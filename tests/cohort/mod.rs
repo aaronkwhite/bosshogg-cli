@@ -343,7 +343,8 @@ async fn cohort_add_person_rejected_on_dynamic_cohort() {
         .mount(&h.server)
         .await;
 
-    let output = h.cmd()
+    let output = h
+        .cmd()
         .args([
             "--yes",
             "cohort",

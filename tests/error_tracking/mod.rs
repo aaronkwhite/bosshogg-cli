@@ -45,7 +45,9 @@ fn grouping_rule_fixture(id: &str) -> serde_json::Value {
 async fn error_tracking_fingerprints_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/error_tracking/fingerprints/"))
+        .and(path(
+            "/api/environments/999999/error_tracking/fingerprints/",
+        ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -241,7 +243,9 @@ async fn error_tracking_assignment_rules_reorder() {
 async fn error_tracking_grouping_rules_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/error_tracking/grouping_rules/"))
+        .and(path(
+            "/api/environments/999999/error_tracking/grouping_rules/",
+        ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
             "next": null,
@@ -265,7 +269,9 @@ async fn error_tracking_grouping_rules_list() {
 async fn error_tracking_grouping_rules_create() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/error_tracking/grouping_rules/"))
+        .and(path(
+            "/api/environments/999999/error_tracking/grouping_rules/",
+        ))
         .respond_with(ResponseTemplate::new(201).set_body_json(grouping_rule_fixture("gr-new")))
         .mount(&h.server)
         .await;
@@ -316,7 +322,9 @@ async fn error_tracking_grouping_rules_get() {
 async fn error_tracking_resolve_github() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/error_tracking/resolve_github/"))
+        .and(path(
+            "/api/environments/999999/error_tracking/resolve_github/",
+        ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"fingerprint": "abc123"})))
         .mount(&h.server)
         .await;
@@ -346,7 +354,9 @@ async fn error_tracking_resolve_github() {
 async fn error_tracking_resolve_gitlab() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/error_tracking/resolve_gitlab/"))
+        .and(path(
+            "/api/environments/999999/error_tracking/resolve_gitlab/",
+        ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"fingerprint": "gl-fp-1"})))
         .mount(&h.server)
         .await;

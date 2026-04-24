@@ -122,9 +122,7 @@ pub enum CohortCommand {
 pub async fn execute(args: CohortArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
         CohortCommand::List { search } => list_cohorts(cx, search).await,
-        CohortCommand::Get { identifier } => {
-            get_cohort_by_identifier(cx, &identifier).await
-        }
+        CohortCommand::Get { identifier } => get_cohort_by_identifier(cx, &identifier).await,
         CohortCommand::Create {
             name,
             filters_file,
@@ -148,9 +146,7 @@ pub async fn execute(args: CohortArgs, cx: &CommandContext) -> Result<()> {
             person_id,
             distinct_id,
         } => remove_person(cx, id, person_id, distinct_id).await,
-        CohortCommand::CalculationHistory { id } => {
-            calculation_history(cx, id).await
-        }
+        CohortCommand::CalculationHistory { id } => calculation_history(cx, id).await,
         CohortCommand::Activity { id } => activity_cohort(cx, id).await,
     }
 }
@@ -235,10 +231,7 @@ async fn resolve_cohort_by_identifier(client: &Client, identifier: &str) -> Resu
         .ok_or_else(|| BosshoggError::NotFound(format!("cohort '{identifier}'")))
 }
 
-async fn get_cohort_by_identifier(
-    cx: &CommandContext,
-    identifier: &str,
-) -> Result<()> {
+async fn get_cohort_by_identifier(cx: &CommandContext, identifier: &str) -> Result<()> {
     let cohort = resolve_cohort_by_identifier(&cx.client, identifier).await?;
     print_cohort(&cohort, cx.json_mode);
     Ok(())
@@ -429,7 +422,9 @@ async fn add_person(
         )));
     }
 
-    cx.confirm(&format!("add person {uuid} to static cohort `{id}`; continue?"))?;
+    cx.confirm(&format!(
+        "add person {uuid} to static cohort `{id}`; continue?"
+    ))?;
 
     let body = json!({ "person_uuids": [uuid] });
     let v: Value = client
@@ -478,7 +473,9 @@ async fn remove_person(
         )));
     }
 
-    cx.confirm(&format!("remove person {uuid} from static cohort `{id}`; continue?"))?;
+    cx.confirm(&format!(
+        "remove person {uuid} from static cohort `{id}`; continue?"
+    ))?;
 
     let body = json!({ "person_uuid": uuid });
     let v: Value = client

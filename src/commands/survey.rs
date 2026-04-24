@@ -410,11 +410,7 @@ async fn duplicate_survey(
 
 // ── archive-response ──────────────────────────────────────────────────────────
 
-async fn archive_response(
-    cx: &CommandContext,
-    id: String,
-    response_uuid: String,
-) -> Result<()> {
+async fn archive_response(cx: &CommandContext, id: String, response_uuid: String) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 

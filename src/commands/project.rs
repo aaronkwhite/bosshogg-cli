@@ -83,7 +83,8 @@ async fn list_projects(cx: &CommandContext) -> Result<()> {
         )
     })?;
 
-    let projects: Vec<Project> = cx.client
+    let projects: Vec<Project> = cx
+        .client
         .get_paginated(&format!("/api/organizations/{org_id}/projects/"), None)
         .await?;
 
@@ -137,7 +138,10 @@ async fn resolve_project_by_identifier(
 async fn get_project(cx: &CommandContext, identifier: &str) -> Result<()> {
     let project = if identifier.parse::<i64>().is_ok() {
         // Numeric: direct fetch
-        let p: Project = cx.client.get(&format!("/api/projects/{identifier}/")).await?;
+        let p: Project = cx
+            .client
+            .get(&format!("/api/projects/{identifier}/"))
+            .await?;
         p
     } else {
         // Name: need org_id for list endpoint
@@ -160,7 +164,10 @@ async fn current_project(cx: &CommandContext) -> Result<()> {
             "no project_id set; run `bosshogg configure` or `bosshogg project switch <id>`".into(),
         )
     })?;
-    let project: Project = cx.client.get(&format!("/api/projects/{project_id}/")).await?;
+    let project: Project = cx
+        .client
+        .get(&format!("/api/projects/{project_id}/"))
+        .await?;
     print_project(&project, cx.json_mode);
     Ok(())
 }
@@ -171,10 +178,9 @@ async fn switch_project(identifier: &str, json_mode: bool, context: Option<&str>
         BosshoggError::Config("no current context; run `bosshogg configure` first".into())
     })?;
     let ctx_name = context.unwrap_or(&current).to_string();
-    let ctx = cfg
-        .contexts
-        .get_mut(&ctx_name)
-        .ok_or_else(|| BosshoggError::Config(format!("context `{ctx_name}` not found in config")))?;
+    let ctx = cfg.contexts.get_mut(&ctx_name).ok_or_else(|| {
+        BosshoggError::Config(format!("context `{ctx_name}` not found in config"))
+    })?;
     ctx.project_id = Some(identifier.to_string());
     config::save(&cfg)?;
 

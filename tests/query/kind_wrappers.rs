@@ -61,7 +61,12 @@ async fn events_wrapper_sends_events_query_kind() {
         .await;
 
     h.cmd()
-        .args(["query", "events", r#"{"select":["event"],"limit":1}"#, "--json"])
+        .args([
+            "query",
+            "events",
+            r#"{"select":["event"],"limit":1}"#,
+            "--json",
+        ])
         .assert()
         .success();
 
@@ -83,7 +88,12 @@ async fn trends_wrapper_sends_trends_query_kind() {
         .await;
 
     h.cmd()
-        .args(["query", "trends", r#"{"series":[{"kind":"EventsNode","event":"$pageview"}]}"#, "--json"])
+        .args([
+            "query",
+            "trends",
+            r#"{"series":[{"kind":"EventsNode","event":"$pageview"}]}"#,
+            "--json",
+        ])
         .assert()
         .success();
 
@@ -105,7 +115,12 @@ async fn funnel_wrapper_sends_funnel_query_kind() {
         .await;
 
     h.cmd()
-        .args(["query", "funnel", r#"{"series":[{"kind":"EventsNode","event":"$pageview"}]}"#, "--json"])
+        .args([
+            "query",
+            "funnel",
+            r#"{"series":[{"kind":"EventsNode","event":"$pageview"}]}"#,
+            "--json",
+        ])
         .assert()
         .success();
 

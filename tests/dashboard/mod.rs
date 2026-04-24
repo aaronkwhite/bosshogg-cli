@@ -317,7 +317,9 @@ async fn dashboard_tiles_reorder_calls_reorder_tiles_endpoint() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/dashboards/40/reorder_tiles/"))
+        .and(path(
+            "/api/environments/999999/dashboards/40/reorder_tiles/",
+        ))
         .and(body_partial_json(json!({ "tile_order": [1, 2, 3] })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -489,4 +491,3 @@ async fn dashboard_share_calls_sharing_endpoint() {
         .stdout(contains("\"enabled\":true"))
         .stdout(contains("dash_share_token_xyz"));
 }
-

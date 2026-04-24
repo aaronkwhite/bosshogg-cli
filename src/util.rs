@@ -33,7 +33,11 @@ pub fn parse_since(input: &str) -> Result<DateTime<Utc>> {
             "h" => Duration::hours(n),
             "m" => Duration::minutes(n),
             "s" => Duration::seconds(n),
-            _ => return Err(BosshoggError::BadRequest(format!("unknown unit in {input}"))),
+            _ => {
+                return Err(BosshoggError::BadRequest(format!(
+                    "unknown unit in {input}"
+                )));
+            }
         };
         return Ok(Utc::now() - dur);
     }

@@ -103,9 +103,7 @@ pub async fn execute(args: ActionArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
         ActionCommand::List { search, limit } => list_actions(cx, search, limit).await,
         ActionCommand::Get { id } => get_action(cx, id).await,
-        ActionCommand::Create { name, steps_file } => {
-            create_action(cx, name, steps_file).await
-        }
+        ActionCommand::Create { name, steps_file } => create_action(cx, name, steps_file).await,
         ActionCommand::Update {
             id,
             name,
@@ -134,7 +132,11 @@ struct ListOutput {
     results: Vec<Action>,
 }
 
-async fn list_actions(cx: &CommandContext, search: Option<String>, limit: Option<usize>) -> Result<()> {
+async fn list_actions(
+    cx: &CommandContext,
+    search: Option<String>,
+    limit: Option<usize>,
+) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 

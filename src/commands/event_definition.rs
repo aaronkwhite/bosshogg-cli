@@ -99,27 +99,21 @@ pub enum EventDefinitionCommand {
 
 pub async fn execute(args: EventDefinitionArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        EventDefinitionCommand::List { event_name, search, limit } => {
-            list_event_definitions(cx, event_name, search, limit).await
-        }
+        EventDefinitionCommand::List {
+            event_name,
+            search,
+            limit,
+        } => list_event_definitions(cx, event_name, search, limit).await,
         EventDefinitionCommand::Get { id } => get_event_definition(cx, &id).await,
         EventDefinitionCommand::Update {
             id,
             description,
             verified,
             owner_id,
-        } => {
-            update_event_definition(cx, &id, description, verified, owner_id).await
-        }
-        EventDefinitionCommand::Delete { id } => {
-            delete_event_definition(cx, &id).await
-        }
-        EventDefinitionCommand::ByName { name } => {
-            by_name_event_definition(cx, &name).await
-        }
-        EventDefinitionCommand::Metrics { id } => {
-            metrics_event_definition(cx, &id).await
-        }
+        } => update_event_definition(cx, &id, description, verified, owner_id).await,
+        EventDefinitionCommand::Delete { id } => delete_event_definition(cx, &id).await,
+        EventDefinitionCommand::ByName { name } => by_name_event_definition(cx, &name).await,
+        EventDefinitionCommand::Metrics { id } => metrics_event_definition(cx, &id).await,
         EventDefinitionCommand::Tag { id, add, remove } => {
             tag_event_definition(cx, &id, add, remove).await
         }
@@ -259,10 +253,7 @@ async fn update_event_definition(
 
 // ── delete ────────────────────────────────────────────────────────────────────
 
-async fn delete_event_definition(
-    cx: &CommandContext,
-    id: &str,
-) -> Result<()> {
+async fn delete_event_definition(cx: &CommandContext, id: &str) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
@@ -357,7 +348,9 @@ async fn tag_event_definition(
         ));
     }
 
-    cx.confirm(&format!("update tags on event definition `{id}`; continue?"))?;
+    cx.confirm(&format!(
+        "update tags on event definition `{id}`; continue?"
+    ))?;
 
     let body = json!({
         "add_tags": tags.iter().filter(|t| !def.tags.contains(t)).cloned().collect::<Vec<_>>(),

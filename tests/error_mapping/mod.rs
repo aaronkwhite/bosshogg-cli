@@ -50,7 +50,10 @@ fn error_codes_are_screaming_snake_case_and_stable() {
         .error_code(),
         "AUTH_SCOPE",
     );
-    assert_eq!(BosshoggError::NotFound("n".into()).error_code(), "NOT_FOUND");
+    assert_eq!(
+        BosshoggError::NotFound("n".into()).error_code(),
+        "NOT_FOUND"
+    );
     assert_eq!(
         BosshoggError::BadRequest("b".into()).error_code(),
         "BAD_REQUEST"

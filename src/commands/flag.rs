@@ -235,7 +235,6 @@ fn rollout_filters(pct: u8) -> Value {
     json!({ "groups": [{ "rollout_percentage": pct }] })
 }
 
-
 async fn resolve_key_to_id(client: &Client, pid: &str, key: &str) -> Result<i64> {
     // Check the Phase B cache, if exposed. The shared Client struct field `cache`
     // in the spec signature is assumed to carry name->id. If the phase B agent

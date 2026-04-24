@@ -95,9 +95,7 @@ pub enum GroupCommand {
 
 pub async fn execute(args: GroupArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        GroupCommand::List { group_type_index } => {
-            list_groups(cx, group_type_index).await
-        }
+        GroupCommand::List { group_type_index } => list_groups(cx, group_type_index).await,
         GroupCommand::Find {
             group_type_index,
             group_key,
@@ -113,24 +111,18 @@ pub async fn execute(args: GroupArgs, cx: &CommandContext) -> Result<()> {
             group_type_index,
             group_key,
         } => related_groups(cx, group_type_index, group_key).await,
-        GroupCommand::Activity { group_type_index } => {
-            activity_groups(cx, group_type_index).await
-        }
+        GroupCommand::Activity { group_type_index } => activity_groups(cx, group_type_index).await,
         GroupCommand::UpdateProperty {
             group_type_index,
             group_key,
             prop_key,
             prop_value,
-        } => {
-            update_property(cx, group_type_index, group_key, prop_key, prop_value).await
-        }
+        } => update_property(cx, group_type_index, group_key, prop_key, prop_value).await,
         GroupCommand::DeleteProperty {
             group_type_index,
             group_key,
             prop_key,
-        } => {
-            delete_property(cx, group_type_index, group_key, prop_key).await
-        }
+        } => delete_property(cx, group_type_index, group_key, prop_key).await,
     }
 }
 
@@ -144,10 +136,7 @@ struct ListOutput {
     results: Vec<Group>,
 }
 
-async fn list_groups(
-    cx: &CommandContext,
-    group_type_index: i32,
-) -> Result<()> {
+async fn list_groups(cx: &CommandContext, group_type_index: i32) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
@@ -178,11 +167,7 @@ async fn list_groups(
 
 // ── find ──────────────────────────────────────────────────────────────────────
 
-async fn find_group(
-    cx: &CommandContext,
-    group_type_index: i32,
-    group_key: String,
-) -> Result<()> {
+async fn find_group(cx: &CommandContext, group_type_index: i32, group_key: String) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let path = format!(
@@ -196,10 +181,7 @@ async fn find_group(
 
 // ── property-definitions ──────────────────────────────────────────────────────
 
-async fn property_definitions(
-    cx: &CommandContext,
-    group_type_index: Option<i32>,
-) -> Result<()> {
+async fn property_definitions(cx: &CommandContext, group_type_index: Option<i32>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
@@ -237,11 +219,7 @@ async fn property_definitions(
 
 // ── property-values ───────────────────────────────────────────────────────────
 
-async fn property_values(
-    cx: &CommandContext,
-    key: String,
-    group_type_index: i32,
-) -> Result<()> {
+async fn property_values(cx: &CommandContext, key: String, group_type_index: i32) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
@@ -303,10 +281,7 @@ async fn related_groups(
 
 // ── activity ──────────────────────────────────────────────────────────────────
 
-async fn activity_groups(
-    cx: &CommandContext,
-    group_type_index: i32,
-) -> Result<()> {
+async fn activity_groups(cx: &CommandContext, group_type_index: i32) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 

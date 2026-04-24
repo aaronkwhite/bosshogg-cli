@@ -236,9 +236,7 @@ async fn update_early_access(
         ));
     }
 
-    cx.confirm(&format!(
-        "update early access feature `{id}`; continue?"
-    ))?;
+    cx.confirm(&format!("update early access feature `{id}`; continue?"))?;
 
     let updated: EarlyAccessFeature = client
         .patch(

@@ -23,7 +23,8 @@ async fn flag_update_accepts_yes_flag() {
         .mount(&h.server)
         .await;
 
-    let output = h.cmd()
+    let output = h
+        .cmd()
         .args(["--yes", "--json", "flag", "update", "foo", "--disabled"])
         .output()
         .unwrap();

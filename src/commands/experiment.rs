@@ -135,9 +135,7 @@ pub async fn execute(args: ExperimentArgs, cx: &CommandContext) -> Result<()> {
             id,
             target_project_id,
         } => copy_to_project(cx, id, target_project_id).await,
-        ExperimentCommand::CreateExposureCohort { id } => {
-            create_exposure_cohort(cx, id).await
-        }
+        ExperimentCommand::CreateExposureCohort { id } => create_exposure_cohort(cx, id).await,
     }
 }
 
@@ -375,15 +373,13 @@ async fn duplicate_experiment(cx: &CommandContext, id: i64) -> Result<()> {
 
 // ── copy-to-project ───────────────────────────────────────────────────────────
 
-async fn copy_to_project(
-    cx: &CommandContext,
-    id: i64,
-    target_project_id: String,
-) -> Result<()> {
+async fn copy_to_project(cx: &CommandContext, id: i64, target_project_id: String) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
-    cx.confirm(&format!("copy experiment `{id}` to project `{target_project_id}`; continue?"))?;
+    cx.confirm(&format!(
+        "copy experiment `{id}` to project `{target_project_id}`; continue?"
+    ))?;
 
     let body = json!({ "team_id": target_project_id });
     let v: Value = client
@@ -403,14 +399,13 @@ async fn copy_to_project(
 
 // ── create-exposure-cohort ────────────────────────────────────────────────────
 
-async fn create_exposure_cohort(
-    cx: &CommandContext,
-    id: i64,
-) -> Result<()> {
+async fn create_exposure_cohort(cx: &CommandContext, id: i64) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
-    cx.confirm(&format!("create exposure cohort for experiment `{id}`; continue?"))?;
+    cx.confirm(&format!(
+        "create exposure cohort for experiment `{id}`; continue?"
+    ))?;
 
     let v: Value = client
         .post(

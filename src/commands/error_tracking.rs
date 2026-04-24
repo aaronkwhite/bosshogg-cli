@@ -181,17 +181,13 @@ pub async fn execute(args: ErrorTrackingArgs, cx: &CommandContext) -> Result<()>
             repo,
             file,
             line,
-        } => {
-            resolve_source(cx, "resolve_github", organization, repo, file, line).await
-        }
+        } => resolve_source(cx, "resolve_github", organization, repo, file, line).await,
         ErrorTrackingCommand::ResolveGitlab {
             organization,
             repo,
             file,
             line,
-        } => {
-            resolve_source(cx, "resolve_gitlab", organization, repo, file, line).await
-        }
+        } => resolve_source(cx, "resolve_gitlab", organization, repo, file, line).await,
     }
 }
 
@@ -297,10 +293,7 @@ async fn get_fingerprint(cx: &CommandContext, id: String) -> Result<()> {
 
 // ── assignment-rules ──────────────────────────────────────────────────────────
 
-async fn dispatch_assignment_rules(
-    cx: &CommandContext,
-    cmd: AssignmentRulesCommand,
-) -> Result<()> {
+async fn dispatch_assignment_rules(cx: &CommandContext, cmd: AssignmentRulesCommand) -> Result<()> {
     match cmd {
         AssignmentRulesCommand::List => list_assignment_rules(cx).await,
         AssignmentRulesCommand::Create {

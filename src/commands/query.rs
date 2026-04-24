@@ -107,11 +107,7 @@ pub async fn execute(args: &QueryArgs, cx: &CommandContext) -> Result<()> {
     }
 }
 
-async fn run_query(
-    cx: &CommandContext,
-    args: &RunArgs,
-    default_kind: QueryKind,
-) -> Result<()> {
+async fn run_query(cx: &CommandContext, args: &RunArgs, default_kind: QueryKind) -> Result<()> {
     let client = &cx.client;
     let kind = args.kind.map(QueryKind::from).unwrap_or(default_kind);
     let input = resolve_sql(args).await?;

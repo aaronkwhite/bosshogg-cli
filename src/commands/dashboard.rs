@@ -145,9 +145,7 @@ pub enum TilesCommand {
 
 pub async fn execute(args: DashboardArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        DashboardCommand::List { tag, search } => {
-            list_dashboards(cx, tag, search).await
-        }
+        DashboardCommand::List { tag, search } => list_dashboards(cx, tag, search).await,
         DashboardCommand::Get { id } => get_dashboard(cx, id).await,
         DashboardCommand::Refresh { id } => refresh_dashboard(cx, id).await,
         DashboardCommand::Create {
@@ -162,9 +160,7 @@ pub async fn execute(args: DashboardArgs, cx: &CommandContext) -> Result<()> {
             tag,
         } => update_dashboard(cx, id, name, description_file, tag).await,
         DashboardCommand::Delete { id } => delete_dashboard(cx, id).await,
-        DashboardCommand::Tiles(tiles_cmd) => {
-            dispatch_tiles(cx, tiles_cmd).await
-        }
+        DashboardCommand::Tiles(tiles_cmd) => dispatch_tiles(cx, tiles_cmd).await,
         DashboardCommand::Share { id } => share_dashboard(cx, id).await,
     }
 }
@@ -390,20 +386,21 @@ async fn delete_dashboard(cx: &CommandContext, id: i64) -> Result<()> {
 
 // ── tiles dispatch ────────────────────────────────────────────────────────────
 
-async fn dispatch_tiles(
-    cx: &CommandContext,
-    cmd: TilesCommand,
-) -> Result<()> {
+async fn dispatch_tiles(cx: &CommandContext, cmd: TilesCommand) -> Result<()> {
     match cmd {
         TilesCommand::Add {
             dashboard_id,
             insight,
         } => {
-            cx.confirm(&format!("add insight {insight} to dashboard {dashboard_id}; continue?"))?;
+            cx.confirm(&format!(
+                "add insight {insight} to dashboard {dashboard_id}; continue?"
+            ))?;
             tiles_add(cx, dashboard_id, insight).await
         }
         TilesCommand::Remove { dashboard_id, tile } => {
-            cx.confirm(&format!("remove tile {tile} from dashboard {dashboard_id}; continue?"))?;
+            cx.confirm(&format!(
+                "remove tile {tile} from dashboard {dashboard_id}; continue?"
+            ))?;
             tiles_remove(cx, dashboard_id, tile).await
         }
         TilesCommand::Move {
@@ -411,7 +408,9 @@ async fn dispatch_tiles(
             tile,
             position,
         } => {
-            cx.confirm(&format!("move tile {tile} on dashboard {dashboard_id}; continue?"))?;
+            cx.confirm(&format!(
+                "move tile {tile} on dashboard {dashboard_id}; continue?"
+            ))?;
             tiles_move(cx, dashboard_id, tile, position).await
         }
         TilesCommand::Copy {
@@ -428,7 +427,9 @@ async fn dispatch_tiles(
             dashboard_id,
             order_file,
         } => {
-            cx.confirm(&format!("reorder tiles on dashboard {dashboard_id}; continue?"))?;
+            cx.confirm(&format!(
+                "reorder tiles on dashboard {dashboard_id}; continue?"
+            ))?;
             tiles_reorder(cx, dashboard_id, &order_file).await
         }
     }
@@ -436,11 +437,7 @@ async fn dispatch_tiles(
 
 // ── tiles add ─────────────────────────────────────────────────────────────────
 
-async fn tiles_add(
-    cx: &CommandContext,
-    dashboard_id: i64,
-    insight: i64,
-) -> Result<()> {
+async fn tiles_add(cx: &CommandContext, dashboard_id: i64, insight: i64) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     // Modern PostHog attaches insights to dashboards by PATCHing the
@@ -474,11 +471,7 @@ async fn tiles_add(
 
 // ── tiles remove ──────────────────────────────────────────────────────────────
 
-async fn tiles_remove(
-    cx: &CommandContext,
-    dashboard_id: i64,
-    tile: i64,
-) -> Result<()> {
+async fn tiles_remove(cx: &CommandContext, dashboard_id: i64, tile: i64) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 

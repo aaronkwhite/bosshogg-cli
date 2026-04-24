@@ -118,7 +118,11 @@ pub struct CreateArgs {
     /// Path to a JSON file containing the legacy `filters` object.
     /// Mutually exclusive with `--query-file`. Newer PostHog accounts may
     /// reject legacy filters; prefer `--query-file`.
-    #[arg(long, conflicts_with = "query_file", required_unless_present = "query_file")]
+    #[arg(
+        long,
+        conflicts_with = "query_file",
+        required_unless_present = "query_file"
+    )]
     pub filters_file: Option<PathBuf>,
     /// Path to a JSON file containing the modern `query` object
     /// (e.g. `{"kind":"InsightVizNode","source":{"kind":"TrendsQuery",...}}`).
@@ -380,10 +384,7 @@ async fn create_insight(cx: &CommandContext, args: CreateArgs) -> Result<()> {
 
 // ── update ────────────────────────────────────────────────────────────────────
 
-async fn update_insight(
-    cx: &CommandContext,
-    args: UpdateArgs,
-) -> Result<()> {
+async fn update_insight(cx: &CommandContext, args: UpdateArgs) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let id = resolve_identifier_to_id(client, env_id, &args.identifier).await?;
@@ -437,14 +438,14 @@ async fn update_insight(
 
 // ── delete ────────────────────────────────────────────────────────────────────
 
-async fn delete_insight(
-    cx: &CommandContext,
-    args: DeleteArgs,
-) -> Result<()> {
+async fn delete_insight(cx: &CommandContext, args: DeleteArgs) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
-    cx.confirm(&format!("soft-delete insight `{}`; continue?", args.identifier))?;
+    cx.confirm(&format!(
+        "soft-delete insight `{}`; continue?",
+        args.identifier
+    ))?;
 
     let id = resolve_identifier_to_id(client, env_id, &args.identifier).await?;
     // client.delete routes soft-delete resources through PATCH {deleted: true}.

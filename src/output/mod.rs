@@ -102,7 +102,9 @@ fn hint_for(err: &BosshoggError) -> Option<&'static str> {
         NotFound(_) => {
             "Check the identifier and your current context (`bosshogg config current-context`)."
         }
-        HogQL(_) => "Inspect the SQL; `bosshogg schema hogql` lists columns for the active project.",
+        HogQL(_) => {
+            "Inspect the SQL; `bosshogg schema hogql` lists columns for the active project."
+        }
         Config(_) => {
             "Run `bosshogg configure`, or set the env var named in the message (POSTHOG_CLI_*)."
         }

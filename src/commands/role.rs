@@ -332,9 +332,7 @@ async fn add_member(cx: &CommandContext, id: String, user_id: String) -> Result<
     let client = &cx.client;
     let org_id = org_id_required(client)?;
 
-    cx.confirm(&format!(
-        "add user `{user_id}` to role `{id}`; continue?"
-    ))?;
+    cx.confirm(&format!("add user `{user_id}` to role `{id}`; continue?"))?;
 
     let body = json!({ "user_uuid": user_id });
     let membership: RoleMembership = client

@@ -100,7 +100,8 @@ async fn list_orgs(cx: &CommandContext) -> Result<()> {
 }
 
 async fn get_org(cx: &CommandContext, identifier: &str) -> Result<()> {
-    let org: Org = cx.client
+    let org: Org = cx
+        .client
         .get(&format!("/api/organizations/{identifier}/"))
         .await?;
     print_org(&org, cx.json_mode);
@@ -113,7 +114,10 @@ async fn current_org(cx: &CommandContext) -> Result<()> {
             "no org_id set; run `bosshogg configure` or `bosshogg org switch <id>`".into(),
         )
     })?;
-    let org: Org = cx.client.get(&format!("/api/organizations/{org_id}/")).await?;
+    let org: Org = cx
+        .client
+        .get(&format!("/api/organizations/{org_id}/"))
+        .await?;
     print_org(&org, cx.json_mode);
     Ok(())
 }
@@ -124,10 +128,9 @@ async fn switch_org(identifier: &str, json_mode: bool, context: Option<&str>) ->
         BosshoggError::Config("no current context; run `bosshogg configure` first".into())
     })?;
     let ctx_name = context.unwrap_or(&current).to_string();
-    let ctx = cfg
-        .contexts
-        .get_mut(&ctx_name)
-        .ok_or_else(|| BosshoggError::Config(format!("context `{ctx_name}` not found in config")))?;
+    let ctx = cfg.contexts.get_mut(&ctx_name).ok_or_else(|| {
+        BosshoggError::Config(format!("context `{ctx_name}` not found in config"))
+    })?;
     ctx.org_id = Some(identifier.to_string());
     config::save(&cfg)?;
 

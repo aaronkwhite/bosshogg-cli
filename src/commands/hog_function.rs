@@ -446,11 +446,7 @@ async fn disable_hog_function(cx: &CommandContext, id: String) -> Result<()> {
 
 // ── invoke ────────────────────────────────────────────────────────────────────
 
-async fn invoke_hog_function(
-    cx: &CommandContext,
-    id: String,
-    event_file: PathBuf,
-) -> Result<()> {
+async fn invoke_hog_function(cx: &CommandContext, id: String, event_file: PathBuf) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 

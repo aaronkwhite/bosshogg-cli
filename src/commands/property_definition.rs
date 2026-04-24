@@ -110,17 +110,13 @@ pub async fn execute(args: PropertyDefinitionArgs, cx: &CommandContext) -> Resul
             search,
             limit,
         } => list_property_definitions(cx, prop_type, event_names, search, limit).await,
-        PropertyDefinitionCommand::Get { id } => {
-            get_property_definition(cx, &id).await
-        }
+        PropertyDefinitionCommand::Get { id } => get_property_definition(cx, &id).await,
         PropertyDefinitionCommand::Update {
             id,
             description,
             verified,
         } => update_property_definition(cx, &id, description, verified).await,
-        PropertyDefinitionCommand::Delete { id } => {
-            delete_property_definition(cx, &id).await
-        }
+        PropertyDefinitionCommand::Delete { id } => delete_property_definition(cx, &id).await,
         PropertyDefinitionCommand::SeenTogether {
             event1,
             event2,
@@ -265,14 +261,13 @@ async fn update_property_definition(
 
 // ── delete ────────────────────────────────────────────────────────────────────
 
-async fn delete_property_definition(
-    cx: &CommandContext,
-    id: &str,
-) -> Result<()> {
+async fn delete_property_definition(cx: &CommandContext, id: &str) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
-    cx.confirm(&format!("hard-delete property definition `{id}`; continue?"))?;
+    cx.confirm(&format!(
+        "hard-delete property definition `{id}`; continue?"
+    ))?;
 
     client
         .delete(&format!(
@@ -361,7 +356,9 @@ async fn tag_property_definition(
         ));
     }
 
-    cx.confirm(&format!("update tags on property definition `{id}`; continue?"))?;
+    cx.confirm(&format!(
+        "update tags on property definition `{id}`; continue?"
+    ))?;
 
     let body = json!({
         "add_tags": tags.iter().filter(|t| !def.tags.contains(t)).cloned().collect::<Vec<_>>(),

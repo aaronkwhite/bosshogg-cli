@@ -11,9 +11,9 @@
 //! config context and need the `--context` override to route to the
 //! right one.
 
+use crate::Result;
 use crate::client::Client;
 use crate::commands::util::gate_destructive;
-use crate::Result;
 
 /// Shared handler context. Owns the `Client`; carries per-invocation
 /// flags (`json_mode`, `yes`) and the `--context` override for handlers
@@ -33,12 +33,7 @@ impl CommandContext {
     /// Build a context from parsed CLI flags. `debug` is consumed by
     /// `Client::new` (baked into the `Client`). `context` is stored so
     /// switch-arm handlers can find the right config section to mutate.
-    pub fn new(
-        json_mode: bool,
-        debug: bool,
-        context: Option<&str>,
-        yes: bool,
-    ) -> Result<Self> {
+    pub fn new(json_mode: bool, debug: bool, context: Option<&str>, yes: bool) -> Result<Self> {
         let client = Client::new(context, debug)?;
         Ok(Self {
             client,

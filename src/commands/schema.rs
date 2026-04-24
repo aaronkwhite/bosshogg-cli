@@ -62,7 +62,9 @@ async fn dump_hogql(cx: &CommandContext) -> Result<()> {
     let tables_obj = resp
         .get("tables")
         .and_then(Value::as_object)
-        .ok_or_else(|| BosshoggError::Config("DatabaseSchemaQuery response missing 'tables'".into()))?;
+        .ok_or_else(|| {
+            BosshoggError::Config("DatabaseSchemaQuery response missing 'tables'".into())
+        })?;
 
     let mut tables: Vec<TableInfo> = Vec::new();
     let mut warehouse_tables: Vec<TableInfo> = Vec::new();

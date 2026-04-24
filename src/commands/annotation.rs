@@ -95,18 +95,18 @@ pub enum AnnotationCommand {
 
 pub async fn execute(args: AnnotationArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        AnnotationCommand::List { before, after, limit } => {
-            list_annotations(cx, before, after, limit).await
-        }
+        AnnotationCommand::List {
+            before,
+            after,
+            limit,
+        } => list_annotations(cx, before, after, limit).await,
         AnnotationCommand::Get { id } => get_annotation(cx, id).await,
         AnnotationCommand::Create {
             content,
             date_marker,
             dashboard_item,
             scope,
-        } => {
-            create_annotation(cx, content, date_marker, dashboard_item, scope).await
-        }
+        } => create_annotation(cx, content, date_marker, dashboard_item, scope).await,
         AnnotationCommand::Update {
             id,
             content,

@@ -56,15 +56,13 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
             commands::whoami::execute(&ctx(json, debug, cli.context.as_deref(), yes)?).await?
         }
         Some(Commands::Schema(args)) => {
-            commands::schema::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
-                .await?
+            commands::schema::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
         }
         Some(Commands::Auth(args)) => {
             commands::auth::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
         }
         Some(Commands::Query(args)) => {
-            commands::query::execute(&args, &ctx(json, debug, cli.context.as_deref(), yes)?)
-                .await?
+            commands::query::execute(&args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
         }
         Some(Commands::Flag(args)) => {
             commands::flag::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
@@ -129,29 +127,20 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
             commands::survey::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
         }
         Some(Commands::EarlyAccess(args)) => {
-            commands::early_access::execute(
-                args,
-                &ctx(json, debug, cli.context.as_deref(), yes)?,
-            )
-            .await?
+            commands::early_access::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
         }
         Some(Commands::HogFunction(args)) => {
             commands::hog_function::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
                 .await?
         }
         Some(Commands::BatchExport(args)) => {
-            commands::batch_export::execute(
-                args,
-                &ctx(json, debug, cli.context.as_deref(), yes)?,
-            )
-            .await?
+            commands::batch_export::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
         }
         Some(Commands::Subscription(args)) => {
-            commands::subscription::execute(
-                args,
-                &ctx(json, debug, cli.context.as_deref(), yes)?,
-            )
-            .await?
+            commands::subscription::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
         }
         Some(Commands::SessionRecording(args)) => {
             commands::session_recording::execute(
@@ -161,20 +150,15 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
             .await?
         }
         Some(Commands::ErrorTracking(args)) => {
-            commands::error_tracking::execute(
-                args,
-                &ctx(json, debug, cli.context.as_deref(), yes)?,
-            )
-            .await?
+            commands::error_tracking::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
         }
         Some(Commands::Role(args)) => {
             commands::role::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
         }
 
         // --- Excluded commands: keep original primitive signatures ---
-        Some(Commands::Configure(args)) => {
-            commands::configure::execute(args, json, debug).await?
-        }
+        Some(Commands::Configure(args)) => commands::configure::execute(args, json, debug).await?,
         Some(Commands::Doctor(args)) => {
             commands::doctor::execute(args, json, debug, cli.context.as_deref()).await?
         }

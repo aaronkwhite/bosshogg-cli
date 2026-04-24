@@ -112,7 +112,16 @@ pub async fn execute(args: SubscriptionArgs, cx: &CommandContext) -> Result<()> 
             insight_id,
             dashboard_id,
         } => {
-            create_subscription(cx, title, target_type, target_value, frequency, insight_id, dashboard_id).await
+            create_subscription(
+                cx,
+                title,
+                target_type,
+                target_value,
+                frequency,
+                insight_id,
+                dashboard_id,
+            )
+            .await
         }
         SubscriptionCommand::Update {
             id,

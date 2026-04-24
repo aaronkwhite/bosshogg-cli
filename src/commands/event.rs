@@ -99,9 +99,7 @@ pub async fn execute(args: EventArgs, cx: &CommandContext) -> Result<()> {
             .await
         }
         EventCommand::Get { uuid } => get_event(cx, &uuid).await,
-        EventCommand::Values { prop, event } => {
-            values(cx, &prop, event.as_deref()).await
-        }
+        EventCommand::Values { prop, event } => values(cx, &prop, event.as_deref()).await,
         EventCommand::Tail { event, limit } => tail_events(cx, event, limit).await,
     }
 }
@@ -241,11 +239,7 @@ async fn values(cx: &CommandContext, prop: &str, event: Option<&str>) -> Result<
 
 // ── tail ──────────────────────────────────────────────────────────────────────
 
-async fn tail_events(
-    cx: &CommandContext,
-    event: Option<String>,
-    limit: Option<u64>,
-) -> Result<()> {
+async fn tail_events(cx: &CommandContext, event: Option<String>, limit: Option<u64>) -> Result<()> {
     let client = &cx.client;
     let flags = ListFlags {
         event,

@@ -121,9 +121,7 @@ pub async fn execute(args: PersonArgs, cx: &CommandContext) -> Result<()> {
             properties,
         } => list_persons(cx, distinct_id, email, search, properties).await,
         PersonCommand::Get { distinct_id } => get_person(cx, &distinct_id).await,
-        PersonCommand::Delete { distinct_id } => {
-            delete_person(cx, &distinct_id).await
-        }
+        PersonCommand::Delete { distinct_id } => delete_person(cx, &distinct_id).await,
         PersonCommand::UpdateProperty {
             distinct_id,
             key,
@@ -132,9 +130,7 @@ pub async fn execute(args: PersonArgs, cx: &CommandContext) -> Result<()> {
         PersonCommand::DeleteProperty { distinct_id, key } => {
             delete_property(cx, &distinct_id, key).await
         }
-        PersonCommand::Activity { distinct_id } => {
-            activity_person(cx, &distinct_id).await
-        }
+        PersonCommand::Activity { distinct_id } => activity_person(cx, &distinct_id).await,
         PersonCommand::Split {
             distinct_id,
             main_distinct_id,
@@ -247,10 +243,7 @@ async fn get_person(cx: &CommandContext, distinct_id: &str) -> Result<()> {
 
 // ── delete ────────────────────────────────────────────────────────────────────
 
-async fn delete_person(
-    cx: &CommandContext,
-    distinct_id: &str,
-) -> Result<()> {
+async fn delete_person(cx: &CommandContext, distinct_id: &str) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
@@ -317,11 +310,7 @@ async fn update_property(
 
 // ── delete-property ───────────────────────────────────────────────────────────
 
-async fn delete_property(
-    cx: &CommandContext,
-    distinct_id: &str,
-    key: String,
-) -> Result<()> {
+async fn delete_property(cx: &CommandContext, distinct_id: &str, key: String) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
