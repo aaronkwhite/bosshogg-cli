@@ -139,71 +139,68 @@ jobs:
   # ---------------------------------------------------------------------------
   # homebrew_tap — push an updated formula to aaronkwhite/homebrew-tap
   #
-  # TODO (post-M9 one-time setup before uncommenting):
-  #   1. Create the tap repo: https://github.com/aaronkwhite/homebrew-tap
-  #      It must be named exactly `homebrew-tap` for `brew tap aaronkwhite/tap`
-  #      to resolve correctly.
-  #   2. Generate a deploy key for the tap repo:
-  #        ssh-keygen -t ed25519 -C "bosshogg-release" -f /tmp/tap_deploy_key
-  #      Add the PUBLIC key as a Deploy Key (with write access) on the tap repo.
-  #      Add the PRIVATE key as a repository secret named HOMEBREW_TAP_DEPLOY_KEY
-  #      on THIS repo (aaronkwhite/bosshogg-cli → Settings → Secrets → Actions).
-  #   3. Uncomment the job below and delete this TODO block.
+  # Uses the HOMEBREW_TAP_TOKEN classic PAT (repo scope) over HTTPS.
+  # No SSH deploy key needed.
   # ---------------------------------------------------------------------------
-  #
-  # homebrew_tap:
-  #   name: Update Homebrew tap formula
-  #   needs: [build, gh_release]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         path: dist
-  #         pattern: bosshogg-*
-  #         merge-multiple: true
-  #
-  #     - name: Compute SHA256 for each tarball
-  #       id: sha
-  #       shell: bash
-  #       run: |
-  #         set -euo pipefail
-  #         version="${GITHUB_REF_NAME#v}"
-  #         for target in aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu; do
-  #           tarball="dist/bosshogg-${version}-${target}.tar.gz"
-  #           hash=$(sha256sum "${tarball}" | awk '{print $1}')
-  #           varname="SHA256_${target//-/_}"
-  #           echo "${varname}=${hash}" >> "$GITHUB_OUTPUT"
-  #         done
-  #         echo "version=${version}" >> "$GITHUB_OUTPUT"
-  #
-  #     - name: Clone tap repo
-  #       run: |
-  #         eval "$(ssh-agent -s)"
-  #         echo "${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}" | ssh-add -
-  #         git clone git@github.com:aaronkwhite/homebrew-tap.git /tmp/homebrew-tap
-  #
-  #     - name: Update formula
-  #       shell: bash
-  #       run: |
-  #         set -euo pipefail
-  #         version="${{ steps.sha.outputs.version }}"
-  #         formula=/tmp/homebrew-tap/Formula/bosshogg.rb
-  #         cp packaging/homebrew/bosshogg.rb "${formula}"
-  #         # Patch version
-  #         sed -i "s/version \".*\"/version \"${version}\"/" "${formula}"
-  #         # Patch SHA256 placeholders (order: aarch64-darwin, x86_64-darwin, aarch64-linux, x86_64-linux)
-  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_aarch64_apple_darwin }}/" "${formula}"
-  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_x86_64_apple_darwin }}/"  "${formula}"
-  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_aarch64_unknown_linux_gnu }}/" "${formula}"
-  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_x86_64_unknown_linux_gnu }}/"  "${formula}"
-  #
-  #     - name: Commit and push to tap repo
-  #       run: |
-  #         cd /tmp/homebrew-tap
-  #         git config user.email "github-actions[bot]@users.noreply.github.com"
-  #         git config user.name "github-actions[bot]"
-  #         git add Formula/bosshogg.rb
-  #         git commit -m "bosshogg v${{ steps.sha.outputs.version }}"
-  #         git push
+  homebrew_tap:
+    name: Update Homebrew tap formula
+    needs: [build, gh_release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: bosshogg-*
+          merge-multiple: true
+
+      - name: Compute SHA256 for each tarball
+        id: sha
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          for target in aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu; do
+            tarball="dist/bosshogg-${version}-${target}.tar.gz"
+            hash=$(sha256sum "${tarball}" | awk '{print $1}')
+            varname="SHA256_${target//-/_}"
+            echo "${varname}=${hash}" >> "$GITHUB_OUTPUT"
+          done
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Clone tap repo
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/aaronkwhite/homebrew-tap.git" /tmp/homebrew-tap
+
+      - name: Update formula
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.sha.outputs.version }}"
+          formula=/tmp/homebrew-tap/Formula/bosshogg.rb
+          cp packaging/homebrew/bosshogg.rb "${formula}"
+          # Patch version (redundant — formula file already has the right
+          # version because it was bumped at release time — but harmless).
+          sed -i "s/version \".*\"/version \"${version}\"/" "${formula}"
+          # Patch SHA256 placeholders in source order:
+          #   aarch64-darwin, x86_64-darwin, aarch64-linux, x86_64-linux
+          sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_aarch64_apple_darwin }}/" "${formula}"
+          sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_x86_64_apple_darwin }}/"  "${formula}"
+          sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_aarch64_unknown_linux_gnu }}/" "${formula}"
+          sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_x86_64_unknown_linux_gnu }}/"  "${formula}"
+
+      - name: Commit and push to tap repo
+        run: |
+          cd /tmp/homebrew-tap
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add Formula/bosshogg.rb
+          if git diff --cached --quiet; then
+            echo "No formula changes — skipping commit."
+            exit 0
+          fi
+          git commit -m "bosshogg v${{ steps.sha.outputs.version }}"
+          git push
