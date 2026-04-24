@@ -63,7 +63,7 @@ All 25 GA PostHog resources, organized by milestone:
 - `bosshogg cohort` — list, get, create, update, delete (soft), members, add-person, remove-person, calculation-history, activity.
 
 **M4 — People & events (v2026.4.3)**
-- `bosshogg person` — list, get, delete (hard/GDPR), update-property, delete-property, timeline, activity, split.
+- `bosshogg person` — list, get, delete (hard/GDPR), update-property, delete-property, activity, split.
 - `bosshogg group` — list, find, property-definitions, property-values, related, activity, update-property, delete-property.
 - `bosshogg event` — list (HogQL), get, values, tail (5s-poll loop).
 - `bosshogg action` — list, get, create, update, delete (soft), references, tag.

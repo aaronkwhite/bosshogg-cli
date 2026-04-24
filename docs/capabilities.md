@@ -142,7 +142,7 @@ Grouped by milestone and purpose. All names are singular.
 
 | Resource | Subcommands |
 |---|---|
-| `person` | `list`, `get`, `delete`, `update-property`, `delete-property`, `properties-timeline`, `activity`, `split` |
+| `person` | `list`, `get`, `delete`, `update-property`, `delete-property`, `activity`, `split` |
 | `group` | `list`, `find`, `property-definitions`, `property-values`, `related`, `activity`, `update-property`, `delete-property` |
 | `event` | `list` (via HogQL), `get`, `values`, `tail` |
 | `action` | `list`, `get`, `create`, `update`, `delete`, `references`, `tag` |
