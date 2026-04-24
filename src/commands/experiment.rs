@@ -67,6 +67,9 @@ pub enum ExperimentCommand {
     List {
         #[arg(long)]
         search: Option<String>,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Get a single experiment by numeric id.
     Get { id: i64 },
@@ -115,7 +118,7 @@ pub enum ExperimentCommand {
 
 pub async fn execute(args: ExperimentArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        ExperimentCommand::List { search } => list_experiments(cx, search).await,
+        ExperimentCommand::List { search, limit } => list_experiments(cx, search, limit).await,
         ExperimentCommand::Get { id } => get_experiment(cx, id).await,
         ExperimentCommand::Create {
             name,
@@ -155,7 +158,11 @@ struct ListOutput {
     results: Vec<Experiment>,
 }
 
-async fn list_experiments(cx: &CommandContext, search: Option<String>) -> Result<()> {
+async fn list_experiments(
+    cx: &CommandContext,
+    search: Option<String>,
+    limit: Option<usize>,
+) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
@@ -166,7 +173,7 @@ async fn list_experiments(cx: &CommandContext, search: Option<String>) -> Result
     };
 
     let path = format!("/api/projects/{project_id}/experiments/{query}");
-    let results: Vec<Experiment> = client.get_paginated(&path, None).await?;
+    let results: Vec<Experiment> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {

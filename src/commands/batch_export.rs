@@ -52,7 +52,11 @@ pub struct BatchExportArgs {
 #[derive(Subcommand, Debug)]
 pub enum BatchExportCommand {
     /// List all batch exports.
-    List,
+    List {
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
+    },
     /// Get a single batch export by UUID.
     Get { id: String },
     /// Create a new batch export.
@@ -131,7 +135,7 @@ pub enum RunsCommand {
 
 pub async fn execute(args: BatchExportArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        BatchExportCommand::List => list_batch_exports(cx).await,
+        BatchExportCommand::List { limit } => list_batch_exports(cx, limit).await,
         BatchExportCommand::Get { id } => get_batch_export(cx, id).await,
         BatchExportCommand::Create {
             name,
@@ -160,11 +164,11 @@ struct ListOutput {
     results: Vec<BatchExport>,
 }
 
-async fn list_batch_exports(cx: &CommandContext) -> Result<()> {
+async fn list_batch_exports(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let path = format!("/api/environments/{env_id}/batch_exports/");
-    let results: Vec<BatchExport> = client.get_paginated(&path, None).await?;
+    let results: Vec<BatchExport> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {

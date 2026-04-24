@@ -35,6 +35,9 @@ pub enum GroupCommand {
         /// Group type index (required by PostHog API — use `/api/:project_id/groups_types/` to discover valid indices).
         #[arg(long)]
         group_type_index: i32,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Find a single group by type index and key.
     Find {
@@ -95,7 +98,10 @@ pub enum GroupCommand {
 
 pub async fn execute(args: GroupArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        GroupCommand::List { group_type_index } => list_groups(cx, group_type_index).await,
+        GroupCommand::List {
+            group_type_index,
+            limit,
+        } => list_groups(cx, group_type_index, limit).await,
         GroupCommand::Find {
             group_type_index,
             group_key,
@@ -136,12 +142,16 @@ struct ListOutput {
     results: Vec<Group>,
 }
 
-async fn list_groups(cx: &CommandContext, group_type_index: i32) -> Result<()> {
+async fn list_groups(
+    cx: &CommandContext,
+    group_type_index: i32,
+    limit: Option<usize>,
+) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
     let path = format!("/api/environments/{env_id}/groups/?group_type_index={group_type_index}");
-    let results: Vec<Group> = client.get_paginated(&path, None).await?;
+    let results: Vec<Group> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {

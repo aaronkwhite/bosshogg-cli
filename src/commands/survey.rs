@@ -73,6 +73,9 @@ pub enum SurveyCommand {
         /// Include archived surveys.
         #[arg(long)]
         archived: bool,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Get a single survey by UUID.
     Get { id: String },
@@ -123,7 +126,11 @@ pub enum SurveyCommand {
 
 pub async fn execute(args: SurveyArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        SurveyCommand::List { search, archived } => list_surveys(cx, search, archived).await,
+        SurveyCommand::List {
+            search,
+            archived,
+            limit,
+        } => list_surveys(cx, search, archived, limit).await,
         SurveyCommand::Get { id } => get_survey(cx, id).await,
         SurveyCommand::Create {
             name,
@@ -164,7 +171,12 @@ struct ListOutput {
     results: Vec<Survey>,
 }
 
-async fn list_surveys(cx: &CommandContext, search: Option<String>, archived: bool) -> Result<()> {
+async fn list_surveys(
+    cx: &CommandContext,
+    search: Option<String>,
+    archived: bool,
+    limit: Option<usize>,
+) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
@@ -182,7 +194,7 @@ async fn list_surveys(cx: &CommandContext, search: Option<String>, archived: boo
     };
 
     let path = format!("/api/projects/{project_id}/surveys/{query}");
-    let results: Vec<Survey> = client.get_paginated(&path, None).await?;
+    let results: Vec<Survey> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {

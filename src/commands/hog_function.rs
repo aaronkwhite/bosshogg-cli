@@ -76,6 +76,9 @@ pub enum HogFunctionCommand {
         /// Search by name.
         #[arg(long)]
         search: Option<String>,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Get a single hog function by UUID.
     Get { id: String },
@@ -141,7 +144,8 @@ pub async fn execute(args: HogFunctionArgs, cx: &CommandContext) -> Result<()> {
             enabled,
             disabled,
             search,
-        } => list_hog_functions(cx, fn_type, enabled, disabled, search).await,
+            limit,
+        } => list_hog_functions(cx, fn_type, enabled, disabled, search, limit).await,
         HogFunctionCommand::Get { id } => get_hog_function(cx, id).await,
         HogFunctionCommand::Create {
             name,
@@ -182,6 +186,7 @@ async fn list_hog_functions(
     enabled: bool,
     disabled: bool,
     search: Option<String>,
+    limit: Option<usize>,
 ) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
@@ -212,7 +217,7 @@ async fn list_hog_functions(
     };
 
     let path = format!("/api/environments/{env_id}/hog_functions/{query}");
-    let results: Vec<HogFunction> = client.get_paginated(&path, None).await?;
+    let results: Vec<HogFunction> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {

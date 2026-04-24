@@ -58,6 +58,9 @@ pub enum CohortCommand {
     List {
         #[arg(long)]
         search: Option<String>,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Get a single cohort by numeric id or exact name.
     Get {
@@ -121,7 +124,7 @@ pub enum CohortCommand {
 
 pub async fn execute(args: CohortArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        CohortCommand::List { search } => list_cohorts(cx, search).await,
+        CohortCommand::List { search, limit } => list_cohorts(cx, search, limit).await,
         CohortCommand::Get { identifier } => get_cohort_by_identifier(cx, &identifier).await,
         CohortCommand::Create {
             name,
@@ -167,7 +170,11 @@ struct ListOutput {
     results: Vec<Cohort>,
 }
 
-async fn list_cohorts(cx: &CommandContext, search: Option<String>) -> Result<()> {
+async fn list_cohorts(
+    cx: &CommandContext,
+    search: Option<String>,
+    limit: Option<usize>,
+) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
@@ -178,7 +185,7 @@ async fn list_cohorts(cx: &CommandContext, search: Option<String>) -> Result<()>
     };
 
     let path = format!("/api/projects/{project_id}/cohorts/{query}");
-    let results: Vec<Cohort> = client.get_paginated(&path, None).await?;
+    let results: Vec<Cohort> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {

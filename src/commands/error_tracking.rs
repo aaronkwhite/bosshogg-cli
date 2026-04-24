@@ -115,6 +115,9 @@ pub enum FingerprintsCommand {
         /// Search by string.
         #[arg(long)]
         search: Option<String>,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Get a single error fingerprint by ID.
     Get { id: String },
@@ -123,7 +126,11 @@ pub enum FingerprintsCommand {
 #[derive(Subcommand, Debug)]
 pub enum AssignmentRulesCommand {
     /// List all assignment rules.
-    List,
+    List {
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
+    },
     /// Create a new assignment rule.
     Create {
         /// Path to a JSON file containing the filters object.
@@ -155,7 +162,11 @@ pub enum AssignmentRulesCommand {
 #[derive(Subcommand, Debug)]
 pub enum GroupingRulesCommand {
     /// List all grouping rules.
-    List,
+    List {
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
+    },
     /// Create a new grouping rule.
     Create {
         /// Path to a JSON file containing the filters object.
@@ -198,7 +209,8 @@ async fn dispatch_fingerprints(cx: &CommandContext, cmd: FingerprintsCommand) ->
         FingerprintsCommand::List {
             distinct_id,
             search,
-        } => list_fingerprints(cx, distinct_id, search).await,
+            limit,
+        } => list_fingerprints(cx, distinct_id, search, limit).await,
         FingerprintsCommand::Get { id } => get_fingerprint(cx, id).await,
     }
 }
@@ -213,6 +225,7 @@ async fn list_fingerprints(
     cx: &CommandContext,
     distinct_id: Option<String>,
     search: Option<String>,
+    limit: Option<usize>,
 ) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
@@ -231,7 +244,7 @@ async fn list_fingerprints(
     };
 
     let path = format!("/api/environments/{env_id}/error_tracking/fingerprints/{query}");
-    let results: Vec<ErrorFingerprint> = client.get_paginated(&path, None).await?;
+    let results: Vec<ErrorFingerprint> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&FingerprintsListOutput {
@@ -295,7 +308,7 @@ async fn get_fingerprint(cx: &CommandContext, id: String) -> Result<()> {
 
 async fn dispatch_assignment_rules(cx: &CommandContext, cmd: AssignmentRulesCommand) -> Result<()> {
     match cmd {
-        AssignmentRulesCommand::List => list_assignment_rules(cx).await,
+        AssignmentRulesCommand::List { limit } => list_assignment_rules(cx, limit).await,
         AssignmentRulesCommand::Create {
             filters_file,
             assignee_id,
@@ -317,11 +330,11 @@ struct AssignmentRulesListOutput {
     results: Vec<AssignmentRule>,
 }
 
-async fn list_assignment_rules(cx: &CommandContext) -> Result<()> {
+async fn list_assignment_rules(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let path = format!("/api/environments/{env_id}/error_tracking/assignment_rules/");
-    let results: Vec<AssignmentRule> = client.get_paginated(&path, None).await?;
+    let results: Vec<AssignmentRule> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&AssignmentRulesListOutput {
@@ -498,7 +511,7 @@ async fn reorder_assignment_rules(cx: &CommandContext, order_file: PathBuf) -> R
 
 async fn dispatch_grouping_rules(cx: &CommandContext, cmd: GroupingRulesCommand) -> Result<()> {
     match cmd {
-        GroupingRulesCommand::List => list_grouping_rules(cx).await,
+        GroupingRulesCommand::List { limit } => list_grouping_rules(cx, limit).await,
         GroupingRulesCommand::Create {
             filters_file,
             description,
@@ -513,11 +526,11 @@ struct GroupingRulesListOutput {
     results: Vec<GroupingRule>,
 }
 
-async fn list_grouping_rules(cx: &CommandContext) -> Result<()> {
+async fn list_grouping_rules(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let path = format!("/api/environments/{env_id}/error_tracking/grouping_rules/");
-    let results: Vec<GroupingRule> = client.get_paginated(&path, None).await?;
+    let results: Vec<GroupingRule> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&GroupingRulesListOutput {

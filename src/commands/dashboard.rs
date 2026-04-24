@@ -59,6 +59,9 @@ pub enum DashboardCommand {
         tag: Option<String>,
         #[arg(long)]
         search: Option<String>,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Get a single dashboard by numeric id.
     Get { id: i64 },
@@ -145,7 +148,9 @@ pub enum TilesCommand {
 
 pub async fn execute(args: DashboardArgs, cx: &CommandContext) -> Result<()> {
     match args.command {
-        DashboardCommand::List { tag, search } => list_dashboards(cx, tag, search).await,
+        DashboardCommand::List { tag, search, limit } => {
+            list_dashboards(cx, tag, search, limit).await
+        }
         DashboardCommand::Get { id } => get_dashboard(cx, id).await,
         DashboardCommand::Refresh { id } => refresh_dashboard(cx, id).await,
         DashboardCommand::Create {
@@ -179,6 +184,7 @@ async fn list_dashboards(
     cx: &CommandContext,
     tag: Option<String>,
     search: Option<String>,
+    limit: Option<usize>,
 ) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
@@ -203,7 +209,7 @@ async fn list_dashboards(
     };
 
     let path = format!("/api/environments/{env_id}/dashboards/{query}");
-    let results: Vec<Dashboard> = client.get_paginated(&path, None).await?;
+    let results: Vec<Dashboard> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {

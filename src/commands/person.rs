@@ -68,6 +68,9 @@ pub enum PersonCommand {
         /// Filter by properties (JSON object).
         #[arg(long)]
         properties: Option<String>,
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
     },
     /// Get a single person by distinct_id.
     Get {
@@ -119,7 +122,8 @@ pub async fn execute(args: PersonArgs, cx: &CommandContext) -> Result<()> {
             email,
             search,
             properties,
-        } => list_persons(cx, distinct_id, email, search, properties).await,
+            limit,
+        } => list_persons(cx, distinct_id, email, search, properties, limit).await,
         PersonCommand::Get { distinct_id } => get_person(cx, &distinct_id).await,
         PersonCommand::Delete { distinct_id } => delete_person(cx, &distinct_id).await,
         PersonCommand::UpdateProperty {
@@ -175,6 +179,7 @@ async fn list_persons(
     email: Option<String>,
     search: Option<String>,
     properties: Option<String>,
+    limit: Option<usize>,
 ) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
@@ -200,7 +205,7 @@ async fn list_persons(
     };
 
     let path = format!("/api/environments/{env_id}/persons/{qs}");
-    let results: Vec<Person> = client.get_paginated(&path, None).await?;
+    let results: Vec<Person> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
         output::print_json(&ListOutput {
