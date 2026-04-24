@@ -1,8 +1,10 @@
 # Rust
 /target
-Cargo.lock
 Cargo.lock.bak
 **/*.rs.bk
+
+# Cargo.lock IS committed — bosshogg is a binary crate, so lockfile in VCS is
+# the recommended practice (https://doc.rust-lang.org/cargo/faq.html).
 
 # IDE / editor
 .idea/

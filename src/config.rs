@@ -136,9 +136,16 @@ mod tests {
     fn with_fake_home<F: FnOnce(&std::path::Path)>(f: F) {
         let tmp = TempDir::new().unwrap();
         let home = tmp.path().to_path_buf();
-        temp_env::with_var("HOME", Some(home.to_str().unwrap()), || {
-            f(&home);
-        });
+        // Unset XDG_CONFIG_HOME so `dirs::config_dir()` falls back to
+        // `$HOME/.config` on Linux. Without this, CI's real XDG path leaks in
+        // and the `starts_with(home)` assertion fails.
+        temp_env::with_vars(
+            [
+                ("HOME", Some(home.to_str().unwrap().to_string())),
+                ("XDG_CONFIG_HOME", None),
+            ],
+            || f(&home),
+        );
     }
 
     #[test]
