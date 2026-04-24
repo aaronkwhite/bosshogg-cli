@@ -56,9 +56,10 @@ pub enum EventCommand {
         /// Property name to enumerate.
         #[arg(long)]
         prop: String,
-        /// Optional event name to scope the property.
+        /// Event name to scope the property. Required by PostHog when using
+        /// a Personal API Key (server returns HTTP 400 if omitted).
         #[arg(long)]
-        event: Option<String>,
+        event: String,
     },
     /// Poll for new events in a loop (Ctrl-C to stop).
     Tail {
@@ -99,7 +100,7 @@ pub async fn execute(args: EventArgs, cx: &CommandContext) -> Result<()> {
             .await
         }
         EventCommand::Get { uuid } => get_event(cx, &uuid).await,
-        EventCommand::Values { prop, event } => values(cx, &prop, event.as_deref()).await,
+        EventCommand::Values { prop, event } => values(cx, &prop, &event).await,
         EventCommand::Tail { event, limit } => tail_events(cx, event, limit).await,
     }
 }
@@ -210,13 +211,14 @@ async fn get_event(cx: &CommandContext, uuid: &str) -> Result<()> {
 
 // ── values ────────────────────────────────────────────────────────────────────
 
-async fn values(cx: &CommandContext, prop: &str, event: Option<&str>) -> Result<()> {
+async fn values(cx: &CommandContext, prop: &str, event: &str) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let mut qs = format!("?key={}", urlencoding::encode(prop));
-    if let Some(e) = event {
-        qs.push_str(&format!("&event_name={}", urlencoding::encode(e)));
-    }
+    let qs = format!(
+        "?key={}&event_name={}",
+        urlencoding::encode(prop),
+        urlencoding::encode(event)
+    );
     let v: Value = client
         .get(&format!("/api/environments/{env_id}/events/values/{qs}"))
         .await?;

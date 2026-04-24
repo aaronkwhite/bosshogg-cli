@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.0 — first stable release. All 25 GA PostHog resources covered.**
+> Status: **v2026.4.1 — dogfood + UX cleanup patch. All 25 GA PostHog resources covered.**
 
 ## Why BossHogg exists
 

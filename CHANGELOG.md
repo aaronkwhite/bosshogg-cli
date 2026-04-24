@@ -11,6 +11,28 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.1] — 2026-04-24
+
+Dogfood + UX cleanup. No resource changes; tightens the surface found during full-surface live-testing of v2026.4.0 against a real PostHog project.
+
+### Added
+
+- **`--limit <N>` on 9 more `list` subcommands.** `batch-export`, `cohort`, `dashboard`, `error-tracking/{fingerprints,assignment-rules,grouping-rules}`, `experiment`, `group`, `hog-function`, `person`, and `survey` now accept `--limit` for consistency with the rest of the CLI. Every `list` verb in the surface now takes `--limit`.
+
+### Changed
+
+- **`bosshogg event values --event <name>` is now required.** PostHog's `/events/values/` endpoint returns `HTTP 400: "The event_name parameter is required when using a personal API key"` if `event_name` is missing. Previously `--event` was optional in the CLI, so the command always failed with a backend error. Now clap enforces it up-front with a clear message.
+- **Homebrew tap auto-update wired into the release workflow.** The previously commented-out `homebrew_tap` job is now active and uses a classic PAT (`HOMEBREW_TAP_TOKEN`) over HTTPS. On every tag push, `Formula/bosshogg.rb` in `aaronkwhite/homebrew-tap` is updated automatically with the new version and SHA256s computed from the release artifacts.
+
+### Fixed
+
+- **CI: `config::tests::config_path_under_home_xdg` failed on Linux** because the test helper set a fake `HOME` but `XDG_CONFIG_HOME` from the runner leaked into `dirs::config_dir()`. Helper now unsets `XDG_CONFIG_HOME` alongside `HOME`.
+- **CI: `cargo-audit` failed with `not found: Couldn't load ./Cargo.lock`** because the lockfile was gitignored. For binary crates the lockfile belongs in VCS; removed the ignore rule and committed `Cargo.lock`.
+- **Release workflow: cross-compile failed with `can't find crate for core`** on macOS targets because `dtolnay/rust-toolchain@stable` installed the stable channel and added the matrix target there, but `cargo build` then auto-switched to channel `1.95` from `rust-toolchain.toml` where the target was missing. Replaced with `rustup show active-toolchain` + `rustup target add`.
+- **`cargo fmt --check` drift across 32 files** — single-line match arms, arg-list split/join differences. All cosmetic; clippy was already clean.
+- **Docs overclaimed `person timeline` / `properties-timeline`** that the CLI doesn't expose. Corrected `README.md` and `docs/capabilities.md`. PostHog's underlying endpoint still exists; implementation is a v1.1+ candidate.
+- **Docs overclaimed `dashboard snapshot`** that the CLI doesn't expose. Corrected `README.md`, `docs/capabilities.md`, `docs/v1-scope.md`, and the CHANGELOG.
+
 ## [2026.4.0] — 2026-04-24
 
 **v1.0 — first public release. M1 through M9 complete. All 25 GA PostHog

@@ -136,6 +136,7 @@ async fn event_values_returns_list() {
     Mock::given(method("GET"))
         .and(path("/api/environments/999999/events/values/"))
         .and(query_param("key", "$browser"))
+        .and(query_param("event_name", "$pageview"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([
             {"name": "Chrome", "count": 1000},
             {"name": "Firefox", "count": 300},
@@ -145,7 +146,15 @@ async fn event_values_returns_list() {
         .await;
 
     h.cmd()
-        .args(["event", "values", "--prop", "$browser", "--json"])
+        .args([
+            "event",
+            "values",
+            "--prop",
+            "$browser",
+            "--event",
+            "$pageview",
+            "--json",
+        ])
         .assert()
         .success()
         .stdout(contains("Chrome"))
