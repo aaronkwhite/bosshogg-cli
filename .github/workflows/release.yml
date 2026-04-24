@@ -1,0 +1,204 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write        # create GH release, upload assets
+  id-token: write        # cosign / OIDC for attest-build-provenance
+  attestations: write    # attest-build-provenance writes here
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: false
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            cross: false
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            cross: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (from rust-toolchain.toml)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Install cross (aarch64-linux only)
+        if: matrix.cross
+        run: |
+          cargo install cross --locked
+          echo "CARGO=cross" >> "$GITHUB_ENV"
+
+      - name: Fallback to cargo (non-cross targets)
+        if: ${{ !matrix.cross }}
+        run: echo "CARGO=cargo" >> "$GITHUB_ENV"
+
+      - name: Build release binary
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }}
+
+      - name: Package tarball
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          staging="bosshogg-${version}-${{ matrix.target }}"
+          mkdir -p "dist/$staging"
+          cp "target/${{ matrix.target }}/release/bosshogg" "dist/$staging/"
+          cp README.md CHANGELOG.md "dist/$staging/"
+          if [[ -f LICENSE ]]; then cp LICENSE "dist/$staging/"; fi
+          tar -C dist -czf "dist/${staging}.tar.gz" "$staging"
+          (cd dist && sha256sum "${staging}.tar.gz" > "${staging}.tar.gz.sha256")
+          echo "path=dist/${staging}.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "sha=dist/${staging}.tar.gz.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.package.outputs.path }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bosshogg-${{ matrix.target }}
+          path: |
+            ${{ steps.package.outputs.path }}
+            ${{ steps.package.outputs.sha }}
+          if-no-files-found: error
+          retention-days: 14
+
+  gh_release:
+    name: GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: bosshogg-*
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            dist/*.tar.gz dist/*.sha256
+
+  crates_io:
+    name: Publish to crates.io
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --locked
+
+  # ---------------------------------------------------------------------------
+  # homebrew_tap — push an updated formula to aaronkwhite/homebrew-tap
+  #
+  # TODO (post-M9 one-time setup before uncommenting):
+  #   1. Create the tap repo: https://github.com/aaronkwhite/homebrew-tap
+  #      It must be named exactly `homebrew-tap` for `brew tap aaronkwhite/tap`
+  #      to resolve correctly.
+  #   2. Generate a deploy key for the tap repo:
+  #        ssh-keygen -t ed25519 -C "bosshogg-release" -f /tmp/tap_deploy_key
+  #      Add the PUBLIC key as a Deploy Key (with write access) on the tap repo.
+  #      Add the PRIVATE key as a repository secret named HOMEBREW_TAP_DEPLOY_KEY
+  #      on THIS repo (aaronkwhite/bosshogg-cli → Settings → Secrets → Actions).
+  #   3. Uncomment the job below and delete this TODO block.
+  # ---------------------------------------------------------------------------
+  #
+  # homebrew_tap:
+  #   name: Update Homebrew tap formula
+  #   needs: [build, gh_release]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         path: dist
+  #         pattern: bosshogg-*
+  #         merge-multiple: true
+  #
+  #     - name: Compute SHA256 for each tarball
+  #       id: sha
+  #       shell: bash
+  #       run: |
+  #         set -euo pipefail
+  #         version="${GITHUB_REF_NAME#v}"
+  #         for target in aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu; do
+  #           tarball="dist/bosshogg-${version}-${target}.tar.gz"
+  #           hash=$(sha256sum "${tarball}" | awk '{print $1}')
+  #           varname="SHA256_${target//-/_}"
+  #           echo "${varname}=${hash}" >> "$GITHUB_OUTPUT"
+  #         done
+  #         echo "version=${version}" >> "$GITHUB_OUTPUT"
+  #
+  #     - name: Clone tap repo
+  #       run: |
+  #         eval "$(ssh-agent -s)"
+  #         echo "${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}" | ssh-add -
+  #         git clone git@github.com:aaronkwhite/homebrew-tap.git /tmp/homebrew-tap
+  #
+  #     - name: Update formula
+  #       shell: bash
+  #       run: |
+  #         set -euo pipefail
+  #         version="${{ steps.sha.outputs.version }}"
+  #         formula=/tmp/homebrew-tap/Formula/bosshogg.rb
+  #         cp packaging/homebrew/bosshogg.rb "${formula}"
+  #         # Patch version
+  #         sed -i "s/version \".*\"/version \"${version}\"/" "${formula}"
+  #         # Patch SHA256 placeholders (order: aarch64-darwin, x86_64-darwin, aarch64-linux, x86_64-linux)
+  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_aarch64_apple_darwin }}/" "${formula}"
+  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_x86_64_apple_darwin }}/"  "${formula}"
+  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_aarch64_unknown_linux_gnu }}/" "${formula}"
+  #         sed -i "0,/<sha256-placeholder>/s//${{ steps.sha.outputs.SHA256_x86_64_unknown_linux_gnu }}/"  "${formula}"
+  #
+  #     - name: Commit and push to tap repo
+  #       run: |
+  #         cd /tmp/homebrew-tap
+  #         git config user.email "github-actions[bot]@users.noreply.github.com"
+  #         git config user.name "github-actions[bot]"
+  #         git add Formula/bosshogg.rb
+  #         git commit -m "bosshogg v${{ steps.sha.outputs.version }}"
+  #         git push

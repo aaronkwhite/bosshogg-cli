@@ -1,0 +1,8 @@
+{
+  "error": true,
+  "code": "RATE_LIMITED",
+  "message": "Exceeded 2400 query requests/hour",
+  "hint": "Wait 47 seconds or pass --async to queue",
+  "retry_with": ["--async"],
+  "retry_after_s": 47
+}

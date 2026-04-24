@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bosshogg://flag_get",
+  "title": "bosshogg flag get --json",
+  "type": "object",
+  "required": ["id", "key", "active", "filters"],
+  "properties": {
+    "id": { "type": "integer" },
+    "team_id": { "type": "integer" },
+    "key": { "type": "string", "minLength": 1 },
+    "name": { "type": ["string", "null"] },
+    "active": { "type": "boolean" },
+    "deleted": { "type": "boolean" },
+    "rollout_percentage": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+    "ensure_experience_continuity": { "type": "boolean" },
+    "is_simple_flag": { "type": "boolean" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "filters": { "type": "object" },
+    "created_by": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["id"],
+          "properties": {
+            "id": { "type": "integer" },
+            "email": { "type": "string" },
+            "first_name": { "type": ["string", "null"] },
+            "last_name": { "type": ["string", "null"] },
+            "uuid": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "status": { "type": ["string", "null"] },
+    "evaluation_runtime": { "type": ["string", "null"] },
+    "version": { "type": ["integer", "null"] },
+    "user_access_level": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

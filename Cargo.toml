@@ -1,0 +1,69 @@
+[package]
+name         = "bosshogg"
+version      = "2026.4.0"
+edition      = "2024"
+rust-version = "1.85"
+authors      = ["Aaron K. White <aaron@aaronkwhite.com>"]
+license      = "MIT"
+description  = "BossHogg — the agent-first PostHog CLI. Feature flags, HogQL queries, insights, dashboards, cohorts, persons, events, experiments, and more — from the terminal or from a Claude Code / Cursor / other coding-agent loop. Ships with a Claude Code skill (~200 idle tokens) that teaches models how to use it."
+readme       = "README.md"
+homepage     = "https://github.com/aaronkwhite/bosshogg-cli"
+repository   = "https://github.com/aaronkwhite/bosshogg-cli"
+documentation = "https://docs.rs/bosshogg"
+keywords     = ["posthog", "cli", "analytics", "feature-flags", "agent"]
+categories   = ["command-line-utilities", "development-tools", "api-bindings"]
+include      = [
+    "src/**/*",
+    "Cargo.toml",
+    "Cargo.lock",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE*",
+    "rust-toolchain.toml",
+]
+
+[[bin]]
+name = "bosshogg"
+path = "src/main.rs"
+
+[lib]
+name = "bosshogg"
+path = "src/lib.rs"
+
+[features]
+default = []
+test-harness = []
+
+[dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+clap_complete = "4"
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "gzip"] }
+tokio = { version = "1", features = ["rt-multi-thread", "rt", "macros", "time", "fs"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+comfy-table = "7"
+console = "0.15"
+dialoguer = { version = "0.11", features = ["fuzzy-select"] }
+dirs = "5"
+termimad = "0.30"
+toml = "0.8"
+dashmap = "6"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+urlencoding = "2"
+
+[dev-dependencies]
+assert_cmd = "2"
+jsonschema = "0.30"
+predicates = "3"
+serde_json = "1"
+temp-env = "0.3"
+tempfile = "3"
+wiremock = "0.6"
+
+[profile.release]
+lto = "thin"
+strip = "symbols"
+codegen-units = 1

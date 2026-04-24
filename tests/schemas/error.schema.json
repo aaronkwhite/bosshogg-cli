@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bosshogg://error",
+  "title": "BossHogg structured error envelope",
+  "type": "object",
+  "required": ["error", "code", "message"],
+  "properties": {
+    "error": { "const": true },
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]+$"
+    },
+    "message": { "type": "string", "minLength": 1 },
+    "hint": { "type": ["string", "null"] },
+    "retry_with": {
+      "type": ["array", "null"],
+      "items": { "type": "string" }
+    },
+    "retry_after_s": { "type": ["integer", "null"], "minimum": 0 }
+  },
+  "additionalProperties": false
+}

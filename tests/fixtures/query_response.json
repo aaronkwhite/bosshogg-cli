@@ -1,0 +1,22 @@
+{
+  "cache_key": "cache_0000000000000000",
+  "is_cached": false,
+  "last_refresh": "2026-04-21T12:00:00Z",
+  "next_allowed_client_refresh": "2026-04-21T12:00:10Z",
+  "timezone": "UTC",
+  "clickhouse": "SELECT count(*) FROM events WHERE equals(team_id, 999999)",
+  "columns": ["count()"],
+  "types": [["count()", "UInt64"]],
+  "results": [[1234567]],
+  "hasMore": false,
+  "hogql": "SELECT count() FROM events",
+  "query_status": null,
+  "modifiers": {
+    "personsOnEventsMode": "person_id_override_properties_joined",
+    "materializationMode": "legacy_null_as_null"
+  },
+  "timings": [
+    { "k": ".", "t": 0.015 },
+    { "k": "./execute", "t": 0.013 }
+  ]
+}

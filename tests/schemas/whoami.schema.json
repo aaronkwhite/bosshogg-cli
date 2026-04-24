@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bosshogg://whoami",
+  "title": "bosshogg whoami --json",
+  "type": "object",
+  "required": ["email", "uuid", "distinct_id"],
+  "properties": {
+    "email": { "type": "string" },
+    "first_name": { "type": ["string", "null"] },
+    "last_name": { "type": ["string", "null"] },
+    "uuid": { "type": "string" },
+    "distinct_id": { "type": "string" },
+    "is_email_verified": { "type": "boolean" },
+    "realm": { "type": ["string", "null"] },
+    "organization": { "type": ["object", "null"] },
+    "team": { "type": ["object", "null"] },
+    "organizations": { "type": "array" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,14 @@
+# Short alias for the common local-dev test invocation.
+#
+# Integration tests run the compiled `bosshogg` binary against a wiremock
+# `http://` server. The binary's HTTP client enforces `https_only(true)` and
+# only honors the `BOSSHOGG_ALLOW_HTTP` bypass when compiled with
+# `--features test-harness` (see docs/development.md). Release builds
+# (`cargo install`, `cargo build --release` without the feature) never honor
+# the env var — the code path is compiled out.
+#
+# Cargo will not let an alias shadow the built-in `test` command, so we
+# expose a short form instead. Use `cargo t` locally; CI already passes
+# `--features test-harness` explicitly (see .github/workflows/ci.yml).
+[alias]
+t = "test --features test-harness"

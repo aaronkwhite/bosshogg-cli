@@ -1,0 +1,64 @@
+{
+  "ok": true,
+  "bosshogg_version": "2026.4.0",
+  "active_context": "prod-us",
+  "host": "https://us.posthog.com",
+  "region": "us",
+  "project_id": 999999,
+  "env_id": 999999,
+  "org_id": "0192f000-0000-0000-0000-000000000099",
+  "clock_skew_ms": 12,
+  "checks": [
+    {
+      "name": "binary_on_path",
+      "ok": true,
+      "detail": "bosshogg resolves to /usr/local/bin/bosshogg",
+      "hint": null,
+      "remediation": null
+    },
+    {
+      "name": "config_exists",
+      "ok": true,
+      "detail": "~/.config/bosshogg/config.toml (0600)",
+      "hint": null,
+      "remediation": null
+    },
+    {
+      "name": "api_key_alive",
+      "ok": true,
+      "detail": "GET /api/users/@me/ -> 200",
+      "hint": null,
+      "remediation": null
+    },
+    {
+      "name": "region_match",
+      "ok": true,
+      "detail": "host us.posthog.com aligns with key prefix phx_",
+      "hint": null,
+      "remediation": null
+    },
+    {
+      "name": "project_accessible",
+      "ok": true,
+      "detail": "project 999999 readable",
+      "hint": null,
+      "remediation": null
+    },
+    {
+      "name": "query_bucket_reachable",
+      "ok": true,
+      "detail": "POST /api/environments/999999/query/ -> 200 in 180ms",
+      "hint": null,
+      "remediation": null
+    },
+    {
+      "name": "clock_skew",
+      "ok": true,
+      "detail": "Server time within 12ms of local",
+      "hint": null,
+      "remediation": null
+    }
+  ],
+  "warnings": [],
+  "errors": []
+}

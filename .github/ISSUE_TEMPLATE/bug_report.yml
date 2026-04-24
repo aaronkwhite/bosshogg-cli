@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a bug in bosshogg
+title: "bug: "
+labels: ["bug", "triage"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: bosshogg version
+      description: Output of `bosshogg --version`
+      placeholder: "bosshogg 2026.4.8"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: host
+    attributes:
+      label: PostHog host
+      options:
+        - US Cloud (us.posthog.com)
+        - EU Cloud (eu.posthog.com)
+        - Self-hosted
+        - Other / not sure
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact `bosshogg` command you ran. Redact tokens and any live identifiers before posting.
+      render: shell
+      placeholder: "bosshogg flag list --active --json"
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Observed output
+      description: Paste the structured `--json` output or error envelope. Redact sensitive values.
+      render: json
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      description: What did you expect to happen? What actually happened?
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: "`bosshogg doctor --json` summary"
+      description: Only paste the `summary` object; redact identifiers from `checks` if you include them.
+      render: json
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Extra context
+      description: Anything else useful — recent PostHog changes, CI environment, local overrides, etc.

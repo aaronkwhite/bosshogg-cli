@@ -1,0 +1,68 @@
+{
+  "posthog_version": "1.165.0",
+  "project_id": 999999,
+  "env_id": 999999,
+  "tables": [
+    {
+      "name": "events",
+      "kind": "posthog",
+      "columns": [
+        { "name": "uuid", "type": "UUID", "schema_valid": true },
+        { "name": "event", "type": "String", "schema_valid": true },
+        { "name": "properties", "type": "JSON", "schema_valid": true },
+        { "name": "timestamp", "type": "DateTime64", "schema_valid": true },
+        { "name": "team_id", "type": "Int64", "schema_valid": true },
+        { "name": "distinct_id", "type": "String", "schema_valid": true },
+        { "name": "person_id", "type": "UUID", "schema_valid": true }
+      ]
+    },
+    {
+      "name": "persons",
+      "kind": "posthog",
+      "columns": [
+        { "name": "id", "type": "UUID", "schema_valid": true },
+        { "name": "properties", "type": "JSON", "schema_valid": true },
+        { "name": "created_at", "type": "DateTime64", "schema_valid": true },
+        { "name": "is_identified", "type": "Boolean", "schema_valid": true }
+      ]
+    },
+    {
+      "name": "sessions",
+      "kind": "posthog",
+      "columns": [
+        { "name": "session_id", "type": "String", "schema_valid": true },
+        { "name": "duration", "type": "Float64", "schema_valid": true },
+        { "name": "page_url", "type": "String", "schema_valid": true }
+      ]
+    },
+    {
+      "name": "groups",
+      "kind": "posthog",
+      "columns": [
+        { "name": "group_type_index", "type": "Int32", "schema_valid": true },
+        { "name": "group_key", "type": "String", "schema_valid": true },
+        { "name": "properties", "type": "JSON", "schema_valid": true }
+      ]
+    },
+    {
+      "name": "cohort_people",
+      "kind": "posthog",
+      "columns": [
+        { "name": "cohort_id", "type": "Int64", "schema_valid": true },
+        { "name": "person_id", "type": "UUID", "schema_valid": true }
+      ]
+    }
+  ],
+  "warehouse_tables": [],
+  "system_tables": [
+    {
+      "name": "system.query_log",
+      "kind": "system",
+      "columns": [
+        { "name": "query_id", "type": "String", "schema_valid": true },
+        { "name": "type", "type": "String", "schema_valid": true },
+        { "name": "query_duration_ms", "type": "UInt64", "schema_valid": true }
+      ]
+    }
+  ]
+}

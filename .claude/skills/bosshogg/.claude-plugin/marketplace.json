@@ -1,0 +1,50 @@
+{
+  "name": "bosshogg",
+  "description": "Agent-first PostHog CLI — feature flags, HogQL, insights, cohorts, persons, events, experiments, surveys, session replays, error tracking, hog functions, batch exports. Ships with the bosshogg CLI and a decision-tree skill.",
+  "version": "2026.4.0",
+  "author": {
+    "name": "Aaron K. White",
+    "email": "aaron@aaronkwhite.com",
+    "url": "https://github.com/aaronkwhite"
+  },
+  "homepage": "https://github.com/aaronkwhite/bosshogg-cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aaronkwhite/bosshogg-cli.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "posthog",
+    "feature-flags",
+    "hogql",
+    "analytics",
+    "product-analytics",
+    "session-replay",
+    "experiments",
+    "cli",
+    "agent-skill"
+  ],
+  "plugins": [
+    {
+      "name": "bosshogg",
+      "source": "./",
+      "description": "Operate PostHog from the terminal. Flags, HogQL queries, insights, cohorts, persons, replays, errors, hog functions, batch exports — via the bosshogg CLI and a pushy, decision-tree skill.",
+      "skills": [
+        {
+          "name": "bosshogg",
+          "path": "."
+        }
+      ],
+      "requirements": {
+        "cli": [
+          {
+            "name": "bosshogg",
+            "install": "cargo install bosshogg",
+            "alternative": "brew install aaronkwhite/tap/bosshogg",
+            "verify": "bosshogg --version"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bosshogg://doctor",
+  "title": "bosshogg doctor --json",
+  "type": "object",
+  "required": ["ok", "checks"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "bosshogg_version": { "type": "string" },
+    "active_context": { "type": ["string", "null"] },
+    "host": { "type": "string", "format": "uri" },
+    "region": { "type": ["string", "null"] },
+    "project_id": { "type": ["integer", "null"] },
+    "env_id": { "type": ["integer", "null"] },
+    "org_id": { "type": ["string", "null"] },
+    "clock_skew_ms": { "type": ["integer", "null"] },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "ok", "detail"],
+        "properties": {
+          "name": { "type": "string" },
+          "ok": { "type": "boolean" },
+          "detail": { "type": "string" },
+          "hint": { "type": ["string", "null"] },
+          "remediation": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "errors": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,191 @@
+[
+  {
+    "id": "eval-01",
+    "prompt": "List all active PostHog feature flags in the project.",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg flag list --active --json",
+    "category": "flag-read",
+    "notes": "Pure read; single-step; clearest possible trigger."
+  },
+  {
+    "id": "eval-02",
+    "prompt": "Disable the `checkout-redesign` flag right now — we think it's causing the 500s in prod.",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg doctor --json",
+    "category": "flag-write",
+    "multi_step": true,
+    "expected_tool_cascade": [
+      "bosshogg doctor --json",
+      "bosshogg flag get checkout-redesign --json",
+      "bosshogg flag update checkout-redesign --disabled --yes --json"
+    ],
+    "notes": "Destructive; must preflight, then confirm, then act with --yes."
+  },
+  {
+    "id": "eval-03",
+    "prompt": "Run this HogQL for me: SELECT count() FROM events WHERE event = '$pageview' AND timestamp > now() - INTERVAL 1 DAY",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg query run \"SELECT count() FROM events WHERE event = '$pageview' AND timestamp > now() - INTERVAL 1 DAY\" --json",
+    "category": "hogql-query",
+    "notes": "Single-step HogQL; CLI should auto-LIMIT 100 but this query already has a count() aggregation so LIMIT is benign."
+  },
+  {
+    "id": "eval-04",
+    "prompt": "Which PostHog project am I pointed at right now, and what scopes does my key have?",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg whoami --json",
+    "category": "whoami",
+    "notes": "Scopes are not directly introspectable (PostHog#25865). Skill should surface whoami output and note the limitation."
+  },
+  {
+    "id": "eval-05",
+    "prompt": "Something's wrong with my PostHog CLI setup — figure out what.",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg doctor --json",
+    "category": "doctor-check",
+    "notes": "Direct preflight request; should use scripts/doctor.sh wrapper or raw `bosshogg doctor --json`."
+  },
+  {
+    "id": "eval-06",
+    "prompt": "Pull up everything we know about the user you@example.com in PostHog.",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg doctor --json",
+    "category": "person-read",
+    "multi_step": true,
+    "expected_tool_cascade": [
+      "bosshogg doctor --json",
+      "bosshogg query run --file find-person.sql --json",
+      "bosshogg query run --file recent-events.sql --json",
+      "bosshogg flag evaluate --distinct-id you@example.com --all-active --json"
+    ],
+    "notes": "Debug-a-user playbook. M1 uses HogQL for person resolution (person subcommand lands M4)."
+  },
+  {
+    "id": "eval-07",
+    "prompt": "Show me the members of the `power-users` cohort.",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg cohort get power-users --json",
+    "category": "cohort-read",
+    "multi_step": true,
+    "expected_tool_cascade": [
+      "bosshogg cohort get power-users --json",
+      "bosshogg cohort members <id> --json"
+    ],
+    "notes": "cohort get now resolves names via list+filter fallback (C4). 'power-users' is not a valid i64 so the name-resolution path triggers: search for exact name match, then use the returned id for members."
+  },
+  {
+    "id": "eval-08",
+    "prompt": "Fetch the definition for the weekly active users insight.",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg insight list --search 'weekly active users' --json",
+    "category": "insight-read",
+    "notes": "M3+ for insight verbs; in M1 agent should explain the stub and offer a HogQL fallback."
+  },
+  {
+    "id": "eval-09",
+    "prompt": "Which LLM traces cost more than $0.50 in the last 24 hours, and which user were they for?",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg doctor --json",
+    "category": "llm-trace-debug",
+    "multi_step": true,
+    "expected_tool_cascade": [
+      "bosshogg doctor --json",
+      "scripts/hogql-schema-dump.sh",
+      "bosshogg query run --file expensive-traces.sql --json"
+    ],
+    "notes": "Uses $ai_* convention; must summarize only, never dump message bodies."
+  },
+  {
+    "id": "eval-10",
+    "prompt": "What columns are on the events table in my project?",
+    "expected_trigger": true,
+    "expected_first_command": "scripts/hogql-schema-dump.sh",
+    "category": "schema-introspection",
+    "multi_step": true,
+    "expected_tool_cascade": [
+      "scripts/hogql-schema-dump.sh",
+      "jq '.tables[] | select(.name==\"events\") | .columns' ~/.cache/bosshogg/schema-999999.json"
+    ],
+    "notes": "Schema grounding; cache hit after first invocation."
+  },
+  {
+    "id": "eval-11",
+    "prompt": "Set up Amplitude tracking for my Next.js app.",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-vendor",
+    "notes": "Amplitude is an explicit exclusion in the skill frontmatter."
+  },
+  {
+    "id": "eval-12",
+    "prompt": "How do I configure a Mixpanel project token in Node.js?",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-vendor",
+    "notes": "Mixpanel is an explicit exclusion."
+  },
+  {
+    "id": "eval-13",
+    "prompt": "Lint this SQL query for me and suggest indexes: SELECT * FROM orders WHERE created_at > now() - interval 1 day",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-generic-sql",
+    "notes": "Generic SQL linting is explicitly excluded. Even though HogQL is SQL-ish, the target isn't PostHog."
+  },
+  {
+    "id": "eval-14",
+    "prompt": "My webpack build is failing with `ERR_INVALID_THIS` — help me debug.",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-frontend-bundling",
+    "notes": "Frontend bundling is explicitly excluded."
+  },
+  {
+    "id": "eval-15",
+    "prompt": "Write a Hog function in PostHog's Hog language that transforms an event's email to lowercase.",
+    "expected_trigger": true,
+    "expected_first_command": "bosshogg hog-function create --file hog-fn.hog --json",
+    "category": "hog-language",
+    "notes": "This IS PostHog-related despite the phrasing 'Hog language' — M7+ resource. In M1 the skill should name the gap and point at references/mcp-gaps.md. Tagged as should-trigger because it IS a PostHog task, just not one M1 can fully execute."
+  },
+  {
+    "id": "eval-16",
+    "prompt": "Debug why my Kubernetes pod is in CrashLoopBackOff.",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-infrastructure",
+    "notes": "Unrelated ops workflow."
+  },
+  {
+    "id": "eval-17",
+    "prompt": "Refactor this Go handler to use context.Context properly.",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-code",
+    "notes": "Generic code refactor with no PostHog signal."
+  },
+  {
+    "id": "eval-18",
+    "prompt": "In Chrome DevTools, how do I pause on DOM mutations for a specific element?",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-browser-devtools",
+    "notes": "Browser DevTools, not PostHog replay. Close conceptually to session replay but not actionable via bosshogg."
+  },
+  {
+    "id": "eval-19",
+    "prompt": "Make the CTA button a softer shade of blue (#0055aa) and add a 2px focus ring.",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-ui",
+    "notes": "Pure CSS; no PostHog signal."
+  },
+  {
+    "id": "eval-20",
+    "prompt": "Tune autovacuum for a large events table in PostgreSQL.",
+    "expected_trigger": false,
+    "expected_first_command": null,
+    "category": "near-miss-dba",
+    "notes": "PostgreSQL admin. The word 'events' is a trap — the context is clearly DBA, not PostHog."
+  }
+]

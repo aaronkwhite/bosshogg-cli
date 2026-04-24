@@ -1,0 +1,73 @@
+{
+  "date_joined": "2024-09-01T00:00:00Z",
+  "uuid": "0192f000-0000-0000-0000-000000000001",
+  "distinct_id": "redacted@example.com",
+  "first_name": "BossHogg",
+  "last_name": "Dogfood",
+  "email": "redacted@example.com",
+  "pending_email": null,
+  "email_opt_in": true,
+  "is_email_verified": true,
+  "notification_settings": {
+    "plugin_disabled": true,
+    "batch_export_run_failure": true,
+    "report_analytics_success": false
+  },
+  "hedgehog_config": null,
+  "anonymize_data": false,
+  "toolbar_mode": "toolbar",
+  "has_password_set": true,
+  "has_social_auth": false,
+  "has_seen_product_intro_for": {},
+  "scene_personalisation": [],
+  "theme_mode": "system",
+  "strapi_id": null,
+  "is_staff": false,
+  "is_impersonated": false,
+  "sensitive_session_expires_at": null,
+  "organization": {
+    "id": "0192f000-0000-0000-0000-000000000099",
+    "name": "BossHogg Dogfood Org",
+    "slug": "bosshogg-dogfood",
+    "membership_level": 8,
+    "logo_media_id": null,
+    "created_at": "2024-09-01T00:00:00Z",
+    "updated_at": "2026-04-01T00:00:00Z",
+    "personalization": null,
+    "plugins_access_level": 9,
+    "for_internal_metrics": false,
+    "available_product_features": [],
+    "is_member_join_email_enabled": true,
+    "metadata": {},
+    "customer_trust_scores": {},
+    "members_can_invite": true,
+    "enforce_2fa": false,
+    "available_features": []
+  },
+  "team": {
+    "id": 999999,
+    "uuid": "0192f000-1111-0000-0000-000000000001",
+    "organization": "0192f000-0000-0000-0000-000000000099",
+    "api_token": "phc_redacted",
+    "name": "BossHogg dogfood project",
+    "completed_snippet_onboarding": true,
+    "has_completed_onboarding_for": {},
+    "ingested_event": true,
+    "is_demo": false,
+    "timezone": "UTC",
+    "access_control": false
+  },
+  "organizations": [
+    {
+      "id": "0192f000-0000-0000-0000-000000000099",
+      "name": "BossHogg Dogfood Org",
+      "slug": "bosshogg-dogfood",
+      "membership_level": 8
+    }
+  ],
+  "realm": "cloud",
+  "posthog_version": "1.165.0",
+  "is_2fa_enabled": false,
+  "has_social_auth_accounts": false,
+  "role_at_organization": "engineering"
+}

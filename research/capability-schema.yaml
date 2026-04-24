@@ -1,0 +1,700 @@
+version: 0.2
+cli:
+  binary: bosshogg
+  crate: bosshogg
+  brand: BossHogg   # marketing capitalization
+  description: >
+    BossHogg — the agent-first PostHog CLI. Single-binary, JSON-friendly,
+    skill-wrapped wrapper around the PostHog REST + Query API. Resource
+    commands use SINGULAR names to mirror the PostHog MCP tool taxonomy
+    (e.g. MCP `feature-flag-create` → `bosshogg flag create`), so model
+    training on MCP transfers for free. Binary name `hog` deliberately
+    avoided — it collides with PostHog's own `bin/hog` interpreter for
+    the Hog programming language.
+
+# -----------------------------------------------------------------------------
+# Global behavior
+# -----------------------------------------------------------------------------
+global:
+  auth:
+    key_types:
+      - name: personal_api_key
+        prefix: phx_
+        default: true
+        note: primary key type for CLI; scoped per-key (feature_flag:*, insight:*, query:read, ...)
+      - name: project_token
+        prefix: phc_
+        note: only used for `capture` and `flag evaluate` public endpoints
+      - name: feature_flag_secure_key
+        prefix: phs_
+        note: not used by CLI v1
+    header: "Authorization: Bearer <key>"
+    scope_introspection:
+      note: >
+        PostHog has no scope-introspection endpoint (open issue posthog#25865).
+        Client must REACT to 403s with remediation hints ("missing scope X"),
+        not pre-flight them.
+  regions:
+    us:
+      private: https://us.posthog.com
+      public: https://us.i.posthog.com
+    eu:
+      private: https://eu.posthog.com
+      public: https://eu.i.posthog.com
+    self_hosted:
+      private: ${BOSSHOGG_HOST}
+      public: ${BOSSHOGG_HOST}
+  output_formats: [json, table, yaml, ndjson, csv]
+  default_output: table_on_tty_else_json
+  contexts:
+    # kubectl/gh-style named environments
+    path: ~/.config/bosshogg/config.toml
+    fields: [host, region, api_key, default_project_id, default_env_id, default_org_id]
+    commands: [set-context, get-contexts, current-context, use-context, delete-context]
+  pagination:
+    style: cursor
+    response_shape: { count, next, previous, results }
+    client_behavior: auto-follow `next` unless --no-paginate or --limit set
+  error_shape:
+    json: { error: true, code: SCREAMING_SNAKE, message, hint, retry_with, retry_after_s }
+    source: PostHog returns { type, code, detail, attr } on 4xx; client maps to the above
+  soft_delete:
+    behavior: >
+      Many resources refuse DELETE (405) and require PATCH {"deleted": true}.
+      Client normalizes: `bosshogg <resource> delete <id>` translates to PATCH.
+    affected_resources:
+      [insight, flag, cohort, annotation, notebook, subscription, hog-function,
+       action, error-tracking-fingerprint]
+  rate_limits:
+    note: team-wide, not per-key; rotating keys does not help
+    analytics: 240/min, 1200/hr
+    query: 2400/hr
+    crud: 480/min, 4800/hr
+    local_eval: 600/min
+    public: unlimited
+    client_behavior: exponential backoff + jitter on 429/503; honors Retry-After header
+  environments_vs_projects:
+    note: >
+      PostHog is mid-migration. CLI accepts --project or --env; where both
+      forms exist, prefers /api/environments/:env_id/... route.
+  safety_rules:
+    hogql_auto_limit: 100   # injected if query has no LIMIT and --no-limit not passed
+    replay_snapshots: never_stdout   # require --out <file>
+    llm_trace_bodies: summarize_default   # --full to opt in
+    error_body_truncation_chars: 200
+    https_only: true
+    env_search: no_current_exe_parent   # security lesson from lin playbook
+
+# -----------------------------------------------------------------------------
+# Meta commands (not tied to a resource)
+# -----------------------------------------------------------------------------
+meta_commands:
+
+  - name: configure
+    description: Interactive first-run wizard; creates a context via prompts.
+    note: Thin wrapper over `config set-context` for humans.
+
+  - name: whoami
+    description: Current user + project + scopes on active key.
+    api_endpoint: GET /api/users/@me/
+
+  - name: doctor
+    description: >
+      Preflight health check: binary on PATH, active context valid, key alive,
+      project/env accessible, region match, clock skew, scope-for-action
+      remediation. `--json` output is consumed by the skill's scripts/doctor.sh.
+    status: ga_m1   # agent-critical — ships in MVP
+
+  - name: schema
+    description: >
+      Schema introspection for grounded HogQL. `bosshogg schema hogql` dumps
+      the ClickHouse/HogQL schema (events, persons, sessions, groups,
+      `system.*`, warehouse tables) for the active project. `bosshogg schema
+      mcp` (v1.x) dumps local cached MCP tool names + filter groups so the
+      skill can route between CLI and MCP.
+    status: ga_m1   # hogql subcommand; mcp subcommand deferred to v1.x
+
+  - name: auth
+    description: >
+      Auth meta-commands. `bosshogg auth token` emits the bearer token to
+      stdout for raw `curl -H "Authorization: Bearer $(bosshogg auth token)"`
+      escape-hatch usage. `bosshogg auth login` (browser-based) deferred to v1.1.
+    subcommands: [token]   # v1; login + logout arrive in v1.1
+
+  - name: config
+    description: Context (kubectl/gh-style named environments) management.
+    subcommands:
+      - set-context
+      - get-contexts
+      - current-context
+      - use-context
+      - delete-context
+
+  - name: use
+    description: Shorthand for `config use-context <name>`.
+
+  - name: version
+    description: Print version + build info.
+
+  - name: completion
+    description: Shell completion scripts for bash/zsh/fish/powershell.
+
+  - name: mcp
+    description: >
+      Run BossHogg as an MCP server over stdio. Same binary, same auth, same
+      JSON contracts. STRETCH GOAL at v1.0; likely slips to v1.1.
+    status: stretch_v1_0
+
+# -----------------------------------------------------------------------------
+# Resources (singular, MCP-taxonomy mirror)
+# -----------------------------------------------------------------------------
+resources:
+
+  # ---- Query (central command) ----
+
+  - name: query
+    status: ga_m1
+    description: >
+      Run a HogQL/Query API call. Supports inline SQL, file input, or stdin.
+      Sync or async. Auto-injects LIMIT 100 if query has no LIMIT clause and
+      --no-limit not passed. The central command of the CLI.
+    subcommands:
+      - run            # inline SQL or --file / stdin
+      - hogql          # alias for run --kind=HogQLQuery
+      - events         # convenience wrapper issuing an EventsQuery
+      - trends         # wrapper for TrendsQuery
+      - funnel         # wrapper for FunnelsQuery
+      - status         # get async query status
+      - cancel         # cancel async query
+      - log            # last-24h execution log
+      - draft-sql      # server-side SQL draft helper
+    api_endpoints:
+      - POST /api/environments/:env_id/query/
+      - GET /api/environments/:env_id/query/:id/
+      - DELETE /api/environments/:env_id/query/:id/
+      - GET /api/environments/:env_id/query/:id/log/
+      - GET /api/environments/:env_id/query/draft_sql/
+    notes: |
+      - Rate-limited at 2400/hr (separate bucket).
+      - --async polls with exponential backoff capped at 10s.
+      - Output: table with typed columns in TTY; --json for raw.
+
+  # ---- Endpoints (materialized HogQL) ----
+
+  - name: endpoint
+    status: ga
+    milestone: M5
+    description: Materialized (saved, named) HogQL endpoints — reusable queries.
+    subcommands: [list, get, create, update, delete, run, materialize-preview, materialize-status, openapi]
+    api_endpoints:
+      - GET /api/environments/:env_id/endpoints/
+      - POST /api/environments/:env_id/endpoints/
+      - GET /api/environments/:env_id/endpoints/:name/
+      - PATCH /api/environments/:env_id/endpoints/:name/
+      - DELETE /api/environments/:env_id/endpoints/:name/
+      - GET /api/environments/:env_id/endpoints/:name/run/
+      - POST /api/environments/:env_id/endpoints/:name/materialization_preview/
+      - GET /api/environments/:env_id/endpoints/:name/materialization_status/
+      - GET /api/environments/:env_id/endpoints/:name/openapi.json/
+
+  # ---- Orgs / Projects ----
+
+  - name: org
+    status: ga
+    milestone: M2
+    description: Organizations — list, pick default, inspect.
+    subcommands: [list, get, current, switch]
+    api_endpoints:
+      - GET /api/organizations/
+      - GET /api/organizations/:id/
+    notes: Create/delete excluded from CLI v1 (rare, destructive).
+
+  - name: project
+    status: ga
+    milestone: M2
+    description: Projects inside an organization.
+    subcommands: [list, get, current, switch, reset-token]
+    api_endpoints:
+      - GET /api/organizations/:org_id/projects/
+      - GET /api/organizations/:org_id/projects/:id/
+      - PATCH /api/organizations/:org_id/projects/:id/reset_token/
+
+  # ---- Flags ----
+
+  - name: flag
+    status: ga_m1   # single M1 resource with CRUD depth
+    description: Feature flags — CRUD, evaluation, rollout tuning.
+    subcommands:
+      - list
+      - get
+      - create
+      - update
+      - delete            # soft
+      - enable
+      - disable
+      - rollout           # set rollout %
+      - evaluate          # POST /flags (public endpoint) for a given distinct_id
+      - dependents        # GET /:id/dependent_flags/
+      - activity
+    api_endpoints:
+      - GET /api/projects/:project_id/feature_flags/
+      - POST /api/projects/:project_id/feature_flags/
+      - GET /api/projects/:project_id/feature_flags/:id/
+      - PATCH /api/projects/:project_id/feature_flags/:id/
+      - DELETE /api/projects/:project_id/feature_flags/:id/
+      - GET /api/projects/:project_id/feature_flags/:id/activity/
+      - GET /api/projects/:project_id/feature_flags/:id/dependent_flags/
+      - POST /flags?v=2   # public evaluation (project token)
+    filters: [active, type, evaluation_runtime, tags, search]
+    input_flags:
+      - --filters-file       # JSON filter tree
+      - --payload-file       # variant payload JSON
+      - --rollout N
+      - --enabled / --disabled
+      - --distinct-id        # for evaluate
+
+  # ---- Insights / Dashboards / Cohorts ----
+
+  - name: insight
+    status: ga
+    milestone: M3
+    description: Saved analyses (trends, funnels, retention, paths, etc.).
+    subcommands: [list, get, refresh, create, update, delete, tag, activity, share]
+    api_endpoints:
+      - GET /api/environments/:env_id/insights/
+      - POST /api/environments/:env_id/insights/
+      - GET /api/environments/:env_id/insights/:id/
+      - PATCH /api/environments/:env_id/insights/:id/
+      - DELETE /api/environments/:env_id/insights/:id/
+      - GET /api/environments/:env_id/insights/:id/activity/
+      - GET /api/environments/:env_id/insights/:id/sharing/
+    filters: [basic, short_id, refresh, limit, offset]
+
+  - name: dashboard
+    status: ga
+    milestone: M3
+    description: Collections of insight tiles.
+    subcommands: [list, get, refresh, create, update, delete, tiles, share, snapshot]
+    api_endpoints:
+      - GET /api/environments/:env_id/dashboards/
+      - POST /api/environments/:env_id/dashboards/
+      - GET /api/environments/:env_id/dashboards/:id/
+      - PATCH /api/environments/:env_id/dashboards/:id/
+      - DELETE /api/environments/:env_id/dashboards/:id/
+      - GET /api/environments/:env_id/dashboards/:id/run_insights/
+      - POST /api/environments/:env_id/dashboards/:id/copy_tile/
+      - PATCH /api/environments/:env_id/dashboards/:id/move_tile/
+      - POST /api/environments/:env_id/dashboards/:id/reorder_tiles/
+      - POST /api/environments/:env_id/dashboards/:id/snapshot/
+    notes: SSE /stream_tiles/ skipped — wrong transport for a CLI.
+
+  - name: cohort
+    status: ga
+    milestone: M3
+    description: User cohorts (static or dynamic).
+    subcommands: [list, get, create, update, delete, members, add-person, remove-person, calculation-history, activity]
+    api_endpoints:
+      - GET /api/projects/:project_id/cohorts/
+      - POST /api/projects/:project_id/cohorts/
+      - GET /api/projects/:project_id/cohorts/:id/
+      - PATCH /api/projects/:project_id/cohorts/:id/
+      - DELETE /api/projects/:project_id/cohorts/:id/
+      - GET /api/projects/:project_id/cohorts/:id/persons/
+      - PATCH /api/projects/:project_id/cohorts/:id/add_persons_to_static_cohort/
+      - PATCH /api/projects/:project_id/cohorts/:id/remove_person_from_static_cohort/
+
+  # ---- People ----
+
+  - name: person
+    status: ga
+    milestone: M4
+    description: User records. Reads + delete + property edits; writes via capture.
+    subcommands: [list, get, delete, update-property, delete-property, properties-timeline, activity, split]
+    api_endpoints:
+      - GET /api/environments/:env_id/persons/
+      - GET /api/environments/:env_id/persons/:id/
+      - PATCH /api/environments/:env_id/persons/:id/
+      - DELETE /api/environments/:env_id/persons/:id/
+      - POST /api/environments/:env_id/persons/:id/update_property/
+      - POST /api/environments/:env_id/persons/:id/delete_property/
+      - GET /api/environments/:env_id/persons/:id/activity/
+      - GET /api/environments/:env_id/persons/:id/properties_timeline/
+      - POST /api/environments/:env_id/persons/:id/split/
+
+  - name: group
+    status: ga
+    milestone: M4
+    description: Group analytics (accounts/companies/teams as first-class entities).
+    subcommands: [list, find, property-definitions, property-values, related, activity, update-property, delete-property]
+    api_endpoints:
+      - GET /api/environments/:env_id/groups/
+      - GET /api/environments/:env_id/groups/find/
+      - GET /api/environments/:env_id/groups/property_definitions/
+      - GET /api/environments/:env_id/groups/property_values/
+      - GET /api/environments/:env_id/groups/related/
+      - POST /api/environments/:env_id/groups/update_property/
+      - POST /api/environments/:env_id/groups/delete_property/
+      - GET /api/environments/:env_id/groups/activity/
+
+  # ---- Events & taxonomy ----
+
+  - name: event
+    status: ga
+    milestone: M4
+    description: >
+      Event lookup. The underlying /events/ REST endpoint is deprecated;
+      CLI routes this through a HogQL EventsQuery for flexibility.
+    subcommands: [list, get, values, tail]
+    api_endpoints:
+      - POST /api/environments/:env_id/query/   # preferred (EventsQuery)
+      - GET /api/environments/:env_id/events/   # fallback only
+      - GET /api/environments/:env_id/events/:id/
+      - GET /api/environments/:env_id/events/values/
+    filters: [event, distinct_id, person_id, before, after, properties, limit]
+    notes: Direct /events/ endpoint caps offset at 50000 and window at 1yr.
+
+  - name: action
+    status: ga
+    milestone: M4
+    description: Named event matchers.
+    subcommands: [list, get, create, update, delete, references, tag]
+    api_endpoints:
+      - GET /api/projects/:project_id/actions/
+      - POST /api/projects/:project_id/actions/
+      - GET /api/projects/:project_id/actions/:id/
+      - PATCH /api/projects/:project_id/actions/:id/
+      - DELETE /api/projects/:project_id/actions/:id/
+      - GET /api/projects/:project_id/actions/:id/references/
+
+  - name: annotation
+    status: ga
+    milestone: M4
+    description: Time-based annotations pinned to charts (release markers, etc.).
+    subcommands: [list, get, create, update, delete]
+    api_endpoints:
+      - GET /api/projects/:project_id/annotations/
+      - POST /api/projects/:project_id/annotations/
+      - GET /api/projects/:project_id/annotations/:id/
+      - PATCH /api/projects/:project_id/annotations/:id/
+      - DELETE /api/projects/:project_id/annotations/:id/
+
+  - name: event-definition
+    status: ga
+    milestone: M5
+    description: Metadata for event names.
+    subcommands: [list, get, update, delete, by-name, metrics, tag]
+    api_endpoints:
+      - GET /api/projects/:project_id/event_definitions/
+      - GET /api/projects/:project_id/event_definitions/:id/
+      - PATCH /api/projects/:project_id/event_definitions/:id/
+      - DELETE /api/projects/:project_id/event_definitions/:id/
+      - GET /api/projects/:project_id/event_definitions/:id/metrics/
+      - GET /api/projects/:project_id/event_definitions/by_name/
+      - POST /api/projects/:project_id/event_definitions/bulk_update_tags/
+
+  - name: property-definition
+    status: ga
+    milestone: M5
+    description: Metadata for event/person/group/session properties.
+    subcommands: [list, get, update, delete, seen-together, tag]
+    api_endpoints:
+      - GET /api/projects/:project_id/property_definitions/
+      - GET /api/projects/:project_id/property_definitions/:id/
+      - PATCH /api/projects/:project_id/property_definitions/:id/
+      - DELETE /api/projects/:project_id/property_definitions/:id/
+      - GET /api/projects/:project_id/property_definitions/seen_together/
+      - POST /api/projects/:project_id/property_definitions/bulk_update_tags/
+    filters: [event_names, type, search]
+
+  # ---- Growth primitives ----
+
+  - name: experiment
+    status: ga
+    milestone: M6
+    description: A/B tests.
+    subcommands: [list, get, create, update, delete, archive, duplicate, copy-to-project, create-exposure-cohort]
+    api_endpoints:
+      - GET /api/projects/:project_id/experiments/
+      - POST /api/projects/:project_id/experiments/
+      - GET /api/projects/:project_id/experiments/:id/
+      - PATCH /api/projects/:project_id/experiments/:id/
+      - DELETE /api/projects/:project_id/experiments/:id/
+      - POST /api/projects/:project_id/experiments/:id/archive/
+      - POST /api/projects/:project_id/experiments/:id/duplicate/
+      - POST /api/projects/:project_id/experiments/:id/copy_to_project/
+      - POST /api/projects/:project_id/experiments/:id/create_exposure_cohort_for_experiment/
+
+  - name: survey
+    status: ga
+    milestone: M6
+    description: In-product surveys.
+    subcommands: [list, get, create, update, delete, activity, duplicate, archive-response]
+    api_endpoints:
+      - GET /api/projects/:project_id/surveys/
+      - POST /api/projects/:project_id/surveys/
+      - GET /api/projects/:project_id/surveys/:id/
+      - PATCH /api/projects/:project_id/surveys/:id/
+      - DELETE /api/projects/:project_id/surveys/:id/
+      - GET /api/projects/:project_id/surveys/:id/activity/
+      - POST /api/projects/:project_id/surveys/:id/duplicate_to_projects/
+      - POST /api/projects/:project_id/surveys/:id/responses/:uuid/archive/
+
+  - name: early-access
+    status: ga
+    milestone: M6
+    description: Early-access feature program management.
+    subcommands: [list, get, create, update, delete]
+    api_endpoints:
+      - GET /api/projects/:project_id/early_access_feature/
+      - POST /api/projects/:project_id/early_access_feature/
+      - GET /api/projects/:project_id/early_access_feature/:id/
+      - PATCH /api/projects/:project_id/early_access_feature/:id/
+      - DELETE /api/projects/:project_id/early_access_feature/:id/
+
+  # ---- Pipeline (CDP) ----
+
+  - name: hog-function
+    status: ga
+    milestone: M7
+    description: >
+      Modern CDP pipeline — destinations, transformations, webhooks, Slack,
+      SMS. Replaces legacy plugins entirely.
+    subcommands: [list, get, create, update, delete, enable, disable, invoke, logs, metrics, enable-backfills]
+    api_endpoints:
+      - GET /api/environments/:env_id/hog_functions/
+      - POST /api/environments/:env_id/hog_functions/
+      - GET /api/environments/:env_id/hog_functions/:id/
+      - PATCH /api/environments/:env_id/hog_functions/:id/
+      - DELETE /api/environments/:env_id/hog_functions/:id/
+      - POST /api/environments/:env_id/hog_functions/:id/invocations/
+      - GET /api/environments/:env_id/hog_functions/:id/logs/
+      - GET /api/environments/:env_id/hog_functions/:id/metrics/
+      - POST /api/environments/:env_id/hog_functions/:id/enable_backfills/
+    filters: [type, enabled, created_at, updated_by, search]
+
+  - name: batch-export
+    status: ga
+    milestone: M7
+    description: Scheduled exports to S3/BigQuery/Snowflake/Postgres/etc.
+    subcommands: [list, get, create, update, delete, pause, unpause, backfills, runs]
+    api_endpoints:
+      - GET /api/environments/:env_id/batch_exports/
+      - POST /api/environments/:env_id/batch_exports/
+      - GET /api/environments/:env_id/batch_exports/:id/
+      - GET /api/environments/:env_id/batch_exports/:id/backfills/
+      - POST /api/environments/:env_id/batch_exports/:id/backfills/
+      - POST /api/environments/:env_id/batch_exports/:id/backfills/:bid/cancel/
+      - GET /api/environments/:env_id/batch_exports/:id/runs/
+      - GET /api/environments/:env_id/batch_exports/:id/runs/:rid/
+      - GET /api/environments/:env_id/batch_exports/:id/runs/:rid/logs/
+      - POST /api/environments/:env_id/batch_exports/:id/runs/:rid/cancel/
+      - POST /api/environments/:env_id/batch_exports/:id/runs/:rid/retry/
+
+  - name: subscription
+    status: ga
+    milestone: M7
+    description: Scheduled delivery of dashboards/insights to email/Slack/webhook.
+    subcommands: [list, get, create, update, delete, test-delivery, deliveries]
+    api_endpoints:
+      - GET /api/environments/:env_id/subscriptions/
+      - POST /api/environments/:env_id/subscriptions/
+      - GET /api/environments/:env_id/subscriptions/:id/
+      - PATCH /api/environments/:env_id/subscriptions/:id/
+      - DELETE /api/environments/:env_id/subscriptions/:id/
+      - POST /api/environments/:env_id/subscriptions/:id/test-delivery/
+      - GET /api/environments/:env_id/subscriptions/:id/deliveries/
+
+  # ---- Operational ----
+
+  - name: session-recording
+    status: ga
+    milestone: M8
+    description: >
+      Session replay metadata. rrweb snapshot download via --out file; NEVER
+      dumps to stdout by default (safety rule).
+    subcommands: [list, get, update, delete]
+    api_endpoints:
+      - GET /api/environments/:env_id/session_recordings/
+      - GET /api/environments/:env_id/session_recordings/:id/
+      - PATCH /api/environments/:env_id/session_recordings/:id/
+      - DELETE /api/environments/:env_id/session_recordings/:id/
+    output_rule: snapshot data requires --out <file>; stdout returns summary
+
+  - name: error-tracking
+    status: ga
+    milestone: M8
+    description: Error grouping, assignment, source link resolution.
+    subcommands:
+      - fingerprints        # list/get
+      - assignment-rules    # list/create/get/update/delete/reorder
+      - grouping-rules      # list/create/get
+      - resolve-github
+      - resolve-gitlab
+    api_endpoints:
+      - GET /api/projects/:project_id/error_tracking/fingerprints/
+      - GET /api/projects/:project_id/error_tracking/assignment_rules/
+      - POST /api/projects/:project_id/error_tracking/assignment_rules/
+      - GET /api/projects/:project_id/error_tracking/grouping_rules/
+      - POST /api/projects/:project_id/error_tracking/grouping_rules/
+      - GET /api/projects/:project_id/error_tracking/resolve_github/
+      - GET /api/projects/:project_id/error_tracking/resolve_gitlab/
+
+  - name: role
+    status: ga
+    milestone: M8
+    description: Enterprise RBAC roles within an org.
+    subcommands: [list, get, create, update, delete, members, add-member, remove-member]
+    api_endpoints:
+      - GET /api/organizations/:org_id/roles/
+      - POST /api/organizations/:org_id/roles/
+      - GET /api/organizations/:org_id/roles/:id/
+      - PATCH /api/organizations/:org_id/roles/:id/
+      - DELETE /api/organizations/:org_id/roles/:id/
+      - GET /api/organizations/:org_id/roles/:id/role_memberships/
+      - POST /api/organizations/:org_id/roles/:id/role_memberships/
+      - DELETE /api/organizations/:org_id/roles/:id/role_memberships/:mid/
+
+  - name: capture
+    status: ga
+    milestone: M8
+    description: >
+      Send a test event to PostHog via the public capture endpoint. Uses
+      PROJECT TOKEN (phc_) not personal API key. Debug-only; production
+      ingestion should use posthog-rs SDK.
+    subcommands: [event, batch, identify]
+    api_endpoints:
+      - POST /i/v0/e
+      - POST /batch
+    notes: No auth header — project token goes in body as `api_key`.
+
+# -----------------------------------------------------------------------------
+# Explicitly excluded from v1
+# -----------------------------------------------------------------------------
+skip_for_v1:
+
+  - name: notebook
+    status: beta
+    rationale: >
+      PostHog's docs explicitly warn "The API can have breaking changes
+      without announcement." Includes kernel/code-execution surface.
+    api_ref: /docs/api/notebooks
+
+  - name: data-warehouse
+    status: beta
+    rationale: >
+      External data sources API (Stripe, Salesforce, HubSpot, Ashby, etc.)
+      still evolving — new connectors, schema changes, CDC prerequisites.
+    api_ref: /docs/api/data-warehouse
+
+  - name: plugin
+    status: deprecated
+    rationale: Superseded by hog-function. /docs/api/plugins returns 404.
+
+  - name: llm-observability
+    status: convention_over_endpoint
+    rationale: >
+      LLM traces are captured as events ($ai_generation, $ai_trace) and
+      queried through the Query API. Covered transparently by `bosshogg
+      query`, no separate resource needed.
+
+  - name: oauth
+    status: wrong_audience
+    rationale: >
+      pha_ / phr_ tokens are for OAuth app integrations, not CLI use.
+      CLI sticks to personal API keys.
+
+  - name: user-admin
+    status: ui_concern
+    rationale: >
+      PATCH /api/users/:id/ and 2FA management belong in the web UI.
+      Keep read-only `whoami`.
+
+  - name: dashboard-sse-streaming
+    status: wrong_transport
+    rationale: >
+      /dashboards/:id/stream_tiles/ is Server-Sent Events. Use `refresh` instead.
+
+  - name: session-recording-payloads
+    status: not_stdout_workflow
+    rationale: >
+      rrweb snapshot download is large and binary-adjacent. List + metadata
+      covered by `session-recording` resource; raw payload via --out file.
+
+  - name: legacy-decide-endpoint
+    status: deprecated
+    rationale: >
+      POST /decide?v=3 superseded by POST /flags?v=2. Only the new one wired up.
+
+# -----------------------------------------------------------------------------
+# Milestone map
+# -----------------------------------------------------------------------------
+milestones:
+  M1:
+    tag: v2026.4.0
+    theme: MVP vertical slice
+    resources: [query, flag]
+    meta: [configure, whoami, doctor, schema (hogql), auth (token), config, use, version, completion]
+    skill: SKILL.md + marketplace.json + 4 references + 3 scripts + 1 example + evals
+  M2:
+    tag: v2026.4.1
+    theme: Context & admin
+    resources: [org, project]
+  M3:
+    tag: v2026.4.2
+    theme: Analytics backbone
+    resources: [insight, dashboard, cohort]
+  M4:
+    tag: v2026.4.3
+    theme: People & events
+    resources: [person, group, event, action, annotation]
+  M5:
+    tag: v2026.4.4
+    theme: Taxonomy & endpoints
+    resources: [event-definition, property-definition, endpoint]
+  M6:
+    tag: v2026.4.5
+    theme: Growth primitives
+    resources: [experiment, survey, early-access]
+  M7:
+    tag: v2026.4.6
+    theme: Pipeline (CDP)
+    resources: [hog-function, batch-export, subscription]
+  M8:
+    tag: v2026.4.7
+    theme: Operational & replay
+    resources: [session-recording, error-tracking, role, capture]
+  M9:
+    tag: v1.0.0 (v2026.4.0 ish)
+    theme: Polish + marketplace
+    deliverables:
+      - all 7 cross-product-playbooks complete
+      - homebrew tap + formula
+      - .claude-plugin/marketplace.json polished
+      - PostHog/skills marketplace submission
+      - PostHog/wizard PR (stretch)
+      - description-optimizer loop on SKILL.md frontmatter
+      - idle-token benchmark vs PostHog MCP (target: <300 idle vs ~44k)
+      - stretch: `bosshogg mcp --stdio` mode
+
+# -----------------------------------------------------------------------------
+# Shared patterns (used by multiple resources)
+# -----------------------------------------------------------------------------
+shared_query_params:
+  list:
+    - limit        # default 100, max varies
+    - offset
+    - cursor
+    - search
+    - tags
+    - format
+  common_write_fields:
+    - name
+    - description
+    - tags
+    - deleted      # for soft delete
+
+shared_file_inputs:
+  - --filters-file       # flag/cohort/insight filter trees
+  - --payload-file       # flag JSON payloads
+  - --description-file   # markdown descriptions
+  - --query-file         # HogQL source

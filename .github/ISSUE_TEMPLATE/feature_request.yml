@@ -1,0 +1,32 @@
+name: Feature request
+description: Propose a feature or new resource for bosshogg
+title: "feat: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Start with the user problem, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed CLI shape
+      description: The command you'd want to run, with flags.
+      render: shell
+      placeholder: "bosshogg <resource> <verb> --flag <value>"
+
+  - type: textarea
+    id: prior-art
+    attributes:
+      label: Prior art
+      description: Relevant PostHog API endpoint, MCP tool, `@posthog/cli` command, or other CLIs that solve similar problems.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you consider? Why is the CLI the right place for this?
