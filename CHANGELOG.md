@@ -11,6 +11,20 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.2] — 2026-04-24
+
+Right-sized surface: remove verbs that cannot work via Personal API Key — the only auth mode a CLI user has. Live-dogfood of v2026.4.1 against a real PostHog account confirmed each returns a permanent HTTP 402 or 403 regardless of input.
+
+### Removed
+
+- **`subscription *` (7 verbs: `list`, `get`, `create`, `update`, `delete`, `test-delivery`, `deliveries`)** — PostHog returns HTTP 402 (`"This feature is not available on your current plan"`) for all subscription endpoints on non-Teams/Enterprise plans. The underlying PostHog subscription API exists but requires a paid Teams or Enterprise subscription — not reachable from a CLI personal API key on free or Growth plans. Users needing subscription management should use the PostHog web UI.
+
+- **`dashboard tiles move`, `tiles copy`, `tiles reorder` (3 verbs)** — PostHog's dedicated `move_tile`, `copy_tile`, and `reorder_tiles` endpoints return HTTP 403 (`"This action does not support Personal API Key access"`) for personal API keys. These endpoints are session-cookie auth only. `tiles add` and `tiles remove` remain — both work correctly via `PATCH insight.dashboards`.
+
+- **`event-definition metrics` (1 verb)** — PostHog's `/event_definitions/{id}/metrics/` endpoint returns HTTP 403 (`"This action does not support Personal API Key access"`) for personal API keys. Session-cookie auth only. Users needing event usage metrics should use the PostHog web UI (Data Management → Events → select event → Insights tab).
+
+Net: 25 → 24 GA resources. The underlying PostHog endpoints still exist — these are auth-boundary removals only, not PostHog regressions.
+
 ## [2026.4.1] — 2026-04-24
 
 Dogfood + UX cleanup. No resource changes; tightens the surface found during full-surface live-testing of v2026.4.0 against a real PostHog project.

@@ -138,10 +138,6 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
             commands::batch_export::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
                 .await?
         }
-        Some(Commands::Subscription(args)) => {
-            commands::subscription::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
-                .await?
-        }
         Some(Commands::SessionRecording(args)) => {
             commands::session_recording::execute(
                 args,

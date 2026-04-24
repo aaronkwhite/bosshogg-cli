@@ -35,7 +35,6 @@ mod query;
 mod role;
 mod schema;
 mod session_recording;
-mod subscription;
 mod survey;
 mod use_cmd;
 mod whoami;

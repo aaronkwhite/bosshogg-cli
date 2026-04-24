@@ -5,7 +5,7 @@ Human-readable render of [`../research/capability-schema.yaml`](../research/capa
 ## At a glance
 
 - **1 central command**: `bosshogg query run` (HogQL over `POST /api/environments/:env_id/query/`)
-- **25 resource command groups** covering the full GA surface
+- **24 resource command groups** covering the Personal API Key-accessible GA surface
 - **~45-55 subcommands** total at v1
 - **Agent utilities**: `bosshogg doctor`, `bosshogg schema hogql`, `bosshogg auth token`
 - **Kubectl/gh-style contexts**: `bosshogg config set-context / use-context` + `bosshogg use <name>` shortcut
@@ -135,7 +135,7 @@ Grouped by milestone and purpose. All names are singular.
 | Resource | Subcommands |
 |---|---|
 | `insight` | `list`, `get`, `refresh`, `create`, `update`, `delete`, `tag`, `activity`, `share` |
-| `dashboard` | `list`, `get`, `refresh`, `create`, `update`, `delete`, `tiles`, `share`, `snapshot` |
+| `dashboard` | `list`, `get`, `refresh`, `create`, `update`, `delete`, `tiles` (`add`, `remove`), `share` |
 | `cohort` | `list`, `get`, `create`, `update`, `delete`, `members`, `add-person`, `remove-person`, `calculation-history`, `activity` |
 
 ### Person / Group / Event / Action / Annotation — M4
@@ -152,7 +152,7 @@ Grouped by milestone and purpose. All names are singular.
 
 | Resource | Subcommands |
 |---|---|
-| `event-definition` | `list`, `get`, `update`, `delete`, `by-name`, `metrics`, `tag` |
+| `event-definition` | `list`, `get`, `update`, `delete`, `by-name`, `tag` |
 | `property-definition` | `list`, `get`, `update`, `delete`, `seen-together`, `tag` |
 
 ### Experiment / Survey / Early-access — M6
@@ -163,13 +163,12 @@ Grouped by milestone and purpose. All names are singular.
 | `survey` | `list`, `get`, `create`, `update`, `delete`, `activity`, `duplicate`, `archive-response` |
 | `early-access` | `list`, `get`, `create`, `update`, `delete` |
 
-### Hog-function / Batch-export / Subscription — M7
+### Hog-function / Batch-export — M7
 
 | Resource | Subcommands |
 |---|---|
 | `hog-function` | `list`, `get`, `create`, `update`, `delete`, `enable`, `disable`, `invoke`, `logs`, `metrics`, `enable-backfills` |
 | `batch-export` | `list`, `get`, `create`, `update`, `delete`, `pause`, `unpause`, `backfills` {list/create/cancel}, `runs` {list/get/logs/cancel/retry} |
-| `subscription` | `list`, `get`, `create`, `update`, `delete`, `test-delivery`, `deliveries` |
 
 ### Session-recording / Error-tracking / Role / Capture — M8
 

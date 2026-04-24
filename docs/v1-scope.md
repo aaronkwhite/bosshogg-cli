@@ -58,7 +58,6 @@ All resources below are generally available in PostHog's API, have stable shapes
 | **Session recording** | `bosshogg session-recording` | Metadata only — list, get, update, delete. rrweb payload download requires `--out`. (M8) |
 | **Hog function** | `bosshogg hog-function` | Modern CDP pipeline — destinations/transformations/webhooks. Replaces legacy plugins. (M7) |
 | **Batch export** | `bosshogg batch-export` | Scheduled exports to S3/BigQuery/Snowflake/Postgres. CRUD + pause/unpause + backfills + runs. (M7) |
-| **Subscription** | `bosshogg subscription` | Scheduled delivery of dashboards/insights to email/Slack/webhook. (M7) |
 | **Role** | `bosshogg role` | Enterprise RBAC. CRUD + membership. (M8) |
 | **Early access** | `bosshogg early-access` | Early-access feature program CRUD. (M6) |
 | **Error tracking** | `bosshogg error-tracking` | Fingerprints (read), assignment + grouping rules, github/gitlab source resolution. (M8) |

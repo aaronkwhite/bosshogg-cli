@@ -16,7 +16,7 @@ use crate::commands::{
     group::GroupArgs, hog_function::HogFunctionArgs, insight::InsightArgs, org::OrgArgs,
     person::PersonArgs, project::ProjectArgs, property_definition::PropertyDefinitionArgs,
     query::QueryArgs, role::RoleArgs, schema::SchemaArgs, session_recording::SessionRecordingArgs,
-    subscription::SubscriptionArgs, survey::SurveyArgs, use_cmd::UseArgs,
+    survey::SurveyArgs, use_cmd::UseArgs,
 };
 
 #[derive(Parser, Debug)]
@@ -92,7 +92,6 @@ pub enum Commands {
     HogFunction(HogFunctionArgs),
     #[command(name = "batch-export")]
     BatchExport(BatchExportArgs),
-    Subscription(SubscriptionArgs),
     #[command(name = "session-recording")]
     SessionRecording(SessionRecordingArgs),
     #[command(name = "error-tracking")]

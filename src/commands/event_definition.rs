@@ -83,8 +83,6 @@ pub enum EventDefinitionCommand {
     /// Look up an event definition by name.
     #[command(name = "by-name")]
     ByName { name: String },
-    /// Get usage metrics for an event definition.
-    Metrics { id: String },
     /// Add or remove a tag on an event definition.
     Tag {
         id: String,
@@ -113,7 +111,6 @@ pub async fn execute(args: EventDefinitionArgs, cx: &CommandContext) -> Result<(
         } => update_event_definition(cx, &id, description, verified, owner_id).await,
         EventDefinitionCommand::Delete { id } => delete_event_definition(cx, &id).await,
         EventDefinitionCommand::ByName { name } => by_name_event_definition(cx, &name).await,
-        EventDefinitionCommand::Metrics { id } => metrics_event_definition(cx, &id).await,
         EventDefinitionCommand::Tag { id, add, remove } => {
             tag_event_definition(cx, &id, add, remove).await
         }
@@ -295,24 +292,6 @@ async fn by_name_event_definition(cx: &CommandContext, name: &str) -> Result<()>
         ))
         .await?;
     print_event_definition(&def, cx.json_mode);
-    Ok(())
-}
-
-// ── metrics ───────────────────────────────────────────────────────────────────
-
-async fn metrics_event_definition(cx: &CommandContext, id: &str) -> Result<()> {
-    let client = &cx.client;
-    let project_id = project_id_required(client)?;
-    let v: Value = client
-        .get(&format!(
-            "/api/projects/{project_id}/event_definitions/{id}/metrics/"
-        ))
-        .await?;
-    if cx.json_mode {
-        output::print_json(&v);
-    } else {
-        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
-    }
     Ok(())
 }
 

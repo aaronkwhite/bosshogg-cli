@@ -29,7 +29,6 @@ pub mod query;
 pub mod role;
 pub mod schema;
 pub mod session_recording;
-pub mod subscription;
 pub mod survey;
 pub mod use_cmd;
 pub mod util;

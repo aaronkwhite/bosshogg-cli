@@ -115,33 +115,6 @@ pub enum TilesCommand {
         #[arg(long)]
         tile: i64,
     },
-    /// Move (reposition) a tile on a dashboard.
-    Move {
-        dashboard_id: i64,
-        /// Tile id to move.
-        #[arg(long)]
-        tile: i64,
-        /// New position as a JSON object (e.g. '{"x":0,"y":0,"w":6,"h":5}').
-        #[arg(long)]
-        position: String,
-    },
-    /// Copy a tile to another dashboard.
-    Copy {
-        dashboard_id: i64,
-        /// Tile id to copy.
-        #[arg(long)]
-        tile: i64,
-        /// Destination dashboard id.
-        #[arg(long, name = "to-dashboard")]
-        to_dashboard: i64,
-    },
-    /// Reorder all tiles on a dashboard from a JSON file.
-    Reorder {
-        dashboard_id: i64,
-        /// Path to a JSON file containing the ordered tile id list.
-        #[arg(long, name = "order-file")]
-        order_file: PathBuf,
-    },
 }
 
 // ── Dispatch ─────────────────────────────────────────────────────────────────
@@ -409,35 +382,6 @@ async fn dispatch_tiles(cx: &CommandContext, cmd: TilesCommand) -> Result<()> {
             ))?;
             tiles_remove(cx, dashboard_id, tile).await
         }
-        TilesCommand::Move {
-            dashboard_id,
-            tile,
-            position,
-        } => {
-            cx.confirm(&format!(
-                "move tile {tile} on dashboard {dashboard_id}; continue?"
-            ))?;
-            tiles_move(cx, dashboard_id, tile, position).await
-        }
-        TilesCommand::Copy {
-            dashboard_id,
-            tile,
-            to_dashboard,
-        } => {
-            cx.confirm(&format!(
-                "copy tile {tile} from dashboard {dashboard_id} to dashboard {to_dashboard}; continue?"
-            ))?;
-            tiles_copy(cx, dashboard_id, tile, to_dashboard).await
-        }
-        TilesCommand::Reorder {
-            dashboard_id,
-            order_file,
-        } => {
-            cx.confirm(&format!(
-                "reorder tiles on dashboard {dashboard_id}; continue?"
-            ))?;
-            tiles_reorder(cx, dashboard_id, &order_file).await
-        }
     }
 }
 
@@ -526,120 +470,6 @@ async fn tiles_remove(cx: &CommandContext, dashboard_id: i64, tile: i64) -> Resu
         output::print_json(&v);
     } else {
         println!("Removed tile {tile} from dashboard {dashboard_id}");
-    }
-    Ok(())
-}
-
-// ── tiles move ────────────────────────────────────────────────────────────────
-
-async fn tiles_move(
-    cx: &CommandContext,
-    dashboard_id: i64,
-    tile: i64,
-    position: String,
-) -> Result<()> {
-    let client = &cx.client;
-    let env_id = env_id_required(client)?;
-
-    // Modern PostHog exposes a dedicated `PATCH /dashboards/{id}/move_tile/`
-    // endpoint. The legacy `PATCH /dashboards/{id}/ {"tiles": [...]}` path
-    // is silently dropped on current accounts.
-    //
-    // NOTE: `move_tile` currently requires session-cookie auth and will
-    // return 403 "does not support Personal API Key access" on PATCH via
-    // personal API key. Hitting the correct endpoint surfaces this
-    // limitation cleanly rather than pretending a silent-drop succeeded.
-    let pos: Value = serde_json::from_str(&position)
-        .map_err(|e| BosshoggError::BadRequest(format!("position is not valid JSON: {e}")))?;
-
-    let path = format!("/api/environments/{env_id}/dashboards/{dashboard_id}/move_tile/");
-    let body = json!({
-        "tile": { "id": tile, "layouts": { "sm": pos } }
-    });
-    let v: Value = client.patch(&path, &body).await?;
-
-    if cx.json_mode {
-        output::print_json(&v);
-    } else {
-        println!("Moved tile {tile} on dashboard {dashboard_id}");
-    }
-    Ok(())
-}
-
-// ── tiles copy ────────────────────────────────────────────────────────────────
-
-async fn tiles_copy(
-    cx: &CommandContext,
-    dashboard_id: i64,
-    tile: i64,
-    to_dashboard: i64,
-) -> Result<()> {
-    let client = &cx.client;
-    let env_id = env_id_required(client)?;
-
-    // Modern PostHog: `POST /dashboards/{id}/copy_tile/` with
-    // `{fromDashboardId, tileId}`. The `id` in the path is the destination.
-    //
-    // NOTE: like `move_tile`, `copy_tile` currently requires session-cookie
-    // auth and returns 403 for Personal API Key access.
-    let path = format!("/api/environments/{env_id}/dashboards/{to_dashboard}/copy_tile/");
-    let body = json!({
-        "fromDashboardId": dashboard_id,
-        "tileId": tile
-    });
-    let v: Value = client.post(&path, &body).await?;
-
-    if cx.json_mode {
-        output::print_json(&v);
-    } else {
-        println!("Copied tile {tile} from dashboard {dashboard_id} to dashboard {to_dashboard}");
-    }
-    Ok(())
-}
-
-// ── tiles reorder ─────────────────────────────────────────────────────────────
-
-async fn tiles_reorder(
-    cx: &CommandContext,
-    dashboard_id: i64,
-    order_file: &std::path::Path,
-) -> Result<()> {
-    let client = &cx.client;
-    let env_id = env_id_required(client)?;
-
-    // Modern PostHog: `POST /dashboards/{id}/reorder_tiles/` with
-    // `{tile_order: [id1, id2, ...]}`.
-    //
-    // NOTE: `reorder_tiles` requires session-cookie auth and returns 403
-    // for Personal API Key access (same as `move_tile`/`copy_tile`).
-    //
-    // Accepts either a bare array of ids or an array of objects with `id`
-    // fields (back-compat with prior file format).
-    let order_value = read_json_file(order_file).await?;
-    let ordered_ids: Vec<i64> = order_value
-        .as_array()
-        .ok_or_else(|| BosshoggError::BadRequest("order-file must contain a JSON array".into()))?
-        .iter()
-        .map(|v| {
-            v.as_i64()
-                .or_else(|| v.get("id").and_then(Value::as_i64))
-                .ok_or_else(|| {
-                    BosshoggError::BadRequest(
-                        "each order entry must be an integer tile id or an object with an \"id\" field".into(),
-                    )
-                })
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    let path = format!("/api/environments/{env_id}/dashboards/{dashboard_id}/reorder_tiles/");
-    let v: Value = client
-        .post(&path, &json!({ "tile_order": ordered_ids }))
-        .await?;
-
-    if cx.json_mode {
-        output::print_json(&v);
-    } else {
-        println!("Reordered tiles on dashboard {dashboard_id}");
     }
     Ok(())
 }

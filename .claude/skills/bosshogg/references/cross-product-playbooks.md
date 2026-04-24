@@ -1103,22 +1103,7 @@ EOF
 
 ### Step 6: Share the notebook
 
-Email or Slack the postmortem link. Optionally create a PostHog subscription to distribute the key insight:
-
-```bash
-bosshogg subscription create \
-  --insight-id <error_trend_insight_id> \
-  --target-type email \
-  --target-value "oncall@example.com,cto@example.com" \
-  --frequency weekly \
-  --json
-```
-
-Test delivery:
-
-```bash
-bosshogg subscription test-delivery <subscription_id> --yes --json
-```
+Email or Slack the postmortem link. To set up recurring delivery of a key insight, use the PostHog web UI (Insights → Share → Subscribe) — the `subscription` CLI resource is not available via Personal API Key.
 
 **Footnotes:**
 - Recording exports (video/blob) require `--out <file>` to avoid stdout pollution. The snapshot blob is suppressed by default.

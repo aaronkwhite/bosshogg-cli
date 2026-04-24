@@ -155,31 +155,7 @@ async fn event_definition_by_name_lookup() {
         .stdout(contains("uuid-byname"));
 }
 
-// ── 6. metrics endpoint ───────────────────────────────────────────────────────
-
-#[tokio::test]
-async fn event_definition_metrics_returns_data() {
-    let h = TestHarness::new().await;
-
-    Mock::given(method("GET"))
-        .and(path(
-            "/api/projects/999999/event_definitions/uuid-10/metrics/",
-        ))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "count": 500,
-            "last_seen_at": "2026-04-20T00:00:00Z"
-        })))
-        .mount(&h.server)
-        .await;
-
-    h.cmd()
-        .args(["event-definition", "metrics", "uuid-10", "--json"])
-        .assert()
-        .success()
-        .stdout(contains("500"));
-}
-
-// ── 7. tag --add uses bulk_update_tags ────────────────────────────────────────
+// ── 6. tag --add uses bulk_update_tags ────────────────────────────────────────
 
 #[tokio::test]
 async fn event_definition_tag_add_calls_bulk_update() {

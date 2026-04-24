@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.1 — dogfood + UX cleanup patch. All 25 GA PostHog resources covered.**
+> Status: **v2026.4.2 — right-sized surface. 24 GA PostHog resources covered (subscription removed; session-auth-only verbs dropped).**
 
 ## Why BossHogg exists
 
@@ -45,7 +45,7 @@ The idle-token figure for the PostHog MCP server comes from independent benchmar
 
 ## What BossHogg does
 
-All 25 GA PostHog resources, organized by milestone:
+All 24 GA PostHog resources (Personal API Key-accessible), organized by milestone:
 
 **M1 — Core (v2026.4.0)**
 - **HogQL first.** `bosshogg query run "SELECT ..."` — sync or async, auto-`LIMIT 100` for safety, file/stdin input, table or JSON output.
@@ -59,7 +59,7 @@ All 25 GA PostHog resources, organized by milestone:
 
 **M3 — Analytics backbone (v2026.4.2)**
 - `bosshogg insight` — list, get, refresh, create, update, delete (soft), tag, activity, share.
-- `bosshogg dashboard` — list, get, refresh, create, update, delete (soft), share, snapshot, plus nested `tiles` subcommands.
+- `bosshogg dashboard` — list, get, refresh, create, update, delete (soft), share, plus `tiles add` and `tiles remove`.
 - `bosshogg cohort` — list, get, create, update, delete (soft), members, add-person, remove-person, calculation-history, activity.
 
 **M4 — People & events (v2026.4.3)**
@@ -70,7 +70,7 @@ All 25 GA PostHog resources, organized by milestone:
 - `bosshogg annotation` — list, get, create, update, delete (soft).
 
 **M5 — Taxonomy (v2026.4.4)**
-- `bosshogg event-definition` — list, get, update, delete, by-name, metrics, tag.
+- `bosshogg event-definition` — list, get, update, delete, by-name, tag.
 - `bosshogg property-definition` — list, get, update, delete, seen-together, tag.
 - `bosshogg endpoint` — list, get, create, update, delete, run, materialize-preview, materialize-status, openapi.
 
@@ -82,7 +82,6 @@ All 25 GA PostHog resources, organized by milestone:
 **M7 — CDP pipeline (v2026.4.6)**
 - `bosshogg hog-function` — list, get, create, update, delete (soft), enable, disable, invoke, logs, metrics, enable-backfills.
 - `bosshogg batch-export` — list, get, create, update, delete, pause, unpause, plus nested `backfills` and `runs`.
-- `bosshogg subscription` — list, get, create, update, delete (soft), test-delivery, deliveries.
 
 **M8 — Ops & debug (v2026.4.7)**
 - `bosshogg session-recording` — list, get (snapshot blob written to `--out` file, never stdout), update, delete.
@@ -100,7 +99,7 @@ Security and data-safety properties baked in from day one:
 
 - **HTTPS-only.** `reqwest` is configured with `.https_only(true)` in all release builds. The `BOSSHOGG_ALLOW_HTTP` escape hatch is feature-gated behind `test-harness` and never compiled into release binaries.
 - **Auth redaction.** `Authorization:` headers are stripped from `--debug` output. Error bodies are truncated to 200 chars. No tokens or PII leak to logs.
-- **Soft-delete routing.** Resources that PostHog soft-deletes (flags, insights, dashboards, cohorts, actions, annotations, hog-functions, subscriptions) are routed through the correct soft-delete path. Hard-delete resources (persons, experiments, event-definitions, etc.) are routed correctly and gated on `--yes` or interactive TTY confirmation.
+- **Soft-delete routing.** Resources that PostHog soft-deletes (flags, insights, dashboards, cohorts, actions, annotations, hog-functions) are routed through the correct soft-delete path. Hard-delete resources (persons, experiments, event-definitions, etc.) are routed correctly and gated on `--yes` or interactive TTY confirmation.
 - **HogQL auto-LIMIT.** `bosshogg query run` auto-injects `LIMIT 100` when the query has no LIMIT clause. Bypass with `--no-limit` intentionally. Injection is logged in `--debug`.
 - **Snapshot never-stdout.** Session recording snapshot blobs are suppressed from stdout by default; use `--out <file>` to write the full blob.
 - **`--yes` gating on destructive ops.** Hard deletes and `bosshogg capture` (which writes to real production data) require `--yes` or interactive confirmation. No accidental bulk deletions.
@@ -144,8 +143,8 @@ BossHogg is **complementary to**, not a replacement for, PostHog's first-party t
 
 **v1.0 (v2026.4.0) — M1 through M9 complete.**
 
-- 25 GA PostHog resources implemented across milestones M1–M8.
-- 397 tests (unit + integration via wiremock, JSON contract validation, HogQL smoke tests).
+- 24 GA PostHog resources implemented across milestones M1–M8 (Personal API Key-accessible only).
+- ~401 tests (unit + integration via wiremock, JSON contract validation, HogQL smoke tests).
 - Claude Code skill with eval set (≥90% pass rate gate on Opus for release).
 - Homebrew tap formula. crates.io publication. Prebuilt tarballs for 4 targets.
 - Cross-product playbooks: safe rollout, debug a user, conversion drop, ship an event, LLM debug, incident notebook, GDPR deletion.
