@@ -175,7 +175,7 @@ Grouped by milestone and purpose. All names are singular.
 | Resource | Subcommands | Safety note |
 |---|---|---|
 | `session-recording` | `list`, `get`, `update`, `delete` | `get --snapshot` requires `--out <file>`; never stdout |
-| `error-tracking` | `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (`list`, `get`, `activity`, `activity-list`, `assign`, `cohort`, `merge`, `split`, `bulk`), `resolve-github`, `resolve-gitlab` | |
+| `error-tracking` | `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (`list`, `get`, `activity`, `activity-list`, `assign`, `cohort`, `merge`, `split`, `bulk`), `resolve-github`, `resolve-gitlab`, `releases` (`list`, `get`, `by-hash`), `symbol-sets` (`list`, `get`, `download`, `start-upload`, `finish-upload`, `bulk-delete`, `bulk-start-upload`, `bulk-finish-upload`) | `download` returns presigned URL JSON; `start-upload` / `finish-upload` are the upload bracket — actual file PUT is `curl -T file <presigned_url>` |
 | `role` | `list`, `get`, `create`, `update`, `delete`, `members`, `add-member`, `remove-member` | Enterprise RBAC |
 | `capture` | `event`, `batch`, `identify` | **project token** (not personal key); debug-only — use `posthog-rs` for production |
 

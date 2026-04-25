@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.6 — four new resources (alert, dashboard-template, session-recording-playlist, insight-variable). 28 GA PostHog resources covered.**
+> Status: **v2026.4.7 — release tracking + source-map upload bracket. 28 GA PostHog resources covered.**
 
 ## Why BossHogg exists
 
@@ -86,7 +86,7 @@ All 28 GA PostHog resources (Personal API Key-accessible), organized by mileston
 
 **M8 — Ops & debug (v2026.4.7)**
 - `bosshogg session-recording` — list, get (snapshot blob written to `--out` file, never stdout), update, delete.
-- `bosshogg error-tracking` — nested `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (list, get, activity, activity-list, assign, cohort, merge, split, bulk), plus resolve-github / resolve-gitlab.
+- `bosshogg error-tracking` — nested `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (list, get, activity, activity-list, assign, cohort, merge, split, bulk), `releases` (list, get, by-hash), `symbol-sets` (list, get, download, start-upload, finish-upload, bulk-delete, bulk-start-upload, bulk-finish-upload), plus resolve-github / resolve-gitlab. Source-map upload bracket: `start-upload` returns a presigned URL; upload via `curl -T file <url>`; then `finish-upload`.
 - `bosshogg role` — Enterprise RBAC, list/get/create/update/delete, plus member management.
 - `bosshogg capture` — event / batch / identify via the public ingest endpoint (uses project token, gated on `--yes`).
 

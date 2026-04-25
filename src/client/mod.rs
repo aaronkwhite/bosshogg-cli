@@ -273,6 +273,12 @@ impl Client {
             .await
     }
 
+    pub async fn put<T: DeserializeOwned>(&self, path: &str, body: &Value) -> Result<T> {
+        let url = self.url(path);
+        self.send_with_retry(|| self.http.put(&url).json(body), path)
+            .await
+    }
+
     pub async fn delete(&self, path: &str) -> Result<()> {
         if is_soft_delete_path(path) {
             let _: Value = self

@@ -1,7 +1,7 @@
 class Bosshogg < Formula
   desc "Agent-first PostHog CLI — flags, HogQL, insights, cohorts from the terminal"
   homepage "https://github.com/aaronkwhite/bosshogg-cli"
-  version "2026.4.6"
+  version "2026.4.7"
 
   on_macos do
     on_arm do

@@ -1,6 +1,6 @@
 // src/commands/error_tracking.rs
 //! `bosshogg error-tracking` — fingerprints / assignment-rules / grouping-rules /
-//! issues / resolve-github / resolve-gitlab.
+//! issues / resolve-github / resolve-gitlab / releases / symbol-sets.
 //!
 //! All endpoints are environment-scoped (PostHog moved these from the legacy
 //! `/api/projects/:project_id/error_tracking/...` routes to
@@ -81,6 +81,42 @@ pub struct ErrorIssue {
     pub description: Option<String>,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ErrorTrackingRelease {
+    pub id: String,
+    pub hash_id: String,
+    pub team_id: i64,
+    pub created_at: String,
+    #[serde(default)]
+    pub version: Option<String>,
+    #[serde(default)]
+    pub project: Option<String>,
+    #[serde(default)]
+    pub metadata: Option<Value>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ErrorTrackingSymbolSet {
+    pub id: String,
+    #[serde(rename = "ref")]
+    pub ref_: String,
+    pub team_id: i64,
+    pub created_at: String,
+    #[serde(default)]
+    pub last_used: Option<String>,
+    #[serde(default)]
+    pub storage_ptr: Option<String>,
+    #[serde(default)]
+    pub failure_reason: Option<String>,
+    #[serde(default)]
+    pub release: Option<Value>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct SymbolSetDownloadResponse {
+    pub url: String,
+}
+
 // ── Clap tree ─────────────────────────────────────────────────────────────────
 
 #[derive(Args, Debug)]
@@ -127,6 +163,12 @@ pub enum ErrorTrackingCommand {
         #[arg(long)]
         line: u32,
     },
+    /// Look up releases linked to source-map uploads.
+    #[command(name = "releases", subcommand)]
+    Releases(ReleasesCommand),
+    /// Manage source-map symbol sets (upload bracket + download).
+    #[command(name = "symbol-sets", subcommand)]
+    SymbolSets(SymbolSetsCommand),
 }
 
 #[derive(Subcommand, Debug)]
@@ -253,6 +295,109 @@ pub enum GroupingRulesCommand {
     Get { id: String },
 }
 
+#[derive(Subcommand, Debug)]
+pub enum ReleasesCommand {
+    /// List releases (paginated).
+    List {
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
+    },
+    /// Get a single release by ID (UUID).
+    Get { id: String },
+    /// Look up a release by its source-map hash.
+    #[command(name = "by-hash")]
+    ByHash {
+        /// The source-map hash identifying the release.
+        hash: String,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum SymbolSetsCommand {
+    /// List symbol sets (paginated).
+    List {
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
+    },
+    /// Get a single symbol set by ID (UUID).
+    Get { id: String },
+    /// Get a presigned download URL for a symbol set's source map.
+    ///
+    /// Returns a JSON object with a `url` field (presigned URL). Pipe through
+    /// `jq -r .url` and then `curl -o out.map <url>` to retrieve the file.
+    Download {
+        /// Symbol set UUID.
+        id: String,
+        /// Write the JSON response to this file instead of stdout.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+    /// Start a source-map upload. Returns a presigned URL.
+    ///
+    /// UPLOAD FLOW:
+    ///   1. bosshogg error-tracking symbol-sets start-upload --name <name> --kind <chunk|sourcemap>
+    ///      (prints presigned URL)
+    ///   2. curl -T <your-file> '<presigned_url>'
+    ///      (PUT the source-map file directly to the presigned URL — S3/GCS, not PostHog)
+    ///   3. bosshogg error-tracking symbol-sets finish-upload <id>
+    ///      (marks upload complete in PostHog)
+    ///
+    /// Use global --yes to skip the confirmation prompt.
+    #[command(name = "start-upload")]
+    StartUpload {
+        /// Human-readable name / ref for this symbol set.
+        #[arg(long)]
+        name: String,
+        /// Symbol set kind: `chunk` or `sourcemap`.
+        #[arg(long)]
+        kind: Option<String>,
+    },
+    /// Finish a source-map upload (marks upload complete in PostHog).
+    ///
+    /// Call this after uploading the file to the presigned URL returned by
+    /// `start-upload`. See `start-upload --help` for the full upload flow.
+    ///
+    /// Use global --yes to skip the confirmation prompt.
+    #[command(name = "finish-upload")]
+    FinishUpload {
+        /// Symbol set UUID returned by `start-upload`.
+        id: String,
+    },
+    /// Bulk-delete symbol sets by ID list. Use global --yes to skip confirmation.
+    #[command(name = "bulk-delete")]
+    BulkDelete {
+        /// Path to a JSON file containing an array of symbol-set UUIDs.
+        #[arg(long)]
+        ids_file: PathBuf,
+    },
+    /// Bulk start-upload for multiple symbol sets.
+    ///
+    /// See `start-upload --help` for the full upload flow. Provide a JSON file
+    /// whose shape matches the PostHog `bulk_start_upload` body (array of name objects).
+    ///
+    /// Use global --yes to skip the confirmation prompt.
+    #[command(name = "bulk-start-upload")]
+    BulkStartUpload {
+        /// Path to a JSON file containing the bulk start-upload body.
+        #[arg(long)]
+        names_file: PathBuf,
+    },
+    /// Bulk finish-upload for multiple symbol sets.
+    ///
+    /// Call after uploading each file to its presigned URL. Provide a JSON file
+    /// containing an array of symbol-set UUIDs to mark complete.
+    ///
+    /// Use global --yes to skip the confirmation prompt.
+    #[command(name = "bulk-finish-upload")]
+    BulkFinishUpload {
+        /// Path to a JSON file containing an array of symbol-set UUIDs.
+        #[arg(long)]
+        ids_file: PathBuf,
+    },
+}
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 
 pub async fn execute(args: ErrorTrackingArgs, cx: &CommandContext) -> Result<()> {
@@ -273,6 +418,8 @@ pub async fn execute(args: ErrorTrackingArgs, cx: &CommandContext) -> Result<()>
             file,
             line,
         } => resolve_source(cx, "resolve_gitlab", organization, repo, file, line).await,
+        ErrorTrackingCommand::Releases(cmd) => dispatch_releases(cx, cmd).await,
+        ErrorTrackingCommand::SymbolSets(cmd) => dispatch_symbol_sets(cx, cmd).await,
     }
 }
 
@@ -968,6 +1115,328 @@ async fn resolve_source(
         output::print_json(&v);
     } else {
         println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+    }
+    Ok(())
+}
+
+// ── releases ──────────────────────────────────────────────────────────────────
+
+async fn dispatch_releases(cx: &CommandContext, cmd: ReleasesCommand) -> Result<()> {
+    match cmd {
+        ReleasesCommand::List { limit } => list_releases(cx, limit).await,
+        ReleasesCommand::Get { id } => get_release(cx, id).await,
+        ReleasesCommand::ByHash { hash } => get_release_by_hash(cx, hash).await,
+    }
+}
+
+#[derive(Serialize)]
+struct ReleasesListOutput {
+    count: usize,
+    results: Vec<ErrorTrackingRelease>,
+}
+
+async fn list_releases(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let path = format!("/api/environments/{env_id}/error_tracking/releases/");
+    let results: Vec<ErrorTrackingRelease> = client.get_paginated(&path, limit).await?;
+
+    if cx.json_mode {
+        output::print_json(&ReleasesListOutput {
+            count: results.len(),
+            results,
+        });
+    } else {
+        let headers = &["ID", "HASH_ID", "VERSION", "CREATED_AT"];
+        let rows: Vec<Vec<String>> = results
+            .iter()
+            .map(|r| {
+                vec![
+                    r.id.clone(),
+                    r.hash_id.clone(),
+                    r.version.clone().unwrap_or_else(|| "-".into()),
+                    r.created_at.clone(),
+                ]
+            })
+            .collect();
+        output::table::print(headers, &rows);
+    }
+    Ok(())
+}
+
+async fn get_release(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let r: ErrorTrackingRelease = client
+        .get(&format!(
+            "/api/environments/{env_id}/error_tracking/releases/{id}/"
+        ))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&r);
+    } else {
+        println!("ID:          {}", r.id);
+        println!("Hash ID:     {}", r.hash_id);
+        if let Some(v) = r.version.as_deref() {
+            println!("Version:     {v}");
+        }
+        println!("Created at:  {}", r.created_at);
+    }
+    Ok(())
+}
+
+async fn get_release_by_hash(cx: &CommandContext, hash: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    // The response shape for the hash lookup is unspecified in the schema (no body),
+    // so we decode as raw Value to be forward-compatible.
+    let v: Value = client
+        .get(&format!(
+            "/api/environments/{env_id}/error_tracking/releases/hash/{hash}/"
+        ))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+    }
+    Ok(())
+}
+
+// ── symbol-sets ───────────────────────────────────────────────────────────────
+
+async fn dispatch_symbol_sets(cx: &CommandContext, cmd: SymbolSetsCommand) -> Result<()> {
+    match cmd {
+        SymbolSetsCommand::List { limit } => list_symbol_sets(cx, limit).await,
+        SymbolSetsCommand::Get { id } => get_symbol_set(cx, id).await,
+        SymbolSetsCommand::Download { id, out } => download_symbol_set(cx, id, out).await,
+        SymbolSetsCommand::StartUpload { name, kind } => start_upload(cx, name, kind).await,
+        SymbolSetsCommand::FinishUpload { id } => finish_upload(cx, id).await,
+        SymbolSetsCommand::BulkDelete { ids_file } => bulk_delete_symbol_sets(cx, ids_file).await,
+        SymbolSetsCommand::BulkStartUpload { names_file } => {
+            bulk_start_upload(cx, names_file).await
+        }
+        SymbolSetsCommand::BulkFinishUpload { ids_file } => bulk_finish_upload(cx, ids_file).await,
+    }
+}
+
+#[derive(Serialize)]
+struct SymbolSetsListOutput {
+    count: usize,
+    results: Vec<ErrorTrackingSymbolSet>,
+}
+
+async fn list_symbol_sets(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let path = format!("/api/environments/{env_id}/error_tracking/symbol_sets/");
+    let results: Vec<ErrorTrackingSymbolSet> = client.get_paginated(&path, limit).await?;
+
+    if cx.json_mode {
+        output::print_json(&SymbolSetsListOutput {
+            count: results.len(),
+            results,
+        });
+    } else {
+        let headers = &["ID", "REF", "CREATED_AT", "LAST_USED", "FAILURE"];
+        let rows: Vec<Vec<String>> = results
+            .iter()
+            .map(|s| {
+                vec![
+                    s.id.clone(),
+                    s.ref_.clone(),
+                    s.created_at.clone(),
+                    s.last_used.clone().unwrap_or_else(|| "-".into()),
+                    s.failure_reason.clone().unwrap_or_else(|| "-".into()),
+                ]
+            })
+            .collect();
+        output::table::print(headers, &rows);
+    }
+    Ok(())
+}
+
+async fn get_symbol_set(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let s: ErrorTrackingSymbolSet = client
+        .get(&format!(
+            "/api/environments/{env_id}/error_tracking/symbol_sets/{id}/"
+        ))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&s);
+    } else {
+        println!("ID:          {}", s.id);
+        println!("Ref:         {}", s.ref_);
+        println!("Created at:  {}", s.created_at);
+        if let Some(lu) = s.last_used.as_deref() {
+            println!("Last used:   {lu}");
+        }
+        if let Some(fr) = s.failure_reason.as_deref() {
+            println!("Failure:     {fr}");
+        }
+    }
+    Ok(())
+}
+
+async fn download_symbol_set(cx: &CommandContext, id: String, out: Option<PathBuf>) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+
+    // The download endpoint returns a JSON object with a `url` field containing
+    // a presigned URL. Print the JSON; users can pipe through `jq -r .url | xargs curl -o file`.
+    let resp: SymbolSetDownloadResponse = client
+        .get(&format!(
+            "/api/environments/{env_id}/error_tracking/symbol_sets/{id}/download/"
+        ))
+        .await?;
+
+    if let Some(path) = out {
+        let json_bytes = serde_json::to_vec_pretty(&resp)
+            .map_err(|e| BosshoggError::Config(format!("serialize error: {e}")))?;
+        tokio::fs::write(&path, &json_bytes)
+            .await
+            .map_err(|e| BosshoggError::Config(format!("write {}: {e}", path.display())))?;
+        if cx.json_mode {
+            output::print_json(
+                &serde_json::json!({"ok": true, "path": path.display().to_string()}),
+            );
+        } else {
+            println!("Written to {}", path.display());
+        }
+    } else if cx.json_mode {
+        output::print_json(&resp);
+    } else {
+        println!("Presigned URL: {}", resp.url);
+        println!();
+        println!("To download the source map:");
+        println!("  curl -o <output-file> '{}'", resp.url);
+    }
+    Ok(())
+}
+
+async fn start_upload(cx: &CommandContext, name: String, kind: Option<String>) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+
+    cx.confirm(&format!("start upload for symbol set `{name}`; continue?"))?;
+
+    let mut body = serde_json::Map::new();
+    body.insert("ref".into(), serde_json::Value::String(name));
+    if let Some(k) = kind {
+        body.insert("kind".into(), serde_json::Value::String(k));
+    }
+
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/start_upload/"),
+            &Value::Object(body),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+        println!();
+        println!("NEXT STEP: Upload the source-map file to the presigned URL above:");
+        println!("  curl -T <your-file> '<presigned_url>'");
+        println!("Then run: bosshogg error-tracking symbol-sets finish-upload <id>");
+    }
+    Ok(())
+}
+
+async fn finish_upload(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+
+    cx.confirm(&format!(
+        "mark upload complete for symbol set `{id}`; continue?"
+    ))?;
+
+    // finish_upload is a PUT — body is the symbol set object; send minimal body.
+    let v: Value = client
+        .put(
+            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/{id}/finish_upload/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Upload marked complete for symbol set {id}");
+    }
+    Ok(())
+}
+
+async fn bulk_delete_symbol_sets(cx: &CommandContext, ids_file: PathBuf) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let ids = read_json_file(&ids_file).await?;
+
+    cx.confirm("bulk-delete symbol sets from file; continue?")?;
+
+    let body = json!({ "ids": ids });
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/bulk_delete/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Bulk delete submitted");
+    }
+    Ok(())
+}
+
+async fn bulk_start_upload(cx: &CommandContext, names_file: PathBuf) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let body = read_json_file(&names_file).await?;
+
+    cx.confirm("bulk start-upload for symbol sets from file; continue?")?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/bulk_start_upload/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+        println!();
+        println!("NEXT STEP: Upload each file to its presigned URL, then run bulk-finish-upload.");
+    }
+    Ok(())
+}
+
+async fn bulk_finish_upload(cx: &CommandContext, ids_file: PathBuf) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let ids = read_json_file(&ids_file).await?;
+
+    cx.confirm("bulk finish-upload for symbol sets from file; continue?")?;
+
+    let body = json!({ "ids": ids });
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/bulk_finish_upload/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Bulk finish-upload submitted");
     }
     Ok(())
 }

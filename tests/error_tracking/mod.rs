@@ -649,6 +649,350 @@ async fn error_tracking_issues_bulk() {
         .stdout(contains("\"ok\":true"));
 }
 
+// ── releases fixtures ─────────────────────────────────────────────────────────
+
+fn release_fixture(id: &str, hash_id: &str) -> serde_json::Value {
+    json!({
+        "id": id,
+        "hash_id": hash_id,
+        "team_id": 999999,
+        "created_at": "2026-04-01T00:00:00Z",
+        "version": "1.0.0",
+        "project": "my-project",
+        "metadata": null
+    })
+}
+
+// ── releases list ─────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_releases_list() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path("/api/environments/999999/error_tracking/releases/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "count": 2,
+            "next": null,
+            "previous": null,
+            "results": [
+                release_fixture("rel-1", "hash-aaa"),
+                release_fixture("rel-2", "hash-bbb")
+            ]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "releases", "list", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"count\":2"))
+        .stdout(contains("rel-1"))
+        .stdout(contains("rel-2"));
+}
+
+// ── releases get ──────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_releases_get() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/environments/999999/error_tracking/releases/rel-abc/",
+        ))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(release_fixture("rel-abc", "hash-ccc")),
+        )
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "releases", "get", "rel-abc", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"id\":\"rel-abc\""))
+        .stdout(contains("hash-ccc"));
+}
+
+// ── releases by-hash ──────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_releases_by_hash() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/environments/999999/error_tracking/releases/hash/deadbeef/",
+        ))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(release_fixture("rel-xyz", "deadbeef")),
+        )
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "error-tracking",
+            "releases",
+            "by-hash",
+            "deadbeef",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("deadbeef"));
+}
+
+// ── symbol-sets fixtures ──────────────────────────────────────────────────────
+
+fn symbol_set_fixture(id: &str, ref_: &str) -> serde_json::Value {
+    json!({
+        "id": id,
+        "ref": ref_,
+        "team_id": 999999,
+        "created_at": "2026-04-01T00:00:00Z",
+        "last_used": null,
+        "storage_ptr": null,
+        "failure_reason": null,
+        "release": null
+    })
+}
+
+// ── symbol-sets list ──────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_list() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path("/api/environments/999999/error_tracking/symbol_sets/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "count": 2,
+            "next": null,
+            "previous": null,
+            "results": [
+                symbol_set_fixture("ss-1", "app/main.js.map"),
+                symbol_set_fixture("ss-2", "app/vendor.js.map")
+            ]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "symbol-sets", "list", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"count\":2"))
+        .stdout(contains("ss-1"))
+        .stdout(contains("ss-2"));
+}
+
+// ── symbol-sets get ───────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_get() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/environments/999999/error_tracking/symbol_sets/ss-abc/",
+        ))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(symbol_set_fixture("ss-abc", "app/chunk.js.map")),
+        )
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "symbol-sets", "get", "ss-abc", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"id\":\"ss-abc\""))
+        .stdout(contains("chunk.js.map"));
+}
+
+// ── symbol-sets download ──────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_download() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/environments/999999/error_tracking/symbol_sets/ss-dl/download/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "url": "https://storage.example.com/presigned-download-url"
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "error-tracking",
+            "symbol-sets",
+            "download",
+            "ss-dl",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("presigned-download-url"));
+}
+
+// ── symbol-sets start-upload ──────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_start_upload() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/symbol_sets/start_upload/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "ss-new",
+            "upload_url": "https://storage.example.com/presigned-upload-url"
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "symbol-sets",
+            "start-upload",
+            "--name",
+            "app/main.js.map",
+            "--kind",
+            "sourcemap",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("ss-new"));
+}
+
+// ── symbol-sets finish-upload ─────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_finish_upload() {
+    let h = TestHarness::new().await;
+    Mock::given(method("PUT"))
+        .and(path(
+            "/api/environments/999999/error_tracking/symbol_sets/ss-fin/finish_upload/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "symbol-sets",
+            "finish-upload",
+            "ss-fin",
+            "--json",
+        ])
+        .assert()
+        .success();
+}
+
+// ── symbol-sets bulk-delete ───────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_bulk_delete() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/symbol_sets/bulk_delete/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    let ids_file = h.config_path.parent().unwrap().join("ss_ids.json");
+    std::fs::write(&ids_file, r#"["ss-1","ss-2"]"#).unwrap();
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "symbol-sets",
+            "bulk-delete",
+            "--ids-file",
+            ids_file.to_str().unwrap(),
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── symbol-sets bulk-start-upload ─────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_bulk_start_upload() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/symbol_sets/bulk_start_upload/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    let names_file = h.config_path.parent().unwrap().join("ss_names.json");
+    std::fs::write(
+        &names_file,
+        r#"[{"name": "app/main.js.map"}, {"name": "app/vendor.js.map"}]"#,
+    )
+    .unwrap();
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "symbol-sets",
+            "bulk-start-upload",
+            "--names-file",
+            names_file.to_str().unwrap(),
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── symbol-sets bulk-finish-upload ────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_symbol_sets_bulk_finish_upload() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/symbol_sets/bulk_finish_upload/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    let ids_file = h.config_path.parent().unwrap().join("ss_fin_ids.json");
+    std::fs::write(&ids_file, r#"["ss-1","ss-2"]"#).unwrap();
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "symbol-sets",
+            "bulk-finish-upload",
+            "--ids-file",
+            ids_file.to_str().unwrap(),
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
 // ── destructive gating without --yes ─────────────────────────────────────────
 
 #[tokio::test]

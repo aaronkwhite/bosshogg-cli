@@ -11,6 +11,27 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.7] — 2026-04-25
+
+Adds `error-tracking releases` and `error-tracking symbol-sets` nested
+groups (11 verbs) — release tracking + source-map upload bracket. Closes
+the last error-tracking gap from `docs/api-coverage.md`.
+
+### Added
+
+- **`error-tracking releases` — 3 verbs**: `list`, `get`, `by-hash <hash>`.
+  Source-map release lookup.
+- **`error-tracking symbol-sets` — 8 verbs**: `list`, `get`, `download`,
+  `start-upload`, `finish-upload`, `bulk-delete`, `bulk-start-upload`,
+  `bulk-finish-upload`. Source-map upload bracket; the actual file PUT
+  to the presigned URL must be done via `curl -T file <presigned-url>`
+  (documented in --help).
+
+### Notes
+
+`download` honors the snapshot-never-stdout convention — requires
+`--out <file>` when the response is binary.
+
 ## [2026.4.6] — 2026-04-25
 
 Adds 4 new resources (~22 verbs), closing remaining `Add — v1.x candidate`

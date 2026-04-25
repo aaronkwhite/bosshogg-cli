@@ -6,7 +6,7 @@ For the canonical bosshogg surface, see [`capabilities.md`](capabilities.md). Th
 
 ## 1. Snapshot versions
 
-- **bosshogg** — `Cargo.toml` v2026.4.6 (28 GA resources, ~232 verbs incl. meta)
+- **bosshogg** — `Cargo.toml` v2026.4.7 (28 GA resources, ~243 verbs incl. meta)
 - **PostHog OpenAPI schema** — fetched 2026-04-24 from `https://us.posthog.com/api/schema/`, cached at `/tmp/ph-schema.yaml` (948 paths)
 - **PostHog MCP** — `github.com/PostHog/mcp` at commit `13aaf2c6e5317e01e61d3af24e7b0744f527ed3e` (main, 2026-01-19), `schema/tool-definitions.json` (44 tools)
 
@@ -19,7 +19,7 @@ Refresh instructions live in section 7.
 | PostHog REST paths | 948 | grouped into ~60 top-level resources |
 | PostHog MCP tools | 44 | curated agent-friendly subset |
 | bosshogg resources | 28 | GA Personal-API-Key-accessible |
-| bosshogg verbs (resource) | ~219 | not counting meta |
+| bosshogg verbs (resource) | ~230 | not counting meta |
 | bosshogg verbs (meta) | 13 | configure, whoami, doctor, schema, auth, config, use, completion, version |
 | MCP tools covered by bosshogg | 40 / 44 | 91% parity |
 | MCP-only tools | 4 | inventoried in section 4 |
@@ -48,7 +48,7 @@ Endpoint counts come from `/api/schema/` grouped by leading resource segment aft
 | hog-function | 20 | 0 | 11 | Full |
 | batch-export | 40 | 0 | 15 | Full |
 | session-recording | 12 | 0 | 4 | Read-only + soft-delete |
-| error-tracking | 56 | 2 | ~21 (incl. nested issues group) | Partial — see notes |
+| error-tracking | 56 | 2 | ~32 (incl. releases + symbol-sets nested groups) | Full — all personal-API-key-accessible error-tracking verbs covered |
 | role | 4 | 0 | 8 | Full |
 | org | 36 | 3 | 4 | Read-only + switch |
 | project | 212 (root) | 2 | 5 | Read-only + reset-token |
@@ -122,6 +122,8 @@ Each gap is a verb or endpoint bosshogg doesn't expose. Grouped by recommendatio
 | ~~`session-recording-playlist list / get / create / update / delete`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** Plus `recordings`, `add-recording`, `remove-recording`. Uses `{short_id}` in URL per spec. |
 | ~~`dashboard-template list / get / create / use`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** No dedicated "use/instantiate" endpoint in OpenAPI spec; `use` verb wraps `POST /dashboards/` with `use_template=<id>`. DELETE returns 405 (soft-delete via PATCH). |
 | ~~`insight-variable list / get / create / update / delete`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** Hard DELETE. Path: `/api/projects/{proj}/insight_variables/`. |
+| ~~`error-tracking releases list / get / by-hash`~~ | REST | personal-api-key-OK | **Closed in v2026.4.7.** Source-map release lookup. Path: `/api/environments/{env}/error_tracking/releases/...`. |
+| ~~`error-tracking symbol-sets list / get / download / start-upload / finish-upload / bulk-delete / bulk-start-upload / bulk-finish-upload`~~ | REST | personal-api-key-OK | **Closed in v2026.4.7.** Source-map upload bracket. `download` returns presigned URL (`_SymbolSetDownloadResponse`). `finish_upload` is a PUT. |
 | `query-tab-state` (saved query history) | REST | unknown — needs probe | Useful for agent context recall; verify auth. |
 | `docs-search` — equivalent of MCP `docs-search` | MCP | n/a (public) | Wraps PostHog docs search. Trivial; consider as a `bosshogg help search` or skill-side instead of CLI verb. |
 
