@@ -182,7 +182,7 @@ Grouped by milestone and purpose. All names are singular.
 ## Shared patterns
 
 - **Pagination**: cursor-style `{count, next, previous, results}`. Auto-follows `next` unless `--no-paginate` or `--limit` set.
-- **Soft-delete**: universal across insights/flags/cohorts/annotations/notebooks/subscriptions/hog-functions/actions/error-tracking-fingerprints. Hard DELETE returns 405; CLI normalizes to `PATCH {deleted: true}`.
+- **Soft-delete**: universal across insights/flags/cohorts/annotations/hog-functions/actions/error-tracking-fingerprints. Hard DELETE returns 405; CLI normalizes to `PATCH {deleted: true}`.
 - **Tags, search, activity, sharing**: consistent flag names — `--tag`, `--search`, `--since`, `--until`.
 - **File-based write inputs**: `--filters-file`, `--payload-file`, `--description-file`, `--query-file` for anything JSON-y. Shell escaping is a footgun for agents.
 
