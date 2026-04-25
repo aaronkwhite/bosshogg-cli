@@ -152,6 +152,30 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
         Some(Commands::Role(args)) => {
             commands::role::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
         }
+        Some(Commands::Alert(args)) => {
+            commands::alert::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?).await?
+        }
+        Some(Commands::DashboardTemplate(args)) => {
+            commands::dashboard_template::execute(
+                args,
+                &ctx(json, debug, cli.context.as_deref(), yes)?,
+            )
+            .await?
+        }
+        Some(Commands::SessionRecordingPlaylist(args)) => {
+            commands::session_recording_playlist::execute(
+                args,
+                &ctx(json, debug, cli.context.as_deref(), yes)?,
+            )
+            .await?
+        }
+        Some(Commands::InsightVariable(args)) => {
+            commands::insight_variable::execute(
+                args,
+                &ctx(json, debug, cli.context.as_deref(), yes)?,
+            )
+            .await?
+        }
 
         // --- Excluded commands: keep original primitive signatures ---
         Some(Commands::Configure(args)) => commands::configure::execute(args, json, debug).await?,

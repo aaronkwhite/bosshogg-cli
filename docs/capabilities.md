@@ -5,7 +5,7 @@ Human-readable render of [`../research/capability-schema.yaml`](../research/capa
 ## At a glance
 
 - **1 central command**: `bosshogg query run` (HogQL over `POST /api/environments/:env_id/query/`)
-- **24 resource command groups** covering the Personal API Key-accessible GA surface
+- **28 resource command groups** covering the Personal API Key-accessible GA surface
 - **~45-55 subcommands** total at v1
 - **Agent utilities**: `bosshogg doctor`, `bosshogg schema hogql`, `bosshogg auth token`
 - **Kubectl/gh-style contexts**: `bosshogg config set-context / use-context` + `bosshogg use <name>` shortcut
@@ -178,6 +178,15 @@ Grouped by milestone and purpose. All names are singular.
 | `error-tracking` | `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (`list`, `get`, `activity`, `activity-list`, `assign`, `cohort`, `merge`, `split`, `bulk`), `resolve-github`, `resolve-gitlab` | |
 | `role` | `list`, `get`, `create`, `update`, `delete`, `members`, `add-member`, `remove-member` | Enterprise RBAC |
 | `capture` | `event`, `batch`, `identify` | **project token** (not personal key); debug-only — use `posthog-rs` for production |
+
+### Alert / Dashboard-template / Session-recording-playlist / Insight-variable — M9 (v2026.4.8)
+
+| Resource | Subcommands | Notes |
+|---|---|---|
+| `alert` | `list`, `get`, `create`, `update`, `delete` | Insight-threshold monitors. Hard DELETE (204). |
+| `dashboard-template` | `list`, `get`, `create`, `use` | `use <id> --new-name <name>` instantiates via `POST /dashboards/` with `use_template`. No dedicated instantiate endpoint in spec. |
+| `session-recording-playlist` | `list`, `get`, `create`, `update`, `delete`, `recordings`, `add-recording`, `remove-recording` | Uses `{short_id}` (not `{id}`) in URL paths, per spec. `recordings` returns untyped body. |
+| `insight-variable` | `list`, `get`, `create`, `update`, `delete` | HogQL template variables. `--type` one of String/Number/Boolean/List/Date. |
 
 ## Shared patterns
 

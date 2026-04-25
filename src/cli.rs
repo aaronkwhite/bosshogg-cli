@@ -8,15 +8,16 @@
 use clap::{Parser, Subcommand};
 
 use crate::commands::{
-    action::ActionArgs, annotation::AnnotationArgs, auth::AuthArgs, batch_export::BatchExportArgs,
-    capture::CaptureArgs, cohort::CohortArgs, config::ConfigArgs, configure::ConfigureArgs,
-    dashboard::DashboardArgs, doctor::DoctorArgs, early_access::EarlyAccessArgs,
-    endpoint::EndpointArgs, error_tracking::ErrorTrackingArgs, event::EventArgs,
-    event_definition::EventDefinitionArgs, experiment::ExperimentArgs, flag::FlagArgs,
-    group::GroupArgs, hog_function::HogFunctionArgs, insight::InsightArgs, org::OrgArgs,
-    person::PersonArgs, project::ProjectArgs, property_definition::PropertyDefinitionArgs,
-    query::QueryArgs, role::RoleArgs, schema::SchemaArgs, session_recording::SessionRecordingArgs,
-    survey::SurveyArgs, use_cmd::UseArgs,
+    action::ActionArgs, alert::AlertArgs, annotation::AnnotationArgs, auth::AuthArgs,
+    batch_export::BatchExportArgs, capture::CaptureArgs, cohort::CohortArgs, config::ConfigArgs,
+    configure::ConfigureArgs, dashboard::DashboardArgs, dashboard_template::DashboardTemplateArgs,
+    doctor::DoctorArgs, early_access::EarlyAccessArgs, endpoint::EndpointArgs,
+    error_tracking::ErrorTrackingArgs, event::EventArgs, event_definition::EventDefinitionArgs,
+    experiment::ExperimentArgs, flag::FlagArgs, group::GroupArgs, hog_function::HogFunctionArgs,
+    insight::InsightArgs, insight_variable::InsightVariableArgs, org::OrgArgs, person::PersonArgs,
+    project::ProjectArgs, property_definition::PropertyDefinitionArgs, query::QueryArgs,
+    role::RoleArgs, schema::SchemaArgs, session_recording::SessionRecordingArgs,
+    session_recording_playlist::SessionRecordingPlaylistArgs, survey::SurveyArgs, use_cmd::UseArgs,
 };
 
 #[derive(Parser, Debug)]
@@ -98,6 +99,13 @@ pub enum Commands {
     ErrorTracking(ErrorTrackingArgs),
     Role(RoleArgs),
     Capture(CaptureArgs),
+    Alert(AlertArgs),
+    #[command(name = "dashboard-template")]
+    DashboardTemplate(DashboardTemplateArgs),
+    #[command(name = "session-recording-playlist")]
+    SessionRecordingPlaylist(SessionRecordingPlaylistArgs),
+    #[command(name = "insight-variable")]
+    InsightVariable(InsightVariableArgs),
     #[command(name = "use")]
     Use(UseArgs),
     /// Generate shell completions for bash/zsh/fish/powershell

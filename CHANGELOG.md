@@ -11,6 +11,30 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.6] — 2026-04-25
+
+Adds 4 new resources (~22 verbs), closing remaining `Add — v1.x candidate`
+items from `docs/api-coverage.md`. Resource count 24 → 28.
+
+### Added
+
+- **`alert` — 5 verbs**: `list`, `get`, `create`, `update`, `delete`.
+  Insight-threshold alerts. `/api/projects/{proj}/alerts/`.
+- **`dashboard-template` — 4 verbs**: `list`, `get`, `create`, `use`.
+  Templated dashboard creation. `use <id> --new-name <name>` wraps
+  `POST /dashboards/` with `use_template=<id>` — no dedicated instantiate
+  endpoint exists in the PostHog OpenAPI spec.
+- **`session-recording-playlist` — 8 verbs**: full CRUD + `recordings`,
+  `add-recording`, `remove-recording`. Companion to `session-recording`.
+  Uses `{short_id}` (not `{id}`) in URL paths per spec.
+- **`insight-variable` — 5 verbs**: `list`/`get`/`create`/`update`/`delete`.
+  Templated HogQL variables. `/api/projects/{proj}/insight_variables/`.
+
+### Notes
+
+All 4 new resources confirmed Personal-API-Key-accessible via live
+probing before implementation.
+
 ## [2026.4.5] — 2026-04-25
 
 Closes 3 of the 7 remaining MCP-parity gaps from `docs/api-coverage.md`

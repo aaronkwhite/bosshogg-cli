@@ -6,7 +6,7 @@ For the canonical bosshogg surface, see [`capabilities.md`](capabilities.md). Th
 
 ## 1. Snapshot versions
 
-- **bosshogg** — `Cargo.toml` v2026.4.5 (24 GA resources, ~210 verbs incl. meta)
+- **bosshogg** — `Cargo.toml` v2026.4.6 (28 GA resources, ~232 verbs incl. meta)
 - **PostHog OpenAPI schema** — fetched 2026-04-24 from `https://us.posthog.com/api/schema/`, cached at `/tmp/ph-schema.yaml` (948 paths)
 - **PostHog MCP** — `github.com/PostHog/mcp` at commit `13aaf2c6e5317e01e61d3af24e7b0744f527ed3e` (main, 2026-01-19), `schema/tool-definitions.json` (44 tools)
 
@@ -18,12 +18,12 @@ Refresh instructions live in section 7.
 |---|---|---|
 | PostHog REST paths | 948 | grouped into ~60 top-level resources |
 | PostHog MCP tools | 44 | curated agent-friendly subset |
-| bosshogg resources | 24 | GA Personal-API-Key-accessible |
-| bosshogg verbs (resource) | 197 | not counting meta |
+| bosshogg resources | 28 | GA Personal-API-Key-accessible |
+| bosshogg verbs (resource) | ~219 | not counting meta |
 | bosshogg verbs (meta) | 13 | configure, whoami, doctor, schema, auth, config, use, completion, version |
 | MCP tools covered by bosshogg | 40 / 44 | 91% parity |
 | MCP-only tools | 4 | inventoried in section 4 |
-| bosshogg-only verbs vs MCP | ~150 | inventoried in section 5 |
+| bosshogg-only verbs vs MCP | ~170 | inventoried in section 5 |
 
 Auth-boundary breakdown of the gap (verbs PostHog REST exposes but bosshogg deliberately omits): vast majority are `personal-api-key-OK` (closeable gaps), with a documented minority of `session-only`, `paid-only`, and `project-token-only` exclusions. See section 6.
 
@@ -59,6 +59,10 @@ Endpoint counts come from `/api/schema/` grouped by leading resource segment aft
 | group | 16 + 7 (types) | 0 | 8 | Full |
 | query | 14 | 3 | 8 | Full (central command) |
 | capture | (ingest) | 0 | 3 | Full |
+| alert | 6 | 0 | 5 | Full |
+| dashboard-template | 4 | 0 | 4 | Full (no dedicated "use" endpoint in spec; uses dashboard create wrapper) |
+| session-recording-playlist | 8 | 0 | 8 | Full |
+| insight-variable | 4 | 0 | 5 | Full |
 
 ### Resources bosshogg deliberately omits
 
@@ -83,14 +87,14 @@ Endpoint counts come from `/api/schema/` grouped by leading resource segment aft
 | file_system | 18 | 0 | Skip — web-UI affordance | Project tree state |
 | conversations | 14 | 0 | Skip — internal | Max conversation transcripts |
 | product_tours | 7 | 0 | Skip — web-UI affordance | Onboarding tours |
-| alerts | 6 | 0 | Add — v1.x candidate | Insight thresholds; user-facing |
+| ~~alerts~~ | 6 | 0 | ~~Add — v1.x candidate~~ **Implemented in v2026.4.6** | |
 | subscriptions | 8 | 0 | Skip — paid-only | Removed in v2026.4.2 (HTTP 402) |
-| session_recording_playlists | 8 | 0 | Add — v1.x candidate | Playlist CRUD; works via personal key |
+| ~~session_recording_playlists~~ | 8 | 0 | ~~Add — v1.x candidate~~ **Implemented in v2026.4.6** | |
 | app_metrics | 8 | 0 | Skip — replaced | Legacy plugin metrics → covered by `hog-function metrics` |
 | elements | 8 | 0 | Skip — niche | Autocapture element queries; rarely useful from CLI |
-| dashboard_templates | 4 | 0 | Add — v1.x candidate | Templated dashboard creation |
+| ~~dashboard_templates~~ | 4 | 0 | ~~Add — v1.x candidate~~ **Implemented in v2026.4.6** | |
 | heatmaps | 4 | 0 | Skip — web-UI affordance | Heatmap rendering is visual |
-| insight_variables | 4 | 0 | Add — v1.x candidate | Templated HogQL variables; agent-relevant |
+| ~~insight_variables~~ | 4 | 0 | ~~Add — v1.x candidate~~ **Implemented in v2026.4.6** | |
 | comments | 4 | 0 | Skip — web-UI affordance | Per-resource discussion threads |
 | change_requests | 5 | 0 | Skip — paid-only | Approval workflows (Teams plan) |
 | approval_policies | 2 | 0 | Skip — paid-only | Same |
@@ -114,10 +118,10 @@ Each gap is a verb or endpoint bosshogg doesn't expose. Grouped by recommendatio
 | ~~`experiment results <id>`~~ — equivalent of MCP `experiment-results-get` | MCP | personal-api-key-OK | **Closed in v2026.4.4** — wraps `/experiments/{id}/timeseries_results/?metric_uuid=...`. |
 | ~~`llm-analytics costs --since`~~ — equivalent of MCP `get-llm-total-costs-for-project` | MCP | personal-api-key-OK | **Closed in v2026.4.4** as `query ai-costs --since <Nd>` (HogQL aggregate over `$ai_generation`). |
 | `llm-analytics list / generations / traces` | REST | personal-api-key-OK | 33 endpoints; positions bosshogg for the `$ai_*` use case. Scope a minimal subset first. |
-| `alert list / get / create / update / delete` | REST | personal-api-key-OK | Insight thresholds; small surface (6 endpoints). |
-| `session-recording-playlist list / get / create / update / delete` | REST | personal-api-key-OK | 8 endpoints; obvious companion to `session-recording`. |
-| `dashboard-template list / get / create / use` | REST | personal-api-key-OK | 4 endpoints; templated dashboard creation. |
-| `insight-variable list / get / create / update / delete` | REST | personal-api-key-OK | 4 endpoints; templated HogQL variables. |
+| ~~`alert list / get / create / update / delete`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** Hard DELETE (204). Path: `/api/projects/{proj}/alerts/`. |
+| ~~`session-recording-playlist list / get / create / update / delete`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** Plus `recordings`, `add-recording`, `remove-recording`. Uses `{short_id}` in URL per spec. |
+| ~~`dashboard-template list / get / create / use`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** No dedicated "use/instantiate" endpoint in OpenAPI spec; `use` verb wraps `POST /dashboards/` with `use_template=<id>`. DELETE returns 405 (soft-delete via PATCH). |
+| ~~`insight-variable list / get / create / update / delete`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** Hard DELETE. Path: `/api/projects/{proj}/insight_variables/`. |
 | `query-tab-state` (saved query history) | REST | unknown — needs probe | Useful for agent context recall; verify auth. |
 | `docs-search` — equivalent of MCP `docs-search` | MCP | n/a (public) | Wraps PostHog docs search. Trivial; consider as a `bosshogg help search` or skill-side instead of CLI verb. |
 

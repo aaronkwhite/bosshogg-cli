@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.5 — error-tracking issues + survey deepening. 24 GA PostHog resources covered.**
+> Status: **v2026.4.6 — four new resources (alert, dashboard-template, session-recording-playlist, insight-variable). 28 GA PostHog resources covered.**
 
 ## Why BossHogg exists
 
@@ -45,7 +45,7 @@ The idle-token figure for the PostHog MCP server comes from independent benchmar
 
 ## What BossHogg does
 
-All 24 GA PostHog resources (Personal API Key-accessible), organized by milestone:
+All 28 GA PostHog resources (Personal API Key-accessible), organized by milestone:
 
 **M1 — Core (v2026.4.0)**
 - **HogQL first.** `bosshogg query run "SELECT ..."` — sync or async, auto-`LIMIT 100` for safety, file/stdin input, table or JSON output.
@@ -89,6 +89,12 @@ All 24 GA PostHog resources (Personal API Key-accessible), organized by mileston
 - `bosshogg error-tracking` — nested `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (list, get, activity, activity-list, assign, cohort, merge, split, bulk), plus resolve-github / resolve-gitlab.
 - `bosshogg role` — Enterprise RBAC, list/get/create/update/delete, plus member management.
 - `bosshogg capture` — event / batch / identify via the public ingest endpoint (uses project token, gated on `--yes`).
+
+**M9 — v1.x candidates (v2026.4.8)**
+- `bosshogg alert` — list, get, create, update, delete. Insight-threshold monitors.
+- `bosshogg dashboard-template` — list, get, create, use (instantiate a dashboard from a template).
+- `bosshogg session-recording-playlist` — list, get, create, update, delete, recordings, add-recording, remove-recording.
+- `bosshogg insight-variable` — list, get, create, update, delete. Templated HogQL variables.
 
 **Agent-native output throughout.** `--json` everywhere, stable schemas validated in CI, structured errors `{error, code, message, hint, retry_with}`, deterministic exit codes (10 auth / 20 not-found / 30 bad-request / 40 rate-limit / 50 upstream / 60 schema-drift / 70 internal).
 
@@ -144,7 +150,7 @@ BossHogg is **complementary to**, not a replacement for, PostHog's first-party t
 
 **v1.0 (v2026.4.0) — M1 through M9 complete.**
 
-- 24 GA PostHog resources implemented across milestones M1–M8 (Personal API Key-accessible only).
+- 28 GA PostHog resources implemented across milestones M1–M9 (Personal API Key-accessible only).
 - ~401 tests (unit + integration via wiremock, JSON contract validation, HogQL smoke tests).
 - Claude Code skill with eval set (≥90% pass rate gate on Opus for release).
 - Homebrew tap formula. crates.io publication. Prebuilt tarballs for 4 targets.
