@@ -6,7 +6,7 @@ Human-readable render of [`../research/capability-schema.yaml`](../research/capa
 
 - **1 central command**: `bosshogg query run` (HogQL over `POST /api/environments/:env_id/query/`)
 - **31 resource command groups + 1 nested-group resource (`llm-analytics`)** covering the Personal API Key-accessible GA surface
-- **~190 subcommands** at v2026.4.8 (LLM analytics complete)
+- **~195 subcommands** at v2026.4.9 (LLM analytics complete; self-tracking telemetry added)
 - **Agent utilities**: `bosshogg doctor`, `bosshogg schema hogql`, `bosshogg auth token`
 - **Kubectl/gh-style contexts**: `bosshogg config set-context / use-context` + `bosshogg use <name>` shortcut
 - **Resource names are SINGULAR** and mirror PostHog MCP tool taxonomy (`feature-flag-create` → `bosshogg flag create`) so model training on MCP transfers for free

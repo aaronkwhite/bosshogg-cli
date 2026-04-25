@@ -33,6 +33,7 @@ src/
   commands/context.rs CommandContext — Client + json_mode + yes, threaded through handlers
   config.rs          TOML at ~/.config/bosshogg/config.toml; multi-context
   output/            print_json, table, detail views, interactive prompts, blob safety
+  analytics.rs       anonymous self-tracking telemetry (queue-then-flush to PostHog /batch/, `DO_NOT_TRACK` honored)
 tests/
   cli.rs             consolidated integration binary (all wiremock-backed per-command tests)
   contracts.rs       JSON-schema validation of every --json output

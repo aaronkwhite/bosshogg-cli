@@ -6,7 +6,7 @@ For the canonical bosshogg surface, see [`capabilities.md`](capabilities.md). Th
 
 ## 1. Snapshot versions
 
-- **bosshogg** — `Cargo.toml` v2026.4.7 (28 GA resources, ~243 verbs incl. meta)
+- **bosshogg** — `Cargo.toml` v2026.4.9 (31 GA resources + 1 nested-group, ~272 verbs incl. meta)
 - **PostHog OpenAPI schema** — fetched 2026-04-24 from `https://us.posthog.com/api/schema/`, cached at `/tmp/ph-schema.yaml` (948 paths)
 - **PostHog MCP** — `github.com/PostHog/mcp` at commit `13aaf2c6e5317e01e61d3af24e7b0744f527ed3e` (main, 2026-01-19), `schema/tool-definitions.json` (44 tools)
 
@@ -18,9 +18,9 @@ Refresh instructions live in section 7.
 |---|---|---|
 | PostHog REST paths | 948 | grouped into ~60 top-level resources |
 | PostHog MCP tools | 44 | curated agent-friendly subset |
-| bosshogg resources | 28 | GA Personal-API-Key-accessible |
-| bosshogg verbs (resource) | ~230 | not counting meta |
-| bosshogg verbs (meta) | 13 | configure, whoami, doctor, schema, auth, config, use, completion, version |
+| bosshogg resources | 31 + 1 nested | GA Personal-API-Key-accessible (`llm-analytics` is the nested group) |
+| bosshogg verbs (resource) | ~258 | not counting meta |
+| bosshogg verbs (meta) | 14 | configure, whoami, doctor, schema, auth, config (incl. `analytics on/off/status`), use, completion, version |
 | MCP tools covered by bosshogg | 40 / 44 | 91% parity |
 | MCP-only tools | 4 | inventoried in section 4 |
 | bosshogg-only verbs vs MCP | ~170 | inventoried in section 5 |

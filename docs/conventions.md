@@ -146,6 +146,7 @@ BossHogg reuses `@posthog/cli`'s variable names where they exist, so CI configur
 | `BOSSHOGG_CONFIG` | Override config file path | — |
 | `NO_COLOR` | Disable color | standard |
 | `RUST_LOG` / `BOSSHOGG_LOG` | `tracing` env filter | — |
+| `DO_NOT_TRACK` | Set to `1` to disable anonymous self-tracking telemetry. Equivalent to `bosshogg config analytics off`. | standard |
 
 ## Auth resolution precedence
 
