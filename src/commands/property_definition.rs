@@ -1,12 +1,11 @@
 // src/commands/property_definition.rs
-//! `bosshogg property-definition` — list / get / update / delete / seen-together / tag.
+//! `bosshogg property-definition` — list / get / update / delete / seen-together.
 //!
 //! Property definitions are project-scoped. Deletion is a hard DELETE.
-//! Tag operations use the bulk_update_tags endpoint.
 
 use clap::{Args, Subcommand};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use crate::client::Client;
 use crate::commands::context::CommandContext;
@@ -90,14 +89,6 @@ pub enum PropertyDefinitionCommand {
         #[arg(long)]
         property: Option<String>,
     },
-    /// Add or remove a tag on a property definition.
-    Tag {
-        id: String,
-        #[arg(long, conflicts_with = "remove")]
-        add: Option<String>,
-        #[arg(long, conflicts_with = "add")]
-        remove: Option<String>,
-    },
 }
 
 // ── Dispatch ─────────────────────────────────────────────────────────────────
@@ -122,9 +113,6 @@ pub async fn execute(args: PropertyDefinitionArgs, cx: &CommandContext) -> Resul
             event2,
             property,
         } => seen_together(cx, &event1, &event2, property.as_deref()).await,
-        PropertyDefinitionCommand::Tag { id, add, remove } => {
-            tag_property_definition(cx, &id, add, remove).await
-        }
     }
 }
 
@@ -320,67 +308,6 @@ async fn seen_together(
         output::print_json(&v);
     } else {
         println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
-    }
-    Ok(())
-}
-
-// ── tag ───────────────────────────────────────────────────────────────────────
-
-async fn tag_property_definition(
-    cx: &CommandContext,
-    id: &str,
-    add: Option<String>,
-    remove: Option<String>,
-) -> Result<()> {
-    let client = &cx.client;
-    let project_id = project_id_required(client)?;
-
-    // Fetch current definition to get existing tags.
-    let def: PropertyDefinition = client
-        .get(&format!(
-            "/api/projects/{project_id}/property_definitions/{id}/"
-        ))
-        .await?;
-
-    let mut tags = def.tags.clone();
-
-    if let Some(tag) = add {
-        if !tags.contains(&tag) {
-            tags.push(tag);
-        }
-    } else if let Some(tag) = remove {
-        tags.retain(|t| t != &tag);
-    } else {
-        return Err(BosshoggError::BadRequest(
-            "provide --add TAG or --remove TAG".into(),
-        ));
-    }
-
-    cx.confirm(&format!(
-        "update tags on property definition `{id}`; continue?"
-    ))?;
-
-    let body = json!({
-        "add_tags": tags.iter().filter(|t| !def.tags.contains(t)).cloned().collect::<Vec<_>>(),
-        "remove_tags": def.tags.iter().filter(|t| !tags.contains(t)).cloned().collect::<Vec<_>>(),
-        "ids": [id],
-    });
-
-    let result: Value = client
-        .post(
-            &format!("/api/projects/{project_id}/property_definitions/bulk_update_tags/"),
-            &body,
-        )
-        .await?;
-
-    if cx.json_mode {
-        output::print_json(&result);
-    } else {
-        println!(
-            "Updated tags on property definition '{}': {}",
-            def.name,
-            tags.join(", ")
-        );
     }
     Ok(())
 }

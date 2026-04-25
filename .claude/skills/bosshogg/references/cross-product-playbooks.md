@@ -629,13 +629,6 @@ bosshogg event-definition update <event_def_id> \
   --json
 ```
 
-Tag for discoverability:
-
-```bash
-bosshogg event-definition tag <event_def_id> --add checkout --json
-bosshogg event-definition tag <event_def_id> --add funnel --json
-```
-
 ### Step 4: Create property-definitions
 
 ```bash

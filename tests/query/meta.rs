@@ -52,20 +52,3 @@ async fn query_log_returns_entries() {
         .success()
         .stdout(contains("plan accepted"));
 }
-
-#[tokio::test]
-async fn query_draft_sql_returns_sql_string() {
-    let h = TestHarness::new().await;
-    Mock::given(method("GET"))
-        .and(path("/api/environments/999999/query/draft_sql/"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "sql": "SELECT count() FROM events WHERE event = 'pageview'"
-        })))
-        .mount(&h.server)
-        .await;
-    h.cmd()
-        .args(["query", "draft-sql", "--prompt", "pageview count", "--json"])
-        .assert()
-        .success()
-        .stdout(contains("pageview"));
-}

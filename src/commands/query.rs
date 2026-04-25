@@ -7,7 +7,6 @@
 //! - `query status` — check async query status
 //! - `query cancel` — cancel async query
 //! - `query log` — fetch 24h execution log
-//! - `query draft-sql` — server-side SQL draft helper
 
 use clap::{Args, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -46,11 +45,6 @@ pub enum QueryCommand {
     Cancel { id: String },
     /// Fetch the 24h execution log for a query.
     Log { id: String },
-    /// Server-side SQL draft helper.
-    DraftSql {
-        #[arg(long)]
-        prompt: String,
-    },
 }
 
 #[derive(Args, Debug)]
@@ -103,7 +97,6 @@ pub async fn execute(args: &QueryArgs, cx: &CommandContext) -> Result<()> {
         QueryCommand::Status { id } => status(cx, id.clone()).await,
         QueryCommand::Cancel { id } => cancel(cx, id.clone()).await,
         QueryCommand::Log { id } => log_cmd(cx, id.clone()).await,
-        QueryCommand::DraftSql { prompt } => draft_sql(cx, prompt.clone()).await,
     }
 }
 
@@ -272,25 +265,6 @@ async fn log_cmd(cx: &CommandContext, id: String) -> Result<()> {
             let msg = line.get("line").and_then(Value::as_str).unwrap_or("-");
             println!("{ts}  {msg}");
         }
-    }
-    Ok(())
-}
-
-async fn draft_sql(cx: &CommandContext, prompt: String) -> Result<()> {
-    let client = &cx.client;
-    let env = client
-        .env_id()
-        .ok_or_else(|| BosshoggError::Config("no env_id".into()))?;
-    let encoded = urlencoding::encode(&prompt);
-    let v: Value = client
-        .get(&format!(
-            "/api/environments/{env}/query/draft_sql/?prompt={encoded}"
-        ))
-        .await?;
-    if cx.json_mode {
-        output::print_json(&v);
-    } else if let Some(sql) = v.get("sql").and_then(Value::as_str) {
-        println!("{sql}");
     }
     Ok(())
 }

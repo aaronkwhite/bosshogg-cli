@@ -155,48 +155,7 @@ async fn event_definition_by_name_lookup() {
         .stdout(contains("uuid-byname"));
 }
 
-// ── 6. tag --add uses bulk_update_tags ────────────────────────────────────────
-
-#[tokio::test]
-async fn event_definition_tag_add_calls_bulk_update() {
-    let h = TestHarness::new().await;
-
-    // GET current definition
-    Mock::given(method("GET"))
-        .and(path("/api/projects/999999/event_definitions/uuid-20/"))
-        .respond_with(ResponseTemplate::new(200).set_body_json({
-            let mut f = event_def_fixture("uuid-20", "$click");
-            f["tags"] = json!(["existing"]);
-            f
-        }))
-        .mount(&h.server)
-        .await;
-
-    // POST to bulk_update_tags
-    Mock::given(method("POST"))
-        .and(path(
-            "/api/projects/999999/event_definitions/bulk_update_tags/",
-        ))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"updated": 1})))
-        .mount(&h.server)
-        .await;
-
-    h.cmd()
-        .args([
-            "--yes",
-            "event-definition",
-            "tag",
-            "uuid-20",
-            "--add",
-            "new-tag",
-            "--json",
-        ])
-        .assert()
-        .success()
-        .stdout(contains("updated"));
-}
-
-// ── 8. destructive ops require --yes ─────────────────────────────────────────
+// ── 6. destructive ops require --yes ─────────────────────────────────────────
 
 #[tokio::test]
 async fn event_definition_delete_without_yes_blocked_in_non_tty() {

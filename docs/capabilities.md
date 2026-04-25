@@ -95,7 +95,6 @@ Grouped by milestone and purpose. All names are singular.
 | `query status` | GET `/query/:id/` | check async query |
 | `query cancel` | DELETE `/query/:id/` | cancel async query |
 | `query log` | GET `/query/:id/log/` | last-24h execution log |
-| `query draft-sql` | GET `/query/draft_sql/` | server-side SQL draft helper |
 
 **Rate limit:** separate bucket at 2400/hr.
 
@@ -152,8 +151,8 @@ Grouped by milestone and purpose. All names are singular.
 
 | Resource | Subcommands |
 |---|---|
-| `event-definition` | `list`, `get`, `update`, `delete`, `by-name`, `tag` |
-| `property-definition` | `list`, `get`, `update`, `delete`, `seen-together`, `tag` |
+| `event-definition` | `list`, `get`, `update`, `delete`, `by-name` |
+| `property-definition` | `list`, `get`, `update`, `delete`, `seen-together` |
 
 ### Experiment / Survey / Early-access — M6
 

@@ -192,48 +192,7 @@ async fn property_definition_seen_together_returns_data() {
         .stdout(contains("$browser"));
 }
 
-// ── 7. tag --add uses bulk_update_tags ────────────────────────────────────────
-
-#[tokio::test]
-async fn property_definition_tag_add_calls_bulk_update() {
-    let h = TestHarness::new().await;
-
-    // GET current definition
-    Mock::given(method("GET"))
-        .and(path("/api/projects/999999/property_definitions/p-uuid-30/"))
-        .respond_with(ResponseTemplate::new(200).set_body_json({
-            let mut f = prop_def_fixture("p-uuid-30", "$url");
-            f["tags"] = json!(["existing"]);
-            f
-        }))
-        .mount(&h.server)
-        .await;
-
-    // POST to bulk_update_tags
-    Mock::given(method("POST"))
-        .and(path(
-            "/api/projects/999999/property_definitions/bulk_update_tags/",
-        ))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"updated": 1})))
-        .mount(&h.server)
-        .await;
-
-    h.cmd()
-        .args([
-            "--yes",
-            "property-definition",
-            "tag",
-            "p-uuid-30",
-            "--add",
-            "important",
-            "--json",
-        ])
-        .assert()
-        .success()
-        .stdout(contains("updated"));
-}
-
-// ── 8. destructive ops require --yes ─────────────────────────────────────────
+// ── 7. destructive ops require --yes ─────────────────────────────────────────
 
 #[tokio::test]
 async fn property_definition_delete_without_yes_blocked_in_non_tty() {

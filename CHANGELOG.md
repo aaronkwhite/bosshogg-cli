@@ -11,6 +11,18 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.3] — 2026-04-25
+
+Right-sized surface: remove 5 more verbs confirmed session-only via live HTTP 403 dogfood. Same auth-boundary rationale as v2026.4.2 — ship only what works via Personal API Key. Resource count unchanged (24); verb count drops by 5.
+
+### Removed
+
+- **`event-definition tag --add` / `--remove` (2 verbs)** — PostHog's `/event_definitions/bulk_update_tags/` endpoint returns HTTP 403 (`"This action does not support Personal API Key access"`) for personal API keys. Session-cookie auth only.
+
+- **`property-definition tag --add` / `--remove` (2 verbs)** — PostHog's `/property_definitions/bulk_update_tags/` endpoint returns HTTP 403 (`"This action does not support Personal API Key access"`) for personal API keys. Session-cookie auth only.
+
+- **`query draft-sql` (1 verb)** — PostHog's `/query/draft_sql/` server-side NL→HogQL helper returns HTTP 403 (`"This action does not support Personal API Key access"`) for personal API keys. Session-cookie auth only.
+
 ## [2026.4.2] — 2026-04-24
 
 Right-sized surface: remove verbs that cannot work via Personal API Key — the only auth mode a CLI user has. Live-dogfood of v2026.4.1 against a real PostHog account confirmed each returns a permanent HTTP 402 or 403 regardless of input.

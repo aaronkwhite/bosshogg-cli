@@ -1,12 +1,12 @@
 // src/commands/event_definition.rs
-//! `bosshogg event-definition` — list / get / update / delete / by-name / metrics / tag.
+//! `bosshogg event-definition` — list / get / update / delete / by-name.
 //!
 //! Event definitions are project-scoped. Deletion is a hard DELETE (not in
-//! SOFT_DELETE_RESOURCES). Tag operations use the bulk_update_tags endpoint.
+//! SOFT_DELETE_RESOURCES).
 
 use clap::{Args, Subcommand};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use crate::client::Client;
 use crate::commands::context::CommandContext;
@@ -83,14 +83,6 @@ pub enum EventDefinitionCommand {
     /// Look up an event definition by name.
     #[command(name = "by-name")]
     ByName { name: String },
-    /// Add or remove a tag on an event definition.
-    Tag {
-        id: String,
-        #[arg(long, conflicts_with = "remove")]
-        add: Option<String>,
-        #[arg(long, conflicts_with = "add")]
-        remove: Option<String>,
-    },
 }
 
 // ── Dispatch ─────────────────────────────────────────────────────────────────
@@ -111,9 +103,6 @@ pub async fn execute(args: EventDefinitionArgs, cx: &CommandContext) -> Result<(
         } => update_event_definition(cx, &id, description, verified, owner_id).await,
         EventDefinitionCommand::Delete { id } => delete_event_definition(cx, &id).await,
         EventDefinitionCommand::ByName { name } => by_name_event_definition(cx, &name).await,
-        EventDefinitionCommand::Tag { id, add, remove } => {
-            tag_event_definition(cx, &id, add, remove).await
-        }
     }
 }
 
@@ -292,67 +281,6 @@ async fn by_name_event_definition(cx: &CommandContext, name: &str) -> Result<()>
         ))
         .await?;
     print_event_definition(&def, cx.json_mode);
-    Ok(())
-}
-
-// ── tag ───────────────────────────────────────────────────────────────────────
-
-async fn tag_event_definition(
-    cx: &CommandContext,
-    id: &str,
-    add: Option<String>,
-    remove: Option<String>,
-) -> Result<()> {
-    let client = &cx.client;
-    let project_id = project_id_required(client)?;
-
-    // Fetch current definition to get existing tags.
-    let def: EventDefinition = client
-        .get(&format!(
-            "/api/projects/{project_id}/event_definitions/{id}/"
-        ))
-        .await?;
-
-    let mut tags = def.tags.clone();
-
-    if let Some(tag) = add {
-        if !tags.contains(&tag) {
-            tags.push(tag);
-        }
-    } else if let Some(tag) = remove {
-        tags.retain(|t| t != &tag);
-    } else {
-        return Err(BosshoggError::BadRequest(
-            "provide --add TAG or --remove TAG".into(),
-        ));
-    }
-
-    cx.confirm(&format!(
-        "update tags on event definition `{id}`; continue?"
-    ))?;
-
-    let body = json!({
-        "add_tags": tags.iter().filter(|t| !def.tags.contains(t)).cloned().collect::<Vec<_>>(),
-        "remove_tags": def.tags.iter().filter(|t| !tags.contains(t)).cloned().collect::<Vec<_>>(),
-        "ids": [id],
-    });
-
-    let result: Value = client
-        .post(
-            &format!("/api/projects/{project_id}/event_definitions/bulk_update_tags/"),
-            &body,
-        )
-        .await?;
-
-    if cx.json_mode {
-        output::print_json(&result);
-    } else {
-        println!(
-            "Updated tags on event definition '{}': {}",
-            def.name,
-            tags.join(", ")
-        );
-    }
     Ok(())
 }
 
