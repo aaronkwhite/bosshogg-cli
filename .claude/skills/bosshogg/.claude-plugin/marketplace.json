@@ -1,7 +1,7 @@
 {
   "name": "bosshogg",
   "description": "Agent-first PostHog CLI — feature flags, HogQL, insights, cohorts, persons, events, experiments, surveys, session replays, error tracking, hog functions, batch exports. Ships with the bosshogg CLI and a decision-tree skill.",
-  "version": "2026.4.3",
+  "version": "2026.4.4",
   "author": {
     "name": "Aaron K. White",
     "email": "aaron@aaronkwhite.com",

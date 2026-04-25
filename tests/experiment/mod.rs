@@ -316,6 +316,186 @@ env_id = "1"
     );
 }
 
+// ── 11. launch experiment ─────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn experiment_launch_posts_to_launch_endpoint() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/projects/999999/experiments/50/launch/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["--yes", "experiment", "launch", "50", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── 12. end experiment ────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn experiment_end_posts_to_end_endpoint() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/projects/999999/experiments/51/end/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["--yes", "experiment", "end", "51", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── 13. pause experiment ──────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn experiment_pause_posts_to_pause_endpoint() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/projects/999999/experiments/52/pause/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["--yes", "experiment", "pause", "52", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── 14. resume experiment ─────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn experiment_resume_posts_to_resume_endpoint() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/projects/999999/experiments/53/resume/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["--yes", "experiment", "resume", "53", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── 15. reset experiment ──────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn experiment_reset_posts_to_reset_endpoint() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/projects/999999/experiments/54/reset/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["--yes", "experiment", "reset", "54", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── 16. ship-variant ──────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn experiment_ship_variant_posts_variant_key() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/projects/999999/experiments/55/ship_variant/"))
+        .and(body_partial_json(json!({"variant_key": "test"})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "--yes",
+            "experiment",
+            "ship-variant",
+            "55",
+            "--variant",
+            "test",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── 17. recalculate-timeseries ────────────────────────────────────────────────
+
+#[tokio::test]
+async fn experiment_recalculate_timeseries_posts_to_endpoint() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/projects/999999/experiments/56/recalculate_timeseries/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "--yes",
+            "experiment",
+            "recalculate-timeseries",
+            "56",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── 18. results (read-only, no --yes required) ────────────────────────────────
+
+#[tokio::test]
+async fn experiment_results_gets_timeseries_results() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/projects/999999/experiments/57/timeseries_results/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "results": [{"variant": "test", "count": 100}]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "experiment",
+            "results",
+            "57",
+            "--metric-uuid",
+            "abc-123",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"results\""));
+}
+
 // ── 11. update requires --yes ─────────────────────────────────────────────────
 
 #[tokio::test]

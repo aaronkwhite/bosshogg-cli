@@ -1,7 +1,7 @@
 use crate::common::TestHarness;
 use predicates::str::contains;
 use serde_json::json;
-use wiremock::matchers::{method, path};
+use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, ResponseTemplate};
 
 #[tokio::test]
@@ -51,4 +51,28 @@ async fn query_log_returns_entries() {
         .assert()
         .success()
         .stdout(contains("plan accepted"));
+}
+
+#[tokio::test]
+async fn query_ai_costs_posts_hogql_with_ai_generation_filter() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path("/api/environments/999999/query/"))
+        .and(body_partial_json(json!({
+            "query": { "kind": "HogQLQuery" }
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "results": [["gpt-4o", 1.23, 42]],
+            "columns": ["model", "total_cost_usd", "generations"],
+            "types": ["String", "Float64", "UInt64"]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["query", "ai-costs", "--since", "7d", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"columns\""))
+        .stdout(contains("gpt-4o"));
 }

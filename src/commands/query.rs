@@ -7,6 +7,7 @@
 //! - `query status` — check async query status
 //! - `query cancel` — cancel async query
 //! - `query log` — fetch 24h execution log
+//! - `query ai-costs` — per-model LLM cost aggregate from `$ai_generation` events
 
 use clap::{Args, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -18,6 +19,7 @@ use crate::client::QueryKind;
 use crate::commands::context::CommandContext;
 use crate::error::{BosshoggError, Result};
 use crate::output;
+use crate::util::parse_since;
 
 #[derive(Args, Debug)]
 pub struct QueryArgs {
@@ -45,6 +47,14 @@ pub enum QueryCommand {
     Cancel { id: String },
     /// Fetch the 24h execution log for a query.
     Log { id: String },
+    /// Compute total LLM cost (USD) by model from $ai_generation events.
+    /// Defaults to last 30 days; pass --since 7d / 90d / etc.
+    #[command(name = "ai-costs")]
+    AiCosts {
+        /// Time window to aggregate over (e.g. 7d, 30d, 90d). Defaults to 30d.
+        #[arg(long)]
+        since: Option<String>,
+    },
 }
 
 #[derive(Args, Debug)]
@@ -97,6 +107,7 @@ pub async fn execute(args: &QueryArgs, cx: &CommandContext) -> Result<()> {
         QueryCommand::Status { id } => status(cx, id.clone()).await,
         QueryCommand::Cancel { id } => cancel(cx, id.clone()).await,
         QueryCommand::Log { id } => log_cmd(cx, id.clone()).await,
+        QueryCommand::AiCosts { since } => ai_costs(cx, since.clone()).await,
     }
 }
 
@@ -266,5 +277,32 @@ async fn log_cmd(cx: &CommandContext, id: String) -> Result<()> {
             println!("{ts}  {msg}");
         }
     }
+    Ok(())
+}
+
+async fn ai_costs(cx: &CommandContext, since: Option<String>) -> Result<()> {
+    let since_str = since.unwrap_or_else(|| "30d".to_string());
+    // parse_since handles "30d", "7d", "90d", etc. We only need the day count
+    // for the INTERVAL expression. Compute it from the DateTime offset.
+    let dt = parse_since(&since_str)?;
+    let days = chrono::offset::Utc::now()
+        .signed_duration_since(dt)
+        .num_days()
+        .max(1);
+
+    let sql = format!(
+        "SELECT \
+            coalesce(toString(properties.$ai_model), '<unknown>') AS model, \
+            sum(toFloat(properties.$ai_total_cost_usd)) AS total_cost_usd, \
+            count() AS generations \
+         FROM events \
+         WHERE event = '$ai_generation' AND timestamp > now() - INTERVAL {days} DAY \
+         GROUP BY model \
+         ORDER BY total_cost_usd DESC"
+    );
+
+    let client = &cx.client;
+    let resp = client.query(&sql, QueryKind::HogQL, false).await?;
+    render_tabular(cx, &resp);
     Ok(())
 }

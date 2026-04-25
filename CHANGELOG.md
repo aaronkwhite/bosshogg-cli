@@ -11,6 +11,34 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.4] — 2026-04-25
+
+Closes 2 of the 4 MCP-parity gaps from the v2026.4.2 coverage analysis, plus
+adds 7 experiment lifecycle verbs PostHog exposes that bosshogg never wired.
+
+### Added
+
+- **`experiment launch / end / pause / resume / reset / ship-variant / recalculate-timeseries`** —
+  full PostHog experiment lifecycle. `experiment archive` previously errored
+  `"Experiment must be ended before it can be archived"` — now you can `end`
+  via CLI. `ship-variant <id> --variant <key>` declares the winner; the
+  variant's rollout goes to 100% on the underlying flag.
+- **`experiment results <id> --metric-uuid <uuid>`** — fetches PostHog's
+  timeseries-results aggregate for a specific metric. Closes the
+  `experiment-results-get` MCP parity gap.
+- **`query ai-costs [--since <Nd>]`** — convenience HogQL aggregate over
+  `$ai_generation` events: per-model total cost (USD) and generation count
+  for the time window (default 30d). Closes the
+  `get-llm-total-costs-for-project` MCP parity gap.
+
+### Notes
+
+- The 2 remaining MCP gaps (`docs-search`, `query-generate-hogql-from-question`)
+  are not closeable: `docs-search` isn't in PostHog's REST schema (MCP routes
+  to a private Inkeep endpoint); `query-generate-hogql-from-question` returns
+  HTTP 403 for personal API keys (was the same root cause that had us drop
+  `query draft-sql` in v2026.4.3).
+
 ## [2026.4.3] — 2026-04-25
 
 Right-sized surface: remove 5 more verbs confirmed session-only via live HTTP 403 dogfood. Same auth-boundary rationale as v2026.4.2 — ship only what works via Personal API Key. Resource count unchanged (24); verb count drops by 5.

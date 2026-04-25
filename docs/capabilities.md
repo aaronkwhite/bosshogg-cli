@@ -95,6 +95,7 @@ Grouped by milestone and purpose. All names are singular.
 | `query status` | GET `/query/:id/` | check async query |
 | `query cancel` | DELETE `/query/:id/` | cancel async query |
 | `query log` | GET `/query/:id/log/` | last-24h execution log |
+| `query ai-costs` | POST `/query/` (HogQL) | per-model LLM cost aggregate from `$ai_generation` events; `--since <Nd>` (default 30d) |
 
 **Rate limit:** separate bucket at 2400/hr.
 
@@ -158,7 +159,7 @@ Grouped by milestone and purpose. All names are singular.
 
 | Resource | Subcommands |
 |---|---|
-| `experiment` | `list`, `get`, `create`, `update`, `delete`, `archive`, `duplicate`, `copy-to-project`, `create-exposure-cohort` |
+| `experiment` | `list`, `get`, `create`, `update`, `delete`, `archive`, `duplicate`, `copy-to-project`, `create-exposure-cohort`, `launch`, `end`, `pause`, `resume`, `reset`, `ship-variant`, `recalculate-timeseries`, `results` |
 | `survey` | `list`, `get`, `create`, `update`, `delete`, `activity`, `duplicate`, `archive-response` |
 | `early-access` | `list`, `get`, `create`, `update`, `delete` |
 

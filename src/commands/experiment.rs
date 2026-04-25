@@ -1,6 +1,8 @@
 // src/commands/experiment.rs
 //! `bosshogg experiment` — list / get / create / update / delete / archive /
-//! duplicate / copy-to-project / create-exposure-cohort.
+//! duplicate / copy-to-project / create-exposure-cohort /
+//! launch / end / pause / resume / reset / ship-variant /
+//! recalculate-timeseries / results.
 //!
 //! Experiments are project-scoped. Deletion is a HARD DELETE (DELETE HTTP verb).
 
@@ -112,6 +114,35 @@ pub enum ExperimentCommand {
     /// Create an exposure cohort for an experiment.
     #[command(name = "create-exposure-cohort")]
     CreateExposureCohort { id: i64 },
+    /// Launch an experiment (transitions it to running state).
+    Launch { id: i64 },
+    /// End a running experiment.
+    End { id: i64 },
+    /// Pause a running experiment.
+    Pause { id: i64 },
+    /// Resume a paused experiment.
+    Resume { id: i64 },
+    /// Reset an experiment's results (clears collected data).
+    Reset { id: i64 },
+    /// Declare a winning variant; sets that variant's rollout to 100% on the
+    /// underlying feature flag.
+    #[command(name = "ship-variant")]
+    ShipVariant {
+        id: i64,
+        /// Key of the variant to ship (e.g. "test" or "control").
+        #[arg(long)]
+        variant: String,
+    },
+    /// Recalculate timeseries results for an experiment.
+    #[command(name = "recalculate-timeseries")]
+    RecalculateTimeseries { id: i64 },
+    /// Fetch timeseries results for a specific metric on an experiment.
+    Results {
+        id: i64,
+        /// UUID of the metric to fetch results for (required by PostHog).
+        #[arg(long)]
+        metric_uuid: String,
+    },
 }
 
 // ── Dispatch ──────────────────────────────────────────────────────────────────
@@ -139,6 +170,16 @@ pub async fn execute(args: ExperimentArgs, cx: &CommandContext) -> Result<()> {
             target_project_id,
         } => copy_to_project(cx, id, target_project_id).await,
         ExperimentCommand::CreateExposureCohort { id } => create_exposure_cohort(cx, id).await,
+        ExperimentCommand::Launch { id } => launch_experiment(cx, id).await,
+        ExperimentCommand::End { id } => end_experiment(cx, id).await,
+        ExperimentCommand::Pause { id } => pause_experiment(cx, id).await,
+        ExperimentCommand::Resume { id } => resume_experiment(cx, id).await,
+        ExperimentCommand::Reset { id } => reset_experiment(cx, id).await,
+        ExperimentCommand::ShipVariant { id, variant } => ship_variant(cx, id, variant).await,
+        ExperimentCommand::RecalculateTimeseries { id } => recalculate_timeseries(cx, id).await,
+        ExperimentCommand::Results { id, metric_uuid } => {
+            experiment_results(cx, id, metric_uuid).await
+        }
     }
 }
 
@@ -428,6 +469,194 @@ async fn create_exposure_cohort(cx: &CommandContext, id: i64) -> Result<()> {
     } else {
         let cohort_id = v.get("cohort_id").and_then(Value::as_i64).unwrap_or(0);
         println!("Created exposure cohort {cohort_id} for experiment {id}");
+    }
+    Ok(())
+}
+
+// ── launch ────────────────────────────────────────────────────────────────────
+
+async fn launch_experiment(cx: &CommandContext, id: i64) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!("launch experiment `{id}`; continue?"))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/experiments/{id}/launch/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Launched experiment {id}");
+    }
+    Ok(())
+}
+
+// ── end ───────────────────────────────────────────────────────────────────────
+
+async fn end_experiment(cx: &CommandContext, id: i64) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!("end experiment `{id}`; continue?"))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/experiments/{id}/end/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Ended experiment {id}");
+    }
+    Ok(())
+}
+
+// ── pause ─────────────────────────────────────────────────────────────────────
+
+async fn pause_experiment(cx: &CommandContext, id: i64) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!("pause experiment `{id}`; continue?"))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/experiments/{id}/pause/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Paused experiment {id}");
+    }
+    Ok(())
+}
+
+// ── resume ────────────────────────────────────────────────────────────────────
+
+async fn resume_experiment(cx: &CommandContext, id: i64) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!("resume experiment `{id}`; continue?"))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/experiments/{id}/resume/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Resumed experiment {id}");
+    }
+    Ok(())
+}
+
+// ── reset ─────────────────────────────────────────────────────────────────────
+
+async fn reset_experiment(cx: &CommandContext, id: i64) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!(
+        "reset experiment `{id}` (clears collected data); continue?"
+    ))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/experiments/{id}/reset/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Reset experiment {id}");
+    }
+    Ok(())
+}
+
+// ── ship-variant ──────────────────────────────────────────────────────────────
+
+async fn ship_variant(cx: &CommandContext, id: i64, variant: String) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!(
+        "ship variant `{variant}` for experiment `{id}` (sets rollout to 100%); continue?"
+    ))?;
+
+    let body = json!({ "variant_key": variant });
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/experiments/{id}/ship_variant/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Shipped variant '{variant}' for experiment {id}");
+    }
+    Ok(())
+}
+
+// ── recalculate-timeseries ────────────────────────────────────────────────────
+
+async fn recalculate_timeseries(cx: &CommandContext, id: i64) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!(
+        "recalculate timeseries for experiment `{id}`; continue?"
+    ))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/experiments/{id}/recalculate_timeseries/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Recalculated timeseries for experiment {id}");
+    }
+    Ok(())
+}
+
+// ── results ───────────────────────────────────────────────────────────────────
+
+async fn experiment_results(cx: &CommandContext, id: i64, metric_uuid: String) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    let encoded = urlencoding::encode(&metric_uuid);
+    let path = format!(
+        "/api/projects/{project_id}/experiments/{id}/timeseries_results/?metric_uuid={encoded}"
+    );
+    let v: Value = client.get(&path).await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{v}");
     }
     Ok(())
 }

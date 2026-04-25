@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.3 — stragglers trim. 24 GA PostHog resources covered.**
+> Status: **v2026.4.4 — experiment lifecycle + LLM-cost convenience. 24 GA PostHog resources covered.**
 
 ## Why BossHogg exists
 
@@ -75,9 +75,10 @@ All 24 GA PostHog resources (Personal API Key-accessible), organized by mileston
 - `bosshogg endpoint` — list, get, create, update, delete, run, materialize-preview, materialize-status, openapi.
 
 **M6 — Growth primitives (v2026.4.5)**
-- `bosshogg experiment` — list, get, create, update, delete, archive, duplicate, copy-to-project, create-exposure-cohort.
+- `bosshogg experiment` — list, get, create, update, delete, archive, duplicate, copy-to-project, create-exposure-cohort, launch, end, pause, resume, reset, ship-variant, recalculate-timeseries, results.
 - `bosshogg survey` — list, get, create, update, delete, activity, duplicate, archive-response.
 - `bosshogg early-access` — list, get, create, update, delete.
+- `bosshogg query ai-costs` — per-model LLM cost aggregate from `$ai_generation` events (default 30d window).
 
 **M7 — CDP pipeline (v2026.4.6)**
 - `bosshogg hog-function` — list, get, create, update, delete (soft), enable, disable, invoke, logs, metrics, enable-backfills.
