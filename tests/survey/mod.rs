@@ -271,7 +271,125 @@ async fn survey_archive_response_posts_to_endpoint() {
         .stdout(contains("\"ok\":true"));
 }
 
-// ── 9. destructive op requires --yes ─────────────────────────────────────────
+// ── 9. survey stats ───────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn survey_stats_returns_aggregates() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/projects/999999/surveys/uuid-s5/stats/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "responses": 42,
+            "response_rate": 0.68
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["survey", "stats", "uuid-s5", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("42"))
+        .stdout(contains("0.68"));
+}
+
+// ── 10. survey project-stats ──────────────────────────────────────────────────
+
+#[tokio::test]
+async fn survey_project_stats_returns_all_surveys_aggregate() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/projects/999999/surveys/stats/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "total_surveys": 5,
+            "total_responses": 200
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["survey", "project-stats", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("total_surveys"))
+        .stdout(contains("200"));
+}
+
+// ── 11. survey responses-count ────────────────────────────────────────────────
+
+#[tokio::test]
+async fn survey_responses_count_returns_counter() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/projects/999999/surveys/responses_count/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "count": 1234
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["survey", "responses-count", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("1234"));
+}
+
+// ── 12. survey project-activity ───────────────────────────────────────────────
+
+#[tokio::test]
+async fn survey_project_activity_returns_log() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/projects/999999/surveys/activity/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "results": [
+                {
+                    "activity": "created",
+                    "created_at": "2026-04-01T00:00:00Z",
+                    "user": {"email": "admin@example.com"}
+                }
+            ]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["survey", "project-activity", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("created"));
+}
+
+// ── 13. survey summarize ──────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn survey_summarize_posts_to_endpoint() {
+    let h = TestHarness::new().await;
+
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/projects/999999/surveys/uuid-sum/summarize_responses/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "summary": "Users generally feel positive about the product."
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["--yes", "survey", "summarize", "uuid-sum", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("summary"))
+        .stdout(contains("positive"));
+}
+
+// ── destructive op requires --yes ─────────────────────────────────────────────
 
 #[tokio::test]
 async fn survey_delete_without_yes_blocked_in_non_tty() {

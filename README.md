@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.4 — experiment lifecycle + LLM-cost convenience. 24 GA PostHog resources covered.**
+> Status: **v2026.4.5 — error-tracking issues + survey deepening. 24 GA PostHog resources covered.**
 
 ## Why BossHogg exists
 
@@ -76,7 +76,7 @@ All 24 GA PostHog resources (Personal API Key-accessible), organized by mileston
 
 **M6 — Growth primitives (v2026.4.5)**
 - `bosshogg experiment` — list, get, create, update, delete, archive, duplicate, copy-to-project, create-exposure-cohort, launch, end, pause, resume, reset, ship-variant, recalculate-timeseries, results.
-- `bosshogg survey` — list, get, create, update, delete, activity, duplicate, archive-response.
+- `bosshogg survey` — list, get, create, update, delete, activity, duplicate, archive-response, stats, project-stats, responses-count, project-activity, summarize.
 - `bosshogg early-access` — list, get, create, update, delete.
 - `bosshogg query ai-costs` — per-model LLM cost aggregate from `$ai_generation` events (default 30d window).
 
@@ -86,7 +86,7 @@ All 24 GA PostHog resources (Personal API Key-accessible), organized by mileston
 
 **M8 — Ops & debug (v2026.4.7)**
 - `bosshogg session-recording` — list, get (snapshot blob written to `--out` file, never stdout), update, delete.
-- `bosshogg error-tracking` — nested `fingerprints`, `assignment-rules`, `grouping-rules`, plus resolve-github / resolve-gitlab.
+- `bosshogg error-tracking` — nested `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (list, get, activity, activity-list, assign, cohort, merge, split, bulk), plus resolve-github / resolve-gitlab.
 - `bosshogg role` — Enterprise RBAC, list/get/create/update/delete, plus member management.
 - `bosshogg capture` — event / batch / identify via the public ingest endpoint (uses project token, gated on `--yes`).
 

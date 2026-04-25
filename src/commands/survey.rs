@@ -1,6 +1,7 @@
 // src/commands/survey.rs
 //! `bosshogg survey` — list / get / create / update / delete / activity /
-//! duplicate / archive-response.
+//! duplicate / archive-response / stats / project-stats / responses-count /
+//! project-activity / summarize.
 //!
 //! Surveys are project-scoped. Deletion is a HARD DELETE (DELETE HTTP verb).
 
@@ -120,6 +121,19 @@ pub enum SurveyCommand {
         #[arg(long)]
         response_uuid: String,
     },
+    /// Get response-rate aggregates for a single survey.
+    Stats { id: String },
+    /// Get response-rate aggregates for all surveys in the project.
+    #[command(name = "project-stats")]
+    ProjectStats,
+    /// Get a global response count across all surveys in the project.
+    #[command(name = "responses-count")]
+    ResponsesCount,
+    /// Get the activity log across all surveys in the project.
+    #[command(name = "project-activity")]
+    ProjectActivity,
+    /// Generate an AI summary of responses for a survey.
+    Summarize { id: String },
 }
 
 // ── Dispatch ──────────────────────────────────────────────────────────────────
@@ -152,6 +166,11 @@ pub async fn execute(args: SurveyArgs, cx: &CommandContext) -> Result<()> {
         SurveyCommand::ArchiveResponse { id, response_uuid } => {
             archive_response(cx, id, response_uuid).await
         }
+        SurveyCommand::Stats { id } => survey_stats(cx, id).await,
+        SurveyCommand::ProjectStats => project_stats(cx).await,
+        SurveyCommand::ResponsesCount => responses_count(cx).await,
+        SurveyCommand::ProjectActivity => project_activity(cx).await,
+        SurveyCommand::Summarize { id } => summarize_survey(cx, id).await,
     }
 }
 
@@ -441,6 +460,107 @@ async fn archive_response(cx: &CommandContext, id: String, response_uuid: String
         output::print_json(&v);
     } else {
         println!("Archived response {response_uuid} for survey {id}");
+    }
+    Ok(())
+}
+
+// ── stats ─────────────────────────────────────────────────────────────────────
+
+async fn survey_stats(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+    let v: Value = client
+        .get(&format!("/api/projects/{project_id}/surveys/{id}/stats/"))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+    }
+    Ok(())
+}
+
+// ── project-stats ─────────────────────────────────────────────────────────────
+
+async fn project_stats(cx: &CommandContext) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+    let v: Value = client
+        .get(&format!("/api/projects/{project_id}/surveys/stats/"))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+    }
+    Ok(())
+}
+
+// ── responses-count ───────────────────────────────────────────────────────────
+
+async fn responses_count(cx: &CommandContext) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+    let v: Value = client
+        .get(&format!(
+            "/api/projects/{project_id}/surveys/responses_count/"
+        ))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+    }
+    Ok(())
+}
+
+// ── project-activity ──────────────────────────────────────────────────────────
+
+async fn project_activity(cx: &CommandContext) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+    let v: Value = client
+        .get(&format!("/api/projects/{project_id}/surveys/activity/"))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&v);
+    } else if let Some(results) = v.get("results").and_then(Value::as_array) {
+        for e in results {
+            let a = e.get("activity").and_then(Value::as_str).unwrap_or("-");
+            let t = e.get("created_at").and_then(Value::as_str).unwrap_or("-");
+            let u = e
+                .pointer("/user/email")
+                .and_then(Value::as_str)
+                .unwrap_or("-");
+            println!("{t}  {a:<12}  {u}");
+        }
+    } else {
+        output::print_json(&v);
+    }
+    Ok(())
+}
+
+// ── summarize ─────────────────────────────────────────────────────────────────
+
+async fn summarize_survey(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let project_id = project_id_required(client)?;
+
+    cx.confirm(&format!(
+        "generate AI response summary for survey `{id}`; continue?"
+    ))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/surveys/{id}/summarize_responses/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
     }
     Ok(())
 }

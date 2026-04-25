@@ -1,6 +1,6 @@
 // src/commands/error_tracking.rs
 //! `bosshogg error-tracking` — fingerprints / assignment-rules / grouping-rules /
-//! resolve-github / resolve-gitlab.
+//! issues / resolve-github / resolve-gitlab.
 //!
 //! All endpoints are environment-scoped (PostHog moved these from the legacy
 //! `/api/projects/:project_id/error_tracking/...` routes to
@@ -60,6 +60,27 @@ pub struct GroupingRule {
     pub assignee: Option<Value>,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ErrorIssue {
+    pub id: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub last_seen: Option<String>,
+    #[serde(default)]
+    pub first_seen: Option<String>,
+    #[serde(default)]
+    pub occurrences: Option<i64>,
+    #[serde(default)]
+    pub affected_users: Option<i64>,
+    #[serde(default)]
+    pub assignee: Option<Value>,
+    #[serde(default)]
+    pub description: Option<String>,
+}
+
 // ── Clap tree ─────────────────────────────────────────────────────────────────
 
 #[derive(Args, Debug)]
@@ -79,6 +100,9 @@ pub enum ErrorTrackingCommand {
     /// Manage grouping rules.
     #[command(name = "grouping-rules", subcommand)]
     GroupingRules(GroupingRulesCommand),
+    /// Manage error tracking issues (list, get, assign, merge, split, etc.).
+    #[command(subcommand)]
+    Issues(IssuesCommand),
     /// Resolve a GitHub source location to an error fingerprint.
     #[command(name = "resolve-github")]
     ResolveGithub {
@@ -102,6 +126,55 @@ pub enum ErrorTrackingCommand {
         file: String,
         #[arg(long)]
         line: u32,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum IssuesCommand {
+    /// List error tracking issues (paginated).
+    List {
+        /// Cap results at N rows (default: fetch all pages).
+        #[arg(long)]
+        limit: Option<usize>,
+    },
+    /// Get a single error tracking issue by ID.
+    Get { id: String },
+    /// Get the activity log for a specific issue.
+    Activity { id: String },
+    /// Get the project-level activity log across all issues.
+    #[command(name = "activity-list")]
+    ActivityList,
+    /// Assign an issue to a user.
+    Assign {
+        id: String,
+        /// Numeric user ID to assign to.
+        #[arg(long)]
+        assignee_id: i64,
+    },
+    /// Create a cohort of users who encountered this issue.
+    Cohort { id: String },
+    /// Merge this issue into another issue (destructive).
+    Merge {
+        id: String,
+        /// ID of the issue to merge into.
+        #[arg(long)]
+        into: String,
+    },
+    /// Split this issue by fingerprints into separate issues (destructive).
+    Split {
+        id: String,
+        /// Path to a JSON file containing an array of fingerprint strings.
+        #[arg(long)]
+        fingerprints_file: PathBuf,
+    },
+    /// Bulk action on multiple issues.
+    Bulk {
+        /// Path to a JSON file containing an array of issue IDs.
+        #[arg(long)]
+        ids_file: PathBuf,
+        /// Action to perform (e.g. "resolve", "archive").
+        #[arg(long)]
+        action: String,
     },
 }
 
@@ -187,6 +260,7 @@ pub async fn execute(args: ErrorTrackingArgs, cx: &CommandContext) -> Result<()>
         ErrorTrackingCommand::Fingerprints(cmd) => dispatch_fingerprints(cx, cmd).await,
         ErrorTrackingCommand::AssignmentRules(cmd) => dispatch_assignment_rules(cx, cmd).await,
         ErrorTrackingCommand::GroupingRules(cmd) => dispatch_grouping_rules(cx, cmd).await,
+        ErrorTrackingCommand::Issues(cmd) => dispatch_issues(cx, cmd).await,
         ErrorTrackingCommand::ResolveGithub {
             organization,
             repo,
@@ -603,6 +677,273 @@ async fn get_grouping_rule(cx: &CommandContext, id: String) -> Result<()> {
     Ok(())
 }
 
+// ── issues ────────────────────────────────────────────────────────────────────
+
+async fn dispatch_issues(cx: &CommandContext, cmd: IssuesCommand) -> Result<()> {
+    match cmd {
+        IssuesCommand::List { limit } => list_issues(cx, limit).await,
+        IssuesCommand::Get { id } => get_issue(cx, id).await,
+        IssuesCommand::Activity { id } => issue_activity(cx, id).await,
+        IssuesCommand::ActivityList => issues_activity_list(cx).await,
+        IssuesCommand::Assign { id, assignee_id } => assign_issue(cx, id, assignee_id).await,
+        IssuesCommand::Cohort { id } => issue_cohort(cx, id).await,
+        IssuesCommand::Merge { id, into } => merge_issue(cx, id, into).await,
+        IssuesCommand::Split {
+            id,
+            fingerprints_file,
+        } => split_issue(cx, id, fingerprints_file).await,
+        IssuesCommand::Bulk { ids_file, action } => bulk_issues(cx, ids_file, action).await,
+    }
+}
+
+#[derive(Serialize)]
+struct IssuesListOutput {
+    count: usize,
+    results: Vec<ErrorIssue>,
+}
+
+async fn list_issues(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let path = format!("/api/environments/{env_id}/error_tracking/issues/");
+    let results: Vec<ErrorIssue> = client.get_paginated(&path, limit).await?;
+
+    if cx.json_mode {
+        output::print_json(&IssuesListOutput {
+            count: results.len(),
+            results,
+        });
+    } else {
+        let headers = &["ID", "NAME", "STATUS", "OCCURRENCES", "LAST_SEEN"];
+        let rows: Vec<Vec<String>> = results
+            .iter()
+            .map(|i| {
+                vec![
+                    i.id.clone(),
+                    i.name.clone().unwrap_or_else(|| "-".into()),
+                    i.status.clone().unwrap_or_else(|| "-".into()),
+                    i.occurrences
+                        .map(|n| n.to_string())
+                        .unwrap_or_else(|| "-".into()),
+                    i.last_seen.clone().unwrap_or_else(|| "-".into()),
+                ]
+            })
+            .collect();
+        output::table::print(headers, &rows);
+    }
+    Ok(())
+}
+
+async fn get_issue(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let issue: ErrorIssue = client
+        .get(&format!(
+            "/api/environments/{env_id}/error_tracking/issues/{id}/"
+        ))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&issue);
+    } else {
+        println!("ID:           {}", issue.id);
+        if let Some(n) = issue.name.as_deref() {
+            println!("Name:         {n}");
+        }
+        if let Some(s) = issue.status.as_deref() {
+            println!("Status:       {s}");
+        }
+        if let Some(n) = issue.occurrences {
+            println!("Occurrences:  {n}");
+        }
+        if let Some(u) = issue.affected_users {
+            println!("Users:        {u}");
+        }
+        if let Some(ls) = issue.last_seen.as_deref() {
+            println!("Last seen:    {ls}");
+        }
+        if let Some(fs) = issue.first_seen.as_deref() {
+            println!("First seen:   {fs}");
+        }
+        if let Some(d) = issue.description.as_deref() {
+            println!("Description:  {d}");
+        }
+    }
+    Ok(())
+}
+
+async fn issue_activity(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let v: Value = client
+        .get(&format!(
+            "/api/environments/{env_id}/error_tracking/issues/{id}/activity/"
+        ))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&v);
+    } else if let Some(results) = v.get("results").and_then(Value::as_array) {
+        for e in results {
+            let a = e.get("activity").and_then(Value::as_str).unwrap_or("-");
+            let t = e.get("created_at").and_then(Value::as_str).unwrap_or("-");
+            let u = e
+                .pointer("/user/email")
+                .and_then(Value::as_str)
+                .unwrap_or("-");
+            println!("{t}  {a:<12}  {u}");
+        }
+    } else {
+        output::print_json(&v);
+    }
+    Ok(())
+}
+
+async fn issues_activity_list(cx: &CommandContext) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let v: Value = client
+        .get(&format!(
+            "/api/environments/{env_id}/error_tracking/issues/activity/"
+        ))
+        .await?;
+    if cx.json_mode {
+        output::print_json(&v);
+    } else if let Some(results) = v.get("results").and_then(Value::as_array) {
+        for e in results {
+            let a = e.get("activity").and_then(Value::as_str).unwrap_or("-");
+            let t = e.get("created_at").and_then(Value::as_str).unwrap_or("-");
+            let u = e
+                .pointer("/user/email")
+                .and_then(Value::as_str)
+                .unwrap_or("-");
+            println!("{t}  {a:<12}  {u}");
+        }
+    } else {
+        output::print_json(&v);
+    }
+    Ok(())
+}
+
+async fn assign_issue(cx: &CommandContext, id: String, assignee_id: i64) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+
+    cx.confirm(&format!(
+        "assign issue `{id}` to user {assignee_id}; continue?"
+    ))?;
+
+    let body = json!({ "assignee_id": assignee_id });
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/assign/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Assigned issue {id} to user {assignee_id}");
+    }
+    Ok(())
+}
+
+async fn issue_cohort(cx: &CommandContext, id: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+
+    cx.confirm(&format!(
+        "create cohort from users who hit issue `{id}`; continue?"
+    ))?;
+
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/cohort/"),
+            &json!({}),
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Created cohort for issue {id}");
+    }
+    Ok(())
+}
+
+async fn merge_issue(cx: &CommandContext, id: String, into_issue_id: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+
+    cx.confirm(&format!(
+        "merge issue `{id}` into `{into_issue_id}` (destructive); continue?"
+    ))?;
+
+    let body = json!({ "into_issue_id": into_issue_id });
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/merge/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Merged issue {id} into {into_issue_id}");
+    }
+    Ok(())
+}
+
+async fn split_issue(cx: &CommandContext, id: String, fingerprints_file: PathBuf) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let fingerprints = read_json_file(&fingerprints_file).await?;
+
+    cx.confirm(&format!(
+        "split issue `{id}` by fingerprints (destructive); continue?"
+    ))?;
+
+    let body = json!({ "fingerprints": fingerprints });
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/split/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Split issue {id} by fingerprints");
+    }
+    Ok(())
+}
+
+async fn bulk_issues(cx: &CommandContext, ids_file: PathBuf, action: String) -> Result<()> {
+    let client = &cx.client;
+    let env_id = env_id_required(client)?;
+    let ids = read_json_file(&ids_file).await?;
+
+    cx.confirm(&format!(
+        "bulk action `{action}` on issues from file; continue?"
+    ))?;
+
+    let body = json!({ "ids": ids, "action": action });
+    let v: Value = client
+        .post(
+            &format!("/api/environments/{env_id}/error_tracking/issues/bulk/"),
+            &body,
+        )
+        .await?;
+
+    if cx.json_mode {
+        output::print_json(&v);
+    } else {
+        println!("Bulk action `{action}` applied to issues");
+    }
+    Ok(())
+}
+
 // ── resolve source ────────────────────────────────────────────────────────────
 
 async fn resolve_source(
@@ -688,5 +1029,35 @@ mod tests {
         let r: GroupingRule = serde_json::from_str(raw).unwrap();
         assert_eq!(r.id, "gr-1");
         assert_eq!(r.description.as_deref(), Some("Group by module"));
+    }
+
+    #[test]
+    fn error_issue_roundtrip_minimal() {
+        let raw = r#"{"id": "issue-1"}"#;
+        let i: ErrorIssue = serde_json::from_str(raw).unwrap();
+        assert_eq!(i.id, "issue-1");
+        assert!(i.name.is_none());
+        assert!(i.status.is_none());
+    }
+
+    #[test]
+    fn error_issue_roundtrip_full() {
+        let raw = r#"{
+            "id": "issue-full",
+            "name": "NullPointerException in main",
+            "status": "active",
+            "last_seen": "2026-04-20T10:00:00Z",
+            "first_seen": "2026-03-01T08:00:00Z",
+            "occurrences": 100,
+            "affected_users": 25,
+            "assignee": {"id": "user-1", "email": "dev@example.com"},
+            "description": "Crash in request handler"
+        }"#;
+        let i: ErrorIssue = serde_json::from_str(raw).unwrap();
+        assert_eq!(i.id, "issue-full");
+        assert_eq!(i.occurrences, Some(100));
+        assert_eq!(i.affected_users, Some(25));
+        assert_eq!(i.status.as_deref(), Some("active"));
+        assert_eq!(i.name.as_deref(), Some("NullPointerException in main"));
     }
 }

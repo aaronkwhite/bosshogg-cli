@@ -11,6 +11,29 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.5] — 2026-04-25
+
+Closes 3 of the 7 remaining MCP-parity gaps from `docs/api-coverage.md`
+and wires error-tracking issue management — the highest-leverage
+debugging surface for agents.
+
+### Added
+
+- **`error-tracking issues` nested group** — 9 verbs: `list`, `get`,
+  `activity`, `activity-list`, `assign`, `cohort`, `merge`, `split`,
+  `bulk`. Closes MCP `list-errors` + `error-details`. Maps to
+  `/api/environments/{proj}/error_tracking/issues/...`.
+- **`survey stats <id>`** — closes MCP `survey-stats`. Per-survey
+  response-rate aggregates.
+- **`survey project-stats`** — closes MCP `surveys-global-stats`.
+  All-surveys aggregate.
+- **`survey responses-count`** — global counter.
+- **`survey project-activity`** — all-surveys activity log.
+- **`survey summarize <id>`** — AI-generated response summary.
+
+MCP parity now 40 / 44 (91%). Remaining 4 gaps inventoried in
+`docs/api-coverage.md` section 4a.
+
 ## [2026.4.4] — 2026-04-25
 
 Closes 2 of the 4 MCP-parity gaps from the v2026.4.2 coverage analysis, plus

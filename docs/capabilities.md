@@ -160,7 +160,7 @@ Grouped by milestone and purpose. All names are singular.
 | Resource | Subcommands |
 |---|---|
 | `experiment` | `list`, `get`, `create`, `update`, `delete`, `archive`, `duplicate`, `copy-to-project`, `create-exposure-cohort`, `launch`, `end`, `pause`, `resume`, `reset`, `ship-variant`, `recalculate-timeseries`, `results` |
-| `survey` | `list`, `get`, `create`, `update`, `delete`, `activity`, `duplicate`, `archive-response` |
+| `survey` | `list`, `get`, `create`, `update`, `delete`, `activity`, `duplicate`, `archive-response`, `stats`, `project-stats`, `responses-count`, `project-activity`, `summarize` |
 | `early-access` | `list`, `get`, `create`, `update`, `delete` |
 
 ### Hog-function / Batch-export — M7
@@ -175,7 +175,7 @@ Grouped by milestone and purpose. All names are singular.
 | Resource | Subcommands | Safety note |
 |---|---|---|
 | `session-recording` | `list`, `get`, `update`, `delete` | `get --snapshot` requires `--out <file>`; never stdout |
-| `error-tracking` | `fingerprints`, `assignment-rules`, `grouping-rules`, `resolve-github`, `resolve-gitlab` | |
+| `error-tracking` | `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (`list`, `get`, `activity`, `activity-list`, `assign`, `cohort`, `merge`, `split`, `bulk`), `resolve-github`, `resolve-gitlab` | |
 | `role` | `list`, `get`, `create`, `update`, `delete`, `members`, `add-member`, `remove-member` | Enterprise RBAC |
 | `capture` | `event`, `batch`, `identify` | **project token** (not personal key); debug-only — use `posthog-rs` for production |
 

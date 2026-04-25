@@ -380,6 +380,275 @@ async fn error_tracking_resolve_gitlab() {
         .stdout(contains("gl-fp-1"));
 }
 
+// ── issues fixtures ───────────────────────────────────────────────────────────
+
+fn issue_fixture(id: &str) -> serde_json::Value {
+    json!({
+        "id": id,
+        "name": "NullPointerException",
+        "status": "active",
+        "last_seen": "2026-04-20T10:00:00Z",
+        "first_seen": "2026-03-01T08:00:00Z",
+        "occurrences": 42,
+        "affected_users": 7,
+        "assignee": null,
+        "description": "Crash in request handler"
+    })
+}
+
+// ── issues list ───────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_list() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path("/api/environments/999999/error_tracking/issues/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "count": 2,
+            "next": null,
+            "previous": null,
+            "results": [
+                issue_fixture("issue-1"),
+                issue_fixture("issue-2")
+            ]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "issues", "list", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"count\":2"))
+        .stdout(contains("issue-1"))
+        .stdout(contains("issue-2"));
+}
+
+// ── issues get ────────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_get() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/environments/999999/error_tracking/issues/issue-abc/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(issue_fixture("issue-abc")))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "issues", "get", "issue-abc", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("\"id\":\"issue-abc\""))
+        .stdout(contains("NullPointerException"));
+}
+
+// ── issues activity ───────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_activity() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/environments/999999/error_tracking/issues/issue-x/activity/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "results": [
+                {
+                    "activity": "assigned",
+                    "created_at": "2026-04-10T00:00:00Z",
+                    "user": {"email": "dev@example.com"}
+                }
+            ]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "issues", "activity", "issue-x", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("assigned"));
+}
+
+// ── issues activity-list ──────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_activity_list() {
+    let h = TestHarness::new().await;
+    Mock::given(method("GET"))
+        .and(path(
+            "/api/environments/999999/error_tracking/issues/activity/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "results": [
+                {
+                    "activity": "resolved",
+                    "created_at": "2026-04-15T00:00:00Z",
+                    "user": {"email": "admin@example.com"}
+                }
+            ]
+        })))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args(["error-tracking", "issues", "activity-list", "--json"])
+        .assert()
+        .success()
+        .stdout(contains("resolved"));
+}
+
+// ── issues assign ─────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_assign() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/issues/issue-a/assign/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "issues",
+            "assign",
+            "issue-a",
+            "--assignee-id",
+            "42",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── issues cohort ─────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_cohort() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/issues/issue-b/cohort/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"cohort_id": "cohort-1"})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "issues",
+            "cohort",
+            "issue-b",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("cohort-1"));
+}
+
+// ── issues merge ──────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_merge() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/issues/issue-c/merge/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "issues",
+            "merge",
+            "issue-c",
+            "--into",
+            "issue-d",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── issues split ──────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_split() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path(
+            "/api/environments/999999/error_tracking/issues/issue-e/split/",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    let fp_file = h.config_path.parent().unwrap().join("fingerprints.json");
+    std::fs::write(&fp_file, r#"["fp-a","fp-b"]"#).unwrap();
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "issues",
+            "split",
+            "issue-e",
+            "--fingerprints-file",
+            fp_file.to_str().unwrap(),
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
+// ── issues bulk ───────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn error_tracking_issues_bulk() {
+    let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path("/api/environments/999999/error_tracking/issues/bulk/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&h.server)
+        .await;
+
+    let ids_file = h.config_path.parent().unwrap().join("issue_ids.json");
+    std::fs::write(&ids_file, r#"["issue-1","issue-2"]"#).unwrap();
+
+    h.cmd()
+        .args([
+            "--yes",
+            "error-tracking",
+            "issues",
+            "bulk",
+            "--ids-file",
+            ids_file.to_str().unwrap(),
+            "--action",
+            "resolve",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("\"ok\":true"));
+}
+
 // ── destructive gating without --yes ─────────────────────────────────────────
 
 #[tokio::test]

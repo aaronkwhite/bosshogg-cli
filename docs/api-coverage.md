@@ -6,7 +6,7 @@ For the canonical bosshogg surface, see [`capabilities.md`](capabilities.md). Th
 
 ## 1. Snapshot versions
 
-- **bosshogg** — `Cargo.toml` v2026.4.4 (24 GA resources, ~196 verbs incl. meta)
+- **bosshogg** — `Cargo.toml` v2026.4.5 (24 GA resources, ~210 verbs incl. meta)
 - **PostHog OpenAPI schema** — fetched 2026-04-24 from `https://us.posthog.com/api/schema/`, cached at `/tmp/ph-schema.yaml` (948 paths)
 - **PostHog MCP** — `github.com/PostHog/mcp` at commit `13aaf2c6e5317e01e61d3af24e7b0744f527ed3e` (main, 2026-01-19), `schema/tool-definitions.json` (44 tools)
 
@@ -19,10 +19,10 @@ Refresh instructions live in section 7.
 | PostHog REST paths | 948 | grouped into ~60 top-level resources |
 | PostHog MCP tools | 44 | curated agent-friendly subset |
 | bosshogg resources | 24 | GA Personal-API-Key-accessible |
-| bosshogg verbs (resource) | 183 | not counting meta |
+| bosshogg verbs (resource) | 197 | not counting meta |
 | bosshogg verbs (meta) | 13 | configure, whoami, doctor, schema, auth, config, use, completion, version |
-| MCP tools covered by bosshogg | 37 / 44 | 84% parity |
-| MCP-only tools | 7 | inventoried in section 4 |
+| MCP tools covered by bosshogg | 40 / 44 | 91% parity |
+| MCP-only tools | 4 | inventoried in section 4 |
 | bosshogg-only verbs vs MCP | ~150 | inventoried in section 5 |
 
 Auth-boundary breakdown of the gap (verbs PostHog REST exposes but bosshogg deliberately omits): vast majority are `personal-api-key-OK` (closeable gaps), with a documented minority of `session-only`, `paid-only`, and `project-token-only` exclusions. See section 6.
@@ -44,11 +44,11 @@ Endpoint counts come from `/api/schema/` grouped by leading resource segment aft
 | event-definition | 8 | 1 | 5 | Partial — see notes |
 | property-definition | 4 | 1 | 5 | Full |
 | experiment | 17 | 6 | 9 | Partial — see notes |
-| survey | 13 | 5 | 8 | Partial — see notes |
+| survey | 13 | 5 | 13 | Partial — see notes |
 | hog-function | 20 | 0 | 11 | Full |
 | batch-export | 40 | 0 | 15 | Full |
 | session-recording | 12 | 0 | 4 | Read-only + soft-delete |
-| error-tracking | 56 | 2 | ~12 (incl. nested) | Partial — see notes |
+| error-tracking | 56 | 2 | ~21 (incl. nested issues group) | Partial — see notes |
 | role | 4 | 0 | 8 | Full |
 | org | 36 | 3 | 4 | Read-only + switch |
 | project | 212 (root) | 2 | 5 | Read-only + reset-token |
@@ -107,10 +107,10 @@ Each gap is a verb or endpoint bosshogg doesn't expose. Grouped by recommendatio
 | Verb / endpoint | Source | Auth class | Reason |
 |---|---|---|---|
 | `dashboard tiles add (existing-insight binding)` — equivalent of MCP `add-insight-to-dashboard` | MCP | personal-api-key-OK | bosshogg's `dashboard tiles add` is the same call but the parity gap with MCP is naming; consider renaming or aliasing for transferability. |
-| `error-tracking errors list` (top-level errors, not just fingerprints) — equivalent of MCP `list-errors` | MCP | personal-api-key-OK | Maps to `GET /api/.../error_tracking/issues/` — listed under the 56 error_tracking endpoints; high agent value (debug loops). |
-| `error-tracking error get` (issue detail with stack/breadcrumbs) — equivalent of MCP `error-details` | MCP | personal-api-key-OK | Companion to the above; closes the most-cited bosshogg debugging gap. |
+| ~~`error-tracking issues list`~~ — equivalent of MCP `list-errors` | MCP | personal-api-key-OK | **Closed in v2026.4.5** as `error-tracking issues list`. Maps to `GET /api/environments/{proj}/error_tracking/issues/`. |
+| ~~`error-tracking issues get`~~ (issue detail with stack/breadcrumbs) — equivalent of MCP `error-details` | MCP | personal-api-key-OK | **Closed in v2026.4.5** as `error-tracking issues get <id>`. |
 | `query nl-to-hogql` — equivalent of MCP `query-generate-hogql-from-question` | MCP | unknown — needs probe | Live-dogfood removed `query draft-sql` in v2026.4.3 (session-only). MCP exposes a different path (Max). Probe `/api/projects/:id/max_tools/` before re-attempting. |
-| `survey stats <id>` and `survey global-stats` — equivalents of MCP `survey-stats` / `surveys-global-stats` | MCP | personal-api-key-OK | Response-rate aggregates; simple GET wrappers. |
+| ~~`survey stats <id>`~~ and ~~`survey project-stats`~~ — equivalents of MCP `survey-stats` / `surveys-global-stats` | MCP | personal-api-key-OK | **Closed in v2026.4.5** as `survey stats <id>` and `survey project-stats`. |
 | ~~`experiment results <id>`~~ — equivalent of MCP `experiment-results-get` | MCP | personal-api-key-OK | **Closed in v2026.4.4** — wraps `/experiments/{id}/timeseries_results/?metric_uuid=...`. |
 | ~~`llm-analytics costs --since`~~ — equivalent of MCP `get-llm-total-costs-for-project` | MCP | personal-api-key-OK | **Closed in v2026.4.4** as `query ai-costs --since <Nd>` (HogQL aggregate over `$ai_generation`). |
 | `llm-analytics list / generations / traces` | REST | personal-api-key-OK | 33 endpoints; positions bosshogg for the `$ai_*` use case. Scope a minimal subset first. |
