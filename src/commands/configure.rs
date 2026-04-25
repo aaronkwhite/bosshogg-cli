@@ -2,10 +2,9 @@ use clap::Args;
 use dialoguer::{Input, Password, Select, theme::ColorfulTheme};
 use serde::Serialize;
 use serde_json::Value;
-use std::collections::HashMap;
 
 use crate::client::{Client, ResolvedAuth};
-use crate::config::{self, Config, Context};
+use crate::config::{self, Context};
 use crate::error::{BosshoggError, Result};
 use crate::output;
 
@@ -172,10 +171,7 @@ pub async fn execute(args: ConfigureArgs, json_mode: bool, debug: bool) -> Resul
         );
     };
 
-    let mut cfg = config::load().unwrap_or_else(|_| Config {
-        current_context: None,
-        contexts: HashMap::new(),
-    });
+    let mut cfg = config::load().unwrap_or_default();
     cfg.contexts.insert(
         name.clone(),
         Context {

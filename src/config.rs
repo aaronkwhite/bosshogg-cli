@@ -26,6 +26,11 @@ pub struct Config {
     /// All known contexts, keyed by name.
     #[serde(default)]
     pub contexts: HashMap<String, Context>,
+
+    /// Anonymous self-tracking telemetry. `None` = default (enabled).
+    /// `Some(false)` = explicitly disabled. See `src/analytics.rs`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub analytics_enabled: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -92,6 +97,7 @@ pub fn load() -> Result<Config> {
     Ok(Config {
         current_context: legacy.default_profile,
         contexts: legacy.profiles,
+        analytics_enabled: None,
     })
 }
 
@@ -126,6 +132,47 @@ pub fn save(config: &Config) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Directory where bosshogg stores per-user state (config, analytics queue,
+/// install id). Resolves under `$BOSSHOGG_CONFIG`'s parent if set, otherwise
+/// `~/.config/bosshogg`. Returns `None` only if no home directory is
+/// resolvable AND `$BOSSHOGG_CONFIG` is unset (rare; CI containers).
+pub fn data_dir() -> Option<PathBuf> {
+    if let Ok(p) = std::env::var("BOSSHOGG_CONFIG") {
+        return PathBuf::from(p).parent().map(PathBuf::from);
+    }
+    dirs::config_dir().map(|d| d.join("bosshogg"))
+}
+
+/// Whether anonymous self-tracking is enabled. Checks in order:
+/// 1. `DO_NOT_TRACK=1` → disabled (industry-standard opt-out).
+/// 2. Config `analytics_enabled = false` → disabled.
+/// 3. Otherwise → enabled (opt-out default).
+pub fn is_analytics_enabled() -> bool {
+    if std::env::var("DO_NOT_TRACK").ok().as_deref() == Some("1") {
+        return false;
+    }
+    !matches!(load().ok().and_then(|c| c.analytics_enabled), Some(false))
+}
+
+/// Persist the `analytics_enabled` setting. `None` removes the field
+/// (revert to default). Creates the config file if absent.
+pub fn set_analytics_enabled(value: Option<bool>) -> Result<()> {
+    let mut cfg = load().unwrap_or_default();
+    cfg.analytics_enabled = value;
+    save(&cfg)
+}
+
+/// Region string of the active context (or the named override). Used as a
+/// telemetry property so we can split self-tracking by US / EU / self-hosted
+/// without identifying anyone. `None` if no config / no current context.
+pub fn active_region(context_override: Option<&str>) -> Option<String> {
+    let cfg = load().ok()?;
+    let name = context_override
+        .map(String::from)
+        .or(cfg.current_context.clone())?;
+    cfg.contexts.get(&name)?.region.clone()
 }
 
 #[cfg(test)]

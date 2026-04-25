@@ -1,8 +1,7 @@
 use clap::{Args, Subcommand};
 use serde::Serialize;
-use std::collections::HashMap;
 
-use crate::config::{self, Config, Context};
+use crate::config::{self, Context};
 use crate::error::{BosshoggError, Result};
 use crate::output;
 
@@ -24,6 +23,24 @@ pub enum ConfigCommand {
     UseContext { name: String },
     /// Delete a context.
     DeleteContext { name: String },
+    /// Manage anonymous self-tracking telemetry.
+    Analytics(AnalyticsArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct AnalyticsArgs {
+    #[command(subcommand)]
+    pub command: AnalyticsCommand,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum AnalyticsCommand {
+    /// Enable anonymous usage stats (the default).
+    On,
+    /// Disable anonymous usage stats.
+    Off,
+    /// Show whether telemetry is currently enabled.
+    Status,
 }
 
 #[derive(Args, Debug)]
@@ -72,6 +89,45 @@ pub async fn run(args: ConfigArgs, json_mode: bool) -> Result<()> {
         ConfigCommand::CurrentContext => current_context(json_mode),
         ConfigCommand::UseContext { name } => use_context(name, json_mode),
         ConfigCommand::DeleteContext { name } => delete_context(name, json_mode),
+        ConfigCommand::Analytics(a) => analytics(a, json_mode),
+    }
+}
+
+fn analytics(args: AnalyticsArgs, json_mode: bool) -> Result<()> {
+    match args.command {
+        AnalyticsCommand::On => {
+            config::set_analytics_enabled(Some(true))?;
+            print_analytics_status(true, "set", json_mode);
+        }
+        AnalyticsCommand::Off => {
+            config::set_analytics_enabled(Some(false))?;
+            print_analytics_status(false, "set", json_mode);
+        }
+        AnalyticsCommand::Status => {
+            let enabled = config::is_analytics_enabled();
+            print_analytics_status(enabled, "status", json_mode);
+        }
+    }
+    Ok(())
+}
+
+fn print_analytics_status(enabled: bool, action: &str, json_mode: bool) {
+    if json_mode {
+        #[derive(Serialize)]
+        struct Out<'a> {
+            ok: bool,
+            action: &'a str,
+            analytics_enabled: bool,
+        }
+        output::print_json(&Out {
+            ok: true,
+            action,
+            analytics_enabled: enabled,
+        });
+    } else if enabled {
+        println!("analytics: enabled");
+    } else {
+        println!("analytics: disabled");
     }
 }
 
@@ -187,10 +243,7 @@ fn delete_context(name: String, json_mode: bool) -> Result<()> {
 }
 
 async fn set_context(args: SetContextArgs, json_mode: bool) -> Result<()> {
-    let mut cfg = config::load().unwrap_or_else(|_| Config {
-        current_context: None,
-        contexts: HashMap::new(),
-    });
+    let mut cfg = config::load().unwrap_or_default();
 
     let api_key = if let Some(var) = args.key_from_env.as_deref() {
         Some(

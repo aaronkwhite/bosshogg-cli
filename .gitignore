@@ -34,3 +34,6 @@ Cargo.lock.bak
 
 # Internal process/dev docs (plans, dogfood runs, session handoffs, specs)
 docs/superpowers/
+
+# Brand/voice working drafts (kept local until ready to publish)
+docs/branding/

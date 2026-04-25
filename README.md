@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.8 — deep LLM analytics. 31 GA PostHog resources covered (+ llm-analytics nested group).**
+> Status: **v2026.4.9 — anonymous self-tracking telemetry (opt-out). 31 GA PostHog resources covered (+ llm-analytics nested group).**
 
 ## Why BossHogg exists
 

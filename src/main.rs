@@ -7,8 +7,9 @@
 //! 4. Render errors via `output::print_error` and exit with `err.exit_code()`.
 
 use bosshogg::commands::context::CommandContext;
-use bosshogg::{cli::Cli, output};
+use bosshogg::{analytics, cli::Cli, output};
 use clap::Parser;
+use std::time::{Duration, Instant};
 use tracing_subscriber::{EnvFilter, fmt};
 
 #[tokio::main]
@@ -18,13 +19,77 @@ async fn main() {
     let cli = Cli::parse();
     let json_mode = cli.json;
 
-    match run(cli).await {
+    // Capture telemetry inputs before `cli` is moved into `run`. The
+    // command-name lookup and flag-vector build both need a reference to
+    // `cli` while it's still intact; region is read from on-disk config
+    // (no network).
+    let telemetry_command = cli.command.as_ref().map(analytics::command_name);
+    let telemetry_flags = collect_flags(&cli);
+    let telemetry_region = analytics::is_enabled()
+        .then(|| bosshogg::config::active_region(cli.context.as_deref()))
+        .flatten();
+
+    let start = Instant::now();
+    let result = run(cli).await;
+    let duration_ms = start.elapsed().as_millis() as u64;
+
+    // Build + queue the event before printing errors / exiting. Skip when
+    // there's no subcommand (clap auto-prints help) or when this was a
+    // local-only completion script render.
+    if let Some(command) = telemetry_command
+        && command != "completion"
+    {
+        let (success, error_code, exit_code) = match &result {
+            Ok(()) => (true, None, None),
+            Err(err) => (
+                false,
+                Some(err.error_code().to_string()),
+                Some(err.exit_code()),
+            ),
+        };
+        analytics::track(&analytics::Event {
+            command: command.to_string(),
+            flags: telemetry_flags,
+            success,
+            duration_ms,
+            region: telemetry_region,
+            error_code,
+            exit_code,
+        });
+    }
+
+    // Fire-and-forget flush, capped at 3 s so a slow / unreachable
+    // PostHog can't stall command exit.
+    let flush_handle = tokio::spawn(analytics::flush());
+    let _ = tokio::time::timeout(Duration::from_secs(3), flush_handle).await;
+
+    match result {
         Ok(()) => std::process::exit(0),
         Err(err) => {
             output::print_error(&err, json_mode);
             std::process::exit(err.exit_code());
         }
     }
+}
+
+/// Top-level flag presence vector for telemetry. Names only — never values
+/// (`--api-key` and `--host` are intentionally omitted to avoid even
+/// hinting at sensitive material).
+fn collect_flags(cli: &Cli) -> Vec<String> {
+    let mut flags = Vec::new();
+    if cli.json {
+        flags.push("--json".into());
+    }
+    if cli.debug {
+        flags.push("--debug".into());
+    }
+    if cli.yes {
+        flags.push("--yes".into());
+    }
+    if cli.context.is_some() {
+        flags.push("--context".into());
+    }
+    flags
 }
 
 /// Build a `CommandContext` from the parsed CLI flags. Calling convention:

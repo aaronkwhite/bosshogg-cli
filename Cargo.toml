@@ -1,6 +1,6 @@
 [package]
 name         = "bosshogg"
-version      = "2026.4.8"
+version      = "2026.4.9"
 edition      = "2024"
 rust-version = "1.85"
 authors      = ["Aaron K. White <aaron@aaronkwhite.com>"]
@@ -53,6 +53,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
 urlencoding = "2"
+uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
 assert_cmd = "2"

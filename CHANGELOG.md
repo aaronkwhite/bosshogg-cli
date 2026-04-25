@@ -11,6 +11,34 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.9] — 2026-04-25
+
+Adds anonymous self-tracking telemetry so we have visibility into
+real-world bosshogg usage. Modeled on `lin`'s pattern: queue-then-flush
+to PostHog `/batch/` with a 3-second cap, write-only `phc_*` project
+token embedded, opt-out via env var or config.
+
+### Added
+
+- **Anonymous self-tracking.** Each command appends one event to
+  `~/.config/bosshogg/analytics_queue.jsonl`; a fire-and-forget task
+  flushes to PostHog `/batch/` on exit (3 s timeout, queue retained on
+  failure). Captured properties: `command`, `flags` (names only — no
+  values), `success`, `duration_ms`, `version`, `os`, `arch`, `region`,
+  and on failure `error_code` (SCREAMING_SNAKE) + `exit_code`. No
+  identifiers, no flag values, no auth material.
+- **`bosshogg config analytics on|off|status`** — manage telemetry
+  preference. Persisted to `analytics_enabled` in `config.toml`.
+- **First-run notice** to stderr explaining how to opt out.
+
+### Notes
+
+- Opt-out: `DO_NOT_TRACK=1` env var, `bosshogg config analytics off`,
+  or compile with `--features test-harness` (auto-disables for tests).
+- The embedded PostHog token is a **write-only public project key**
+  (`phc_*`); it cannot read data. Same project as `lin` — events are
+  filtered by `version` / `command` properties on the dashboard side.
+
 ## [2026.4.8] — 2026-04-25
 
 Adds the LLM-analytics surface bosshogg's agent-first positioning needs.

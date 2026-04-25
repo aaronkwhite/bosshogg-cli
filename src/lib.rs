@@ -5,6 +5,7 @@
 //!
 //! Module layout mirrors docs/architecture.md.
 
+pub mod analytics;
 pub mod cli;
 pub mod client;
 pub mod commands;
