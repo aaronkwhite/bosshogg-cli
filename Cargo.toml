@@ -1,6 +1,6 @@
 [package]
 name         = "bosshogg"
-version      = "2026.4.9"
+version      = "2026.4.10"
 edition      = "2024"
 rust-version = "1.85"
 authors      = ["Aaron K. White <aaron@aaronkwhite.com>"]

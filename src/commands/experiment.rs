@@ -4,7 +4,7 @@
 //! launch / end / pause / resume / reset / ship-variant /
 //! recalculate-timeseries / results.
 //!
-//! Experiments are project-scoped. Deletion is a HARD DELETE (DELETE HTTP verb).
+//! Experiments are project-scoped. Deletion is soft (PATCH {"deleted": true}).
 
 use clap::{Args, Subcommand};
 use serde::{Deserialize, Serialize};
@@ -348,11 +348,15 @@ async fn delete_experiment(cx: &CommandContext, id: i64) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
-    cx.confirm(&format!("hard-delete experiment `{id}`; continue?"))?;
+    cx.confirm(&format!("delete experiment `{id}`; continue?"))?;
 
     client
-        .delete(&format!("/api/projects/{project_id}/experiments/{id}/"))
-        .await?;
+        .patch(
+            &format!("/api/projects/{project_id}/experiments/{id}/"),
+            &serde_json::json!({"deleted": true}),
+        )
+        .await
+        .map(|_: Value| ())?;
 
     if cx.json_mode {
         #[derive(Serialize)]

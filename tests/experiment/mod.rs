@@ -161,15 +161,15 @@ async fn experiment_update_name_patches() {
         .stdout(contains("\"name\":\"Renamed Experiment\""));
 }
 
-// ── 5. delete (hard delete) ───────────────────────────────────────────────────
+// ── 5. delete (soft-delete via PATCH) ────────────────────────────────────────
 
 #[tokio::test]
-async fn experiment_delete_issues_hard_delete() {
+async fn experiment_delete_soft_deletes() {
     let h = TestHarness::new().await;
 
-    Mock::given(method("DELETE"))
+    Mock::given(method("PATCH"))
         .and(path("/api/projects/999999/experiments/77/"))
-        .respond_with(ResponseTemplate::new(204))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"id": 77, "name": "exp"})))
         .mount(&h.server)
         .await;
 

@@ -11,6 +11,17 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.10] — 2026-04-25
+
+Bugfix: `experiment delete` was issuing a hard `DELETE` against an endpoint that only
+accepts soft-delete via `PATCH {"deleted": true}`, causing a 405 in all cases.
+
+### Fixed
+
+- **`experiment delete` now soft-deletes** via `PATCH {"deleted": true}` instead of
+  `DELETE`. Discovered during dogfood cleanup of a stuck draft experiment. Experiments
+  join the soft-delete resource list alongside insights, feature-flags, cohorts, etc.
+
 ## [2026.4.9] — 2026-04-25
 
 Adds anonymous self-tracking telemetry so we have visibility into

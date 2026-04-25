@@ -164,7 +164,7 @@ We do **not** search `current_exe().parent()` for `.env` files — explicit less
 
 These resources refuse `DELETE` (return 405) and require `PATCH {"deleted": true}`:
 
-- `insights`, `feature-flags`, `cohorts`, `annotations`, `notebooks`, `subscriptions`, `hog-functions`, `actions`, `error-tracking-fingerprints`
+- `insights`, `feature-flags`, `cohorts`, `annotations`, `notebooks`, `subscriptions`, `hog-functions`, `actions`, `error-tracking-fingerprints`, `experiments`
 
 Client behavior: `bosshogg <resource> delete <id>` always issues a `PATCH {"deleted": true}` for soft-delete resources. Users never see a 405. Hard-delete resources (where applicable) use actual `DELETE`. The mapping lives in `client/mod.rs` as a static list.
 
