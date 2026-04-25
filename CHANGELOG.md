@@ -11,6 +11,32 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.8] — 2026-04-25
+
+Adds the LLM-analytics surface bosshogg's agent-first positioning needs.
+3 new top-level resources + 1 nested-group resource = 26 new verbs.
+
+### Added
+
+- **`dataset` — 5 verbs**: `list`, `get`, `create`, `update`, `delete`. Eval datasets at `/api/projects/{proj}/datasets/`.
+- **`dataset-item` — 5 verbs**: same CRUD over `/dataset_items/`. Items live inside datasets.
+- **`evaluation` — 3 verbs**: `list`, `get`, `test-hog`. `test-hog` runs Hog code against inputs and returns the output (synchronous).
+- **`llm-analytics` — new nested-group resource (~13 verbs)**:
+  - `models list`
+  - `evaluation-summary` (project-wide aggregate)
+  - `evaluation-reports {list, get, create, update, delete, generate, runs}` — 7 verbs
+  - `provider-keys {list, get, validate}` — 3 verbs (read + validate only; create/update/delete deferred)
+  - `review-queue list`
+
+### Deferred
+
+These `llm_analytics` endpoints are admin/setup flows that don't fit the agent-operational thesis; deferred unless user demand justifies:
+
+- `clustering_config` + `clustering_config/set_event_filters/`
+- `clustering_jobs` (job orchestration)
+- `evaluation_config` + `set_active_key/`
+- `provider_keys` write paths (assign / dependent_configs / trial_evaluations / write-side validations)
+
 ## [2026.4.7] — 2026-04-25
 
 Adds `error-tracking releases` and `error-tracking symbol-sets` nested

@@ -176,6 +176,22 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
             )
             .await?
         }
+        Some(Commands::Dataset(args)) => {
+            commands::dataset::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
+        }
+        Some(Commands::DatasetItem(args)) => {
+            commands::dataset_item::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
+        }
+        Some(Commands::Evaluation(args)) => {
+            commands::evaluation::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
+        }
+        Some(Commands::LlmAnalytics(args)) => {
+            commands::llm_analytics::execute(args, &ctx(json, debug, cli.context.as_deref(), yes)?)
+                .await?
+        }
 
         // --- Excluded commands: keep original primitive signatures ---
         Some(Commands::Configure(args)) => commands::configure::execute(args, json, debug).await?,

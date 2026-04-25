@@ -2,7 +2,7 @@
 
 **The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
 
-> Status: **v2026.4.7 — release tracking + source-map upload bracket. 28 GA PostHog resources covered.**
+> Status: **v2026.4.8 — deep LLM analytics. 31 GA PostHog resources covered (+ llm-analytics nested group).**
 
 ## Why BossHogg exists
 
@@ -45,7 +45,7 @@ The idle-token figure for the PostHog MCP server comes from independent benchmar
 
 ## What BossHogg does
 
-All 28 GA PostHog resources (Personal API Key-accessible), organized by milestone:
+All 31 GA PostHog resources + 1 nested group (Personal API Key-accessible), organized by milestone:
 
 **M1 — Core (v2026.4.0)**
 - **HogQL first.** `bosshogg query run "SELECT ..."` — sync or async, auto-`LIMIT 100` for safety, file/stdin input, table or JSON output.
@@ -90,11 +90,22 @@ All 28 GA PostHog resources (Personal API Key-accessible), organized by mileston
 - `bosshogg role` — Enterprise RBAC, list/get/create/update/delete, plus member management.
 - `bosshogg capture` — event / batch / identify via the public ingest endpoint (uses project token, gated on `--yes`).
 
-**M9 — v1.x candidates (v2026.4.8)**
+**M9 — v1.x candidates (v2026.4.6)**
 - `bosshogg alert` — list, get, create, update, delete. Insight-threshold monitors.
 - `bosshogg dashboard-template` — list, get, create, use (instantiate a dashboard from a template).
 - `bosshogg session-recording-playlist` — list, get, create, update, delete, recordings, add-recording, remove-recording.
 - `bosshogg insight-variable` — list, get, create, update, delete. Templated HogQL variables.
+
+**M10 — Deep LLM analytics (v2026.4.8)**
+- `bosshogg dataset` — list, get, create, update, delete. Eval datasets at `/api/projects/{proj}/datasets/`.
+- `bosshogg dataset-item` — list (with optional `--dataset` filter), get, create, update, delete. Input/output pairs for evaluation datasets.
+- `bosshogg evaluation` — list, get, test-hog. `test-hog` runs Hog evaluation code against recent `$ai_generation` events and returns pass/fail results synchronously.
+- `bosshogg llm-analytics` — nested group with 5 sub-resources:
+  - `models list` — available LLM models for the configured provider.
+  - `evaluation-summary` — AI-powered summary of evaluation results (pass/fail patterns + recommendations).
+  - `evaluation-reports` — CRUD + `generate` (async trigger) + `runs` (history). 7 verbs.
+  - `provider-keys` — `list`, `get`, `validate` (read + validate only; write paths deferred).
+  - `review-queue list` — LLM analytics review queue items.
 
 **Agent-native output throughout.** `--json` everywhere, stable schemas validated in CI, structured errors `{error, code, message, hint, retry_with}`, deterministic exit codes (10 auth / 20 not-found / 30 bad-request / 40 rate-limit / 50 upstream / 60 schema-drift / 70 internal).
 
@@ -148,10 +159,10 @@ BossHogg is **complementary to**, not a replacement for, PostHog's first-party t
 
 ## Status & roadmap
 
-**v1.0 (v2026.4.0) — M1 through M9 complete.**
+**v1.0 (v2026.4.0) — M1 through M10 complete.**
 
-- 28 GA PostHog resources implemented across milestones M1–M9 (Personal API Key-accessible only).
-- ~401 tests (unit + integration via wiremock, JSON contract validation, HogQL smoke tests).
+- 31 GA PostHog resources + 1 nested group (llm-analytics) implemented across milestones M1–M10 (Personal API Key-accessible only).
+- ~508 tests (unit + integration via wiremock, JSON contract validation, HogQL smoke tests).
 - Claude Code skill with eval set (≥90% pass rate gate on Opus for release).
 - Homebrew tap formula. crates.io publication. Prebuilt tarballs for 4 targets.
 - Cross-product playbooks: safe rollout, debug a user, conversion drop, ship an event, LLM debug, incident notebook, GDPR deletion.

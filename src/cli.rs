@@ -11,12 +11,14 @@ use crate::commands::{
     action::ActionArgs, alert::AlertArgs, annotation::AnnotationArgs, auth::AuthArgs,
     batch_export::BatchExportArgs, capture::CaptureArgs, cohort::CohortArgs, config::ConfigArgs,
     configure::ConfigureArgs, dashboard::DashboardArgs, dashboard_template::DashboardTemplateArgs,
-    doctor::DoctorArgs, early_access::EarlyAccessArgs, endpoint::EndpointArgs,
-    error_tracking::ErrorTrackingArgs, event::EventArgs, event_definition::EventDefinitionArgs,
+    dataset::DatasetArgs, dataset_item::DatasetItemArgs, doctor::DoctorArgs,
+    early_access::EarlyAccessArgs, endpoint::EndpointArgs, error_tracking::ErrorTrackingArgs,
+    evaluation::EvaluationArgs, event::EventArgs, event_definition::EventDefinitionArgs,
     experiment::ExperimentArgs, flag::FlagArgs, group::GroupArgs, hog_function::HogFunctionArgs,
-    insight::InsightArgs, insight_variable::InsightVariableArgs, org::OrgArgs, person::PersonArgs,
-    project::ProjectArgs, property_definition::PropertyDefinitionArgs, query::QueryArgs,
-    role::RoleArgs, schema::SchemaArgs, session_recording::SessionRecordingArgs,
+    insight::InsightArgs, insight_variable::InsightVariableArgs, llm_analytics::LlmAnalyticsArgs,
+    org::OrgArgs, person::PersonArgs, project::ProjectArgs,
+    property_definition::PropertyDefinitionArgs, query::QueryArgs, role::RoleArgs,
+    schema::SchemaArgs, session_recording::SessionRecordingArgs,
     session_recording_playlist::SessionRecordingPlaylistArgs, survey::SurveyArgs, use_cmd::UseArgs,
 };
 
@@ -106,6 +108,12 @@ pub enum Commands {
     SessionRecordingPlaylist(SessionRecordingPlaylistArgs),
     #[command(name = "insight-variable")]
     InsightVariable(InsightVariableArgs),
+    Dataset(DatasetArgs),
+    #[command(name = "dataset-item")]
+    DatasetItem(DatasetItemArgs),
+    Evaluation(EvaluationArgs),
+    #[command(name = "llm-analytics")]
+    LlmAnalytics(LlmAnalyticsArgs),
     #[command(name = "use")]
     Use(UseArgs),
     /// Generate shell completions for bash/zsh/fish/powershell
