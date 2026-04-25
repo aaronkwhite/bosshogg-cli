@@ -7,13 +7,14 @@ This folder is the **design-time source of truth** for BossHogg. Implementation 
 1. [**Vision & positioning**](vision-and-positioning.md) — What BossHogg is, why it exists, how it sits next to PostHog's official tooling.
 2. [**V1 scope**](v1-scope.md) — Explicit in/out list with rationale. Start here before touching the schema.
 3. [**Capability surface**](capabilities.md) — Human-readable catalog of resources and subcommands.
-4. [**Architecture**](architecture.md) — Project layout, HTTP client, auth, output, config. Adapted from the `lin` CLI playbook for a REST API.
-5. [**Conventions**](conventions.md) — JSON output contract, error shape, exit codes, env vars, soft-delete behavior.
-6. [**Agent-first design**](agent-first.md) — The skill-over-MCP thesis; when to use BossHogg vs MCP; the Claude Code skill we ship with the repo.
-7. [**Naming**](naming.md) — Why `bosshogg`, why not `hog`, why not `phog`.
-8. [**PostHog API notes**](api-notes.md) — Non-obvious API quirks BossHogg has to handle: soft-delete, environments-vs-projects migration, rate-limit buckets, HogQL centrality, deprecated endpoints.
-9. [**Glossary**](glossary.md) — PostHog terminology, especially for readers (and agents) new to the platform.
-10. [**Development**](development.md) — Build, test, toolchain, CI intent.
+4. [**API coverage**](api-coverage.md) — bosshogg vs PostHog REST vs PostHog MCP, with every gap classified by auth boundary. Read after `capabilities.md` when triaging "should we add X?".
+5. [**Architecture**](architecture.md) — Project layout, HTTP client, auth, output, config. Adapted from the `lin` CLI playbook for a REST API.
+6. [**Conventions**](conventions.md) — JSON output contract, error shape, exit codes, env vars, soft-delete behavior.
+7. [**Agent-first design**](agent-first.md) — The skill-over-MCP thesis; when to use BossHogg vs MCP; the Claude Code skill we ship with the repo.
+8. [**Naming**](naming.md) — Why `bosshogg`, why not `hog`, why not `phog`.
+9. [**PostHog API notes**](api-notes.md) — Non-obvious API quirks BossHogg has to handle: soft-delete, environments-vs-projects migration, rate-limit buckets, HogQL centrality, deprecated endpoints.
+10. [**Glossary**](glossary.md) — PostHog terminology, especially for readers (and agents) new to the platform.
+11. [**Development**](development.md) — Build, test, toolchain, CI intent.
 
 ## Supporting artifacts
 
