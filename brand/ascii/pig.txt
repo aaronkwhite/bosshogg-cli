@@ -1,0 +1,10 @@
+
+    (`.      ,'
+     `.`---'
+      / o o \
+     |  ---  |
+      \_____/
+    ___|   |___
+   /   |   |   \
+  /    |   |    \
+ BossHogg — PostHog power, right in your prompt.

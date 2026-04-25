@@ -1,22 +1,61 @@
-# BossHogg
+<p align="center">
+  <img src="images/bosshogg-repo-banner.png" alt="BossHogg — the agent-first PostHog CLI" width="900">
+</p>
 
-**The agent-first PostHog CLI.** Query events with HogQL, manage feature flags, inspect persons and cohorts, and debug insights — from your terminal, or from Claude Code, Cursor, and other coding agents.
+<h1 align="center">BossHogg</h1>
 
-> Status: **v2026.4.9 — anonymous self-tracking telemetry (opt-out). 31 GA PostHog resources covered (+ llm-analytics nested group).**
+<p align="center">
+  <strong>The agent-first PostHog CLI.</strong><br>
+  PostHog power, right in your prompt.
+</p>
 
-## Why BossHogg exists
+<p align="center">
+  <a href="https://github.com/aaronkwhite/bosshogg-cli/actions"><img src="https://img.shields.io/github/actions/workflow/status/aaronkwhite/bosshogg-cli/ci.yml?branch=main&label=CI" alt="CI"></a>
+  <a href="https://crates.io/crates/bosshogg"><img src="https://img.shields.io/crates/v/bosshogg.svg?label=crates.io" alt="crates.io"></a>
+  <a href="https://github.com/aaronkwhite/homebrew-tap"><img src="https://img.shields.io/badge/homebrew-aaronkwhite%2Ftap-orange" alt="Homebrew"></a>
+  <img src="https://img.shields.io/badge/rust-1.78%2B-orange" alt="Rust 1.78+">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
+  <img src="https://img.shields.io/badge/posthog%20resources-31%20GA-FF6A00" alt="31 PostHog resources">
+</p>
 
-PostHog's official tooling is deliberately narrow: [`@posthog/cli`](https://github.com/PostHog/posthog/tree/master/cli) focuses on source-map and release uploads; [`posthog-rs`](https://crates.io/crates/posthog-rs) embeds event capture and flag evaluation in your Rust app; and the [PostHog MCP server](https://posthog.com/docs/model-context-protocol) is rich but costs roughly **44,000 tokens of idle context** in every agent session that loads it (per independent benchmarks; see [Scalekit's gh-vs-GitHub-MCP analysis](https://scalekit.com)).
+Query events with HogQL, manage feature flags, inspect persons and cohorts, debug insights, and operate 31 PostHog resources from your terminal — or from Claude Code, Cursor, and other coding agents. Ships a Claude Code skill that loads at **~200 idle tokens** instead of the **~44,000 tokens** the PostHog MCP server costs every agent session.
 
-BossHogg fills the gap: a broad operational surface for reading *and* writing PostHog state from a terminal or an agent loop, with a Claude Code skill (~200 tokens idle) that teaches models how to use it — a design target of **~220x reduction** in idle context cost vs the MCP server, while keeping the full admin surface reachable. The CLI deliberately mirrors PostHog MCP tool names (`feature-flag-create` → `bosshogg flag create`) so model training on MCP transfers for free.
+<details>
+<summary>Table of contents</summary>
+
+- [Quickstart](#quickstart)
+- [Why BossHogg over the PostHog MCP server?](#why-bosshogg-over-the-posthog-mcp-server)
+- [Built for coding agents](#built-for-coding-agents)
+- [What BossHogg does](#what-bosshogg-does)
+- [Safety](#safety)
+- [Install](#install)
+- [Positioning](#positioning)
+- [Status & roadmap](#status--roadmap)
+- [Documentation](#documentation)
+- [Credits](#credits)
+- [License](#license)
+
+</details>
 
 ## Quickstart
 
 ```bash
-cargo install bosshogg         # or: brew install aaronkwhite/tap/bosshogg
-bosshogg configure             # interactive: host, personal API key, default project
-bosshogg doctor                # verify setup — all checks green?
-bosshogg flag list --active --json | jq
+brew install aaronkwhite/tap/bosshogg   # or: cargo install bosshogg
+bosshogg configure                       # interactive: host, API key, default project
+bosshogg doctor                          # verify setup — all checks green?
+bosshogg flag list --active --json | jq '.[0]'
+```
+
+Output:
+
+```json
+{
+  "id": 12345,
+  "key": "checkout-redesign",
+  "active": true,
+  "rollout_percentage": 25,
+  "filters": { "groups": [] }
+}
 ```
 
 **Tip — add a `bh` shortcut.** Symlink is friendliest to subshells and agent loops (which often don't load your shell config):
@@ -27,6 +66,10 @@ ln -s "$(command -v bosshogg)" /usr/local/bin/bh   # or anywhere on PATH
 ```
 
 Then `bh flag list`, `bh query run "SELECT …"`, etc.
+
+<p align="center">
+  <img src="images/demo.gif" alt="BossHogg demo: doctor, flag list, HogQL query" width="900">
+</p>
 
 ## Why BossHogg over the PostHog MCP server?
 
@@ -43,15 +86,36 @@ The PostHog MCP server is excellent for wizard-driven flows and chart rendering 
 
 The idle-token figure for the PostHog MCP server comes from independent benchmarks (including the Scalekit gh-vs-GitHub-MCP 32x benchmark for equivalent surfaces). BossHogg's ~200-token target is based on the skill frontmatter size; actual measurement should be performed before each release.
 
+## Built for coding agents
+
+BossHogg ships with a Claude Code skill at `.claude/skills/bosshogg/`. Instead of loading a 44,000-token tool surface into every session, your agent loads ~200 tokens of frontmatter and pulls reference docs on demand.
+
+```
+> Use bosshogg to find the top 5 events by volume in the last 7 days
+```
+
+The agent calls:
+
+```bash
+bh query run "SELECT event, count() FROM events WHERE timestamp > now() - INTERVAL 7 DAY GROUP BY event ORDER BY count() DESC LIMIT 5" --json
+```
+
+And returns the structured result. No web UI hop. No browser. No idle context tax.
+
+**MCPs and CLIs are not competitors — they serve different jobs.** MCP is great for rich, hosted, chart-rendering workflows. BossHogg is for terminal ops, CI scripts, and the tight agent loops where you want a small, predictable command surface.
+
 ## What BossHogg does
 
-All 31 GA PostHog resources + 1 nested group (Personal API Key-accessible), organized by milestone:
+All 31 GA PostHog resources + 1 nested group (Personal API Key-accessible):
 
 **M1 — Core (v2026.4.0)**
 - **HogQL first.** `bosshogg query run "SELECT ..."` — sync or async, auto-`LIMIT 100` for safety, file/stdin input, table or JSON output.
 - **Feature flag management, CRUD-deep.** `bosshogg flag list / get / create / update / delete` — list, toggle, rollout, inspect filters & payloads.
 - **Agent utilities.** `bosshogg doctor` (preflight health check), `bosshogg schema hogql` (grounds models on your schema), `bosshogg auth token` (escape hatch for `curl`).
 - **Multi-project, multi-region contexts.** US, EU, and self-hosted in one kubectl-style config.
+
+<details>
+<summary>Full resource catalog (M2–M10)</summary>
 
 **M2 — Org & project (v2026.4.1)**
 - `bosshogg org` — list, get, current, switch.
@@ -86,7 +150,7 @@ All 31 GA PostHog resources + 1 nested group (Personal API Key-accessible), orga
 
 **M8 — Ops & debug (v2026.4.7)**
 - `bosshogg session-recording` — list, get (snapshot blob written to `--out` file, never stdout), update, delete.
-- `bosshogg error-tracking` — nested `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (list, get, activity, activity-list, assign, cohort, merge, split, bulk), `releases` (list, get, by-hash), `symbol-sets` (list, get, download, start-upload, finish-upload, bulk-delete, bulk-start-upload, bulk-finish-upload), plus resolve-github / resolve-gitlab. Source-map upload bracket: `start-upload` returns a presigned URL; upload via `curl -T file <url>`; then `finish-upload`.
+- `bosshogg error-tracking` — nested `fingerprints`, `assignment-rules`, `grouping-rules`, `issues` (list, get, activity, activity-list, assign, cohort, merge, split, bulk), `releases` (list, get, by-hash), `symbol-sets` (list, get, download, start-upload, finish-upload, bulk-delete, bulk-start-upload, bulk-finish-upload), plus resolve-github / resolve-gitlab.
 - `bosshogg role` — Enterprise RBAC, list/get/create/update/delete, plus member management.
 - `bosshogg capture` — event / batch / identify via the public ingest endpoint (uses project token, gated on `--yes`).
 
@@ -107,9 +171,9 @@ All 31 GA PostHog resources + 1 nested group (Personal API Key-accessible), orga
   - `provider-keys` — `list`, `get`, `validate` (read + validate only; write paths deferred).
   - `review-queue list` — LLM analytics review queue items.
 
-**Agent-native output throughout.** `--json` everywhere, stable schemas validated in CI, structured errors `{error, code, message, hint, retry_with}`, deterministic exit codes (10 auth / 20 not-found / 30 bad-request / 40 rate-limit / 50 upstream / 60 schema-drift / 70 internal).
+</details>
 
-**Ships a Claude Code skill** (`.claude/skills/bosshogg/`) from the first release. Teaches agents the golden path and when to fall back to the PostHog MCP server.
+**Agent-native output throughout.** `--json` everywhere, stable schemas validated in CI, structured errors `{error, code, message, hint, retry_with}`, deterministic exit codes (10 auth / 20 not-found / 30 bad-request / 40 rate-limit / 50 upstream / 60 schema-drift / 70 internal).
 
 ## Safety
 
@@ -117,7 +181,7 @@ Security and data-safety properties baked in from day one:
 
 - **HTTPS-only.** `reqwest` is configured with `.https_only(true)` in all release builds. The `BOSSHOGG_ALLOW_HTTP` escape hatch is feature-gated behind `test-harness` and never compiled into release binaries.
 - **Auth redaction.** `Authorization:` headers are stripped from `--debug` output. Error bodies are truncated to 200 chars. No tokens or PII leak to logs.
-- **Soft-delete routing.** Resources that PostHog soft-deletes (flags, insights, dashboards, cohorts, actions, annotations, hog-functions) are routed through the correct soft-delete path. Hard-delete resources (persons, experiments, event-definitions, etc.) are routed correctly and gated on `--yes` or interactive TTY confirmation.
+- **Soft-delete routing.** Resources that PostHog soft-deletes (flags, insights, dashboards, cohorts, actions, annotations, hog-functions) are routed through the correct soft-delete path. Hard-delete resources (persons, event-definitions, etc.) are routed correctly and gated on `--yes` or interactive TTY confirmation.
 - **HogQL auto-LIMIT.** `bosshogg query run` auto-injects `LIMIT 100` when the query has no LIMIT clause. Bypass with `--no-limit` intentionally. Injection is logged in `--debug`.
 - **Snapshot never-stdout.** Session recording snapshot blobs are suppressed from stdout by default; use `--out <file>` to write the full blob.
 - **`--yes` gating on destructive ops.** Hard deletes and `bosshogg capture` (which writes to real production data) require `--yes` or interactive confirmation. No accidental bulk deletions.
@@ -159,6 +223,8 @@ BossHogg is **complementary to**, not a replacement for, PostHog's first-party t
 
 ## Status & roadmap
 
+> **v2026.4.10 — 31 GA PostHog resources covered (+ llm-analytics nested group).**
+
 **v1.0 (v2026.4.0) — M1 through M10 complete.**
 
 - 31 GA PostHog resources + 1 nested group (llm-analytics) implemented across milestones M1–M10 (Personal API Key-accessible only).
@@ -196,7 +262,7 @@ Raw research artifacts (API catalog, competitive landscape, schema drafts) live 
 
 ## Credits
 
-Modeled after the `lin` CLI playbook — a Rust CLI for Linear's GraphQL API (`~/Documents/building-a-rust-cli-for-a-product-api.md`). Thanks to PostHog for an API that's genuinely pleasant to wrap.
+Modeled after the `lin` CLI playbook — a Rust CLI for Linear's GraphQL API. Thanks to PostHog for an API that's genuinely pleasant to wrap.
 
 ## License
 

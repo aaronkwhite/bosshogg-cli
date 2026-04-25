@@ -97,7 +97,7 @@ pub enum ExperimentCommand {
         #[arg(long)]
         parameters_file: Option<PathBuf>,
     },
-    /// Hard-delete an experiment (DELETE HTTP verb).
+    /// Soft-delete an experiment (PATCH with deleted=true).
     Delete { id: i64 },
     /// Archive an experiment.
     Archive { id: i64 },
