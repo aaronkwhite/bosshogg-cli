@@ -273,7 +273,9 @@ pub async fn execute(args: LoginArgs, json_mode: bool) -> Result<()> {
             println!("Project: {pid}");
         }
         if ctx_name == "login" {
-            println!("Tip: use --context <name> to avoid overwriting this context on future logins.");
+            println!(
+                "Tip: use --context <name> to avoid overwriting this context on future logins."
+            );
         }
         println!("\nRun `bosshogg doctor` to verify setup.");
     }
