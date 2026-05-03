@@ -43,7 +43,9 @@ Branch on the output:
 
 - `"summary": {"ok": true, ...}` — proceed.
 - `"summary": {"ok": false, ...}` — one or more checks failed. Iterate `checks[]` and for each entry where `"ok": false`, follow the `"remediation"` string. Common check names and remediations:
+  - `binary_path` → bosshogg binary not found on PATH. Install via `brew install aaronkwhite/tap/bosshogg` or `cargo install bosshogg`. Do not proceed until this passes.
   - `config_file` → config is missing or unparseable. Run `bosshogg configure`.
+  - `auth_source` → no auth source found (no env vars, no config file, no context). Set `POSTHOG_CLI_TOKEN` or run `bosshogg configure`.
   - `active_context` → no context is active. Run `bosshogg configure` or `bosshogg use <name>`.
   - `api_key_present` → no API key in the active context. Run `bosshogg configure` or `bosshogg config set-context`.
   - `host_region_match` → the configured host doesn't match the region setting. Fix via `bosshogg config set-context`.
@@ -56,10 +58,13 @@ Prefer the wrapper at `scripts/doctor.sh` if the user asked for a classified sum
 
 ## 3. Setup & auth
 
-Two setup paths:
+Three setup paths:
 
-1. **Interactive** (recommended for workstations): `bosshogg configure`. This upserts a named context in `~/.config/bosshogg/config.toml` with `host`, `project_id`, `env_id`, and stores the key with `0600` perms.
-2. **Env-var only** (required in CI): set one of `POSTHOG_CLI_TOKEN`, `POSTHOG_CLI_API_KEY`, `POSTHOG_API_KEY` (resolved in that order). Also set `POSTHOG_CLI_HOST` and `POSTHOG_CLI_PROJECT_ID` if not using US Cloud defaults.
+1. **Browser login** (easiest for new users): `bosshogg login`. Opens PostHog in a browser, walks through the device-code authorization flow, saves a personal API key and project info to config. Use `--no-browser` to print the URL instead of opening the browser (for SSH/CI). Use `--context <name>` to override the default context name (derived from host: "us", "eu", or "login").
+2. **Interactive** (recommended when you already have a personal API key): `bosshogg configure`. Upserts a named context in `~/.config/bosshogg/config.toml` with `host`, `project_id`, `env_id`, and stores the key with `0600` perms.
+3. **Env-var only** (required in CI): set one of `POSTHOG_CLI_TOKEN`, `POSTHOG_CLI_API_KEY`, `POSTHOG_API_KEY` (resolved in that order). Also set `POSTHOG_CLI_HOST` and `POSTHOG_CLI_PROJECT_ID` if not using US Cloud defaults.
+
+**`.env` / `.env.local` auto-loading**: `bosshogg` silently loads `.env.local` then `.env` from the current working directory at startup. Variables already in the process env are NOT overwritten. This means you can put `POSTHOG_CLI_TOKEN=phx_...` in a project-local `.env.local` and it will be picked up automatically.
 
 Key hygiene:
 
@@ -71,6 +76,8 @@ EU and self-host:
 
 - EU Cloud: `POSTHOG_CLI_HOST=https://eu.posthog.com`.
 - Self-host: set the custom host; `bosshogg doctor` verifies the host answers and reports the detected region back.
+
+**Context switching mid-session:** If the user runs `bosshogg use <context>` to switch projects, treat all in-session resource IDs (flag IDs, insight IDs, dashboard IDs, cached schema) as stale. Re-run `bosshogg whoami --json` to confirm the new project, and re-run `scripts/hogql-schema-dump.sh` before writing any new HogQL. Do not reuse IDs from before the switch.
 
 ## 4. Golden rules
 
@@ -86,6 +93,8 @@ One-liner recipes for the 80% case. Lean on these before reaching for HogQL or R
 
 | Task | Command |
 |---|---|
+| Authenticate via browser (new installs) | `bosshogg login` (opens browser) or `bosshogg login --no-browser` (prints URL) |
+| Check CLI version | `bosshogg version --json` |
 | Ground HogQL in the active project schema | `bosshogg schema hogql --json` (cache via `scripts/hogql-schema-dump.sh`) |
 | Run a HogQL query (inline) | `bosshogg query run "SELECT count() FROM events WHERE event = '$pageview'" --json` |
 | Run a HogQL query (file) | `bosshogg query run --file query.sql --json` |
@@ -94,10 +103,12 @@ One-liner recipes for the 80% case. Lean on these before reaching for HogQL or R
 | Get a specific flag | `bosshogg flag get my-feature --json` |
 | Toggle a flag on | `bosshogg flag update my-feature --enabled --json` |
 | Set rollout percentage | `bosshogg flag update my-feature --rollout 10 --json` |
+| Page through a long list | `bosshogg flag list --json` → read `next_cursor` → `bosshogg flag list --cursor <next_cursor> --json`; stop when `next_cursor` is `null` |
 | Look up a person | `bosshogg person get user@example.com --json` (M4+ — stub in M1) |
 | Show the current context | `bosshogg whoami --json` |
 | Read an insight | `bosshogg insight get <id> --json` (M3+) |
 | Inspect a cohort | `bosshogg cohort get <id> --json` (M3+) |
+| Multi-step workflows (safe rollout, user debug) | See `references/cross-product-playbooks.md` |
 | Escape-hatch bearer token | `curl -H "Authorization: Bearer $(bosshogg auth token)" https://us.posthog.com/api/...` |
 
 Recipe references for depth:

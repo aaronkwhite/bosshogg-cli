@@ -59,6 +59,7 @@ async fn project_list_returns_projects() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["project", "list", "--json"])
@@ -83,6 +84,7 @@ async fn project_get_by_id() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["project", "get", "101", "--json"])
@@ -113,6 +115,7 @@ async fn project_get_by_name_uses_list_filter() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["project", "get", "Staging", "--json"])
@@ -136,6 +139,7 @@ async fn project_current_reads_from_config_and_fetches() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["project", "current", "--json"])
@@ -162,6 +166,7 @@ project_id = "101"
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .args(["project", "switch", "999", "--json"])
         .assert()
@@ -192,6 +197,7 @@ async fn project_reset_token_with_yes_flag() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["--yes", "project", "reset-token", "101", "--json"])

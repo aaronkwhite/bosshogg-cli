@@ -73,6 +73,7 @@ async fn role_list_returns_results() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["role", "list", "--json"])
@@ -99,6 +100,7 @@ async fn role_get_by_id() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["role", "get", "role-abc", "--json"])
@@ -125,6 +127,7 @@ async fn role_create_posts_name() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["role", "create", "--name", "Viewers", "--json"])
@@ -152,6 +155,7 @@ async fn role_update_patches_name() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args([
@@ -178,6 +182,7 @@ async fn role_delete_hard_delete() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["--yes", "role", "delete", "role-del", "--json"])
@@ -211,6 +216,7 @@ async fn role_members_returns_list() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["role", "members", "role-m", "--json"])
@@ -242,6 +248,7 @@ async fn role_add_member_posts_user_uuid() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args([
@@ -276,6 +283,7 @@ async fn role_remove_member_deletes_membership() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args([
@@ -315,6 +323,7 @@ org_id = "my-org"
 
     let out = Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["role", "delete", "role-x"])
@@ -348,6 +357,7 @@ env_id = "1"
 
     let out = Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["role", "list", "--json"])

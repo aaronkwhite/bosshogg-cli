@@ -14,6 +14,12 @@ use tracing_subscriber::{EnvFilter, fmt};
 
 #[tokio::main]
 async fn main() {
+    // Load .env.local then .env from cwd before any env var is read.
+    // dotenvy does not overwrite already-set vars, so priority remains:
+    //   process env > .env.local > .env > config.toml
+    let _ = dotenvy::from_filename(".env.local");
+    let _ = dotenvy::from_filename(".env");
+
     init_tracing();
 
     let cli = Cli::parse();
@@ -259,6 +265,7 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
         }
 
         // --- Excluded commands: keep original primitive signatures ---
+        Some(Commands::Login(args)) => commands::login::execute(args, json).await?,
         Some(Commands::Configure(args)) => commands::configure::execute(args, json, debug).await?,
         Some(Commands::Doctor(args)) => {
             commands::doctor::execute(args, json, debug, cli.context.as_deref()).await?
@@ -268,6 +275,7 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
         }
         Some(Commands::Use(args)) => commands::use_cmd::execute(args, json).await?,
         Some(Commands::Completion(args)) => bosshogg::commands::completion::execute(&args)?,
+        Some(Commands::Version) => commands::version::execute(json)?,
         Some(Commands::Config(args)) => commands::config::run(args, json).await?,
         None => {
             // No subcommand: clap will print help automatically.

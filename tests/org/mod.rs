@@ -45,6 +45,7 @@ async fn org_list_returns_orgs() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["org", "list", "--json"])
@@ -75,6 +76,7 @@ async fn org_get_by_id() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["org", "get", "org-uuid-1", "--json"])
@@ -102,6 +104,7 @@ async fn org_current_reads_from_config_and_fetches() {
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .env("BOSSHOGG_ALLOW_HTTP", "1")
         .args(["org", "current", "--json"])
@@ -128,6 +131,7 @@ org_id = "old-org-id"
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .args(["org", "switch", "new-org-uuid", "--json"])
         .assert()
@@ -160,6 +164,7 @@ api_key = "phx_testkey"
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path())
         .env("BOSSHOGG_CONFIG", &cfg)
         .args(["org", "current"])
         .assert()

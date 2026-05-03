@@ -1,12 +1,12 @@
-<p align="center">
-  <img src="images/bosshogg-repo-banner.png" alt="BossHogg — the agent-first PostHog CLI" width="900">
-</p>
-
 <h1 align="center">BossHogg</h1>
 
 <p align="center">
   <strong>The agent-first PostHog CLI.</strong><br>
   PostHog power, right in your prompt.
+</p>
+
+<p align="center">
+  <img src="images/bosshogg-repo-banner.png" alt="BossHogg — the agent-first PostHog CLI" width="900">
 </p>
 
 <p align="center">

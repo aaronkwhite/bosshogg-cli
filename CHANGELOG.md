@@ -11,6 +11,31 @@ crates.io publication and a GitHub Release with prebuilt tarballs.
 
 ## [Unreleased]
 
+## [2026.4.11] — 2026-04-25
+
+### Added
+
+- **`bosshogg login`** — browser device-flow authentication. Requests a device
+  code from PostHog's `/api/cli-auth/device-code/` endpoint, prints the
+  verification URL and user code, polls `/api/cli-auth/poll/` until authorized,
+  then fetches `/api/users/@me/` to derive project/org IDs and saves everything
+  to config. `--no-browser` skips opening a browser and just prints the URL
+  (required for CI and for testing). `--context <name>` sets the context name
+  (default: host-derived "us"/"eu"/"login"). Falls back gracefully if the host
+  returns 404 on the device-code endpoint, suggesting `bosshogg configure`.
+- **`.env` / `.env.local` auto-loading** — on startup, `bosshogg` silently
+  loads `.env.local` then `.env` from the current working directory (via
+  `dotenvy`). Variables already set in the process environment are NOT
+  overwritten, preserving the priority: process env > `.env.local` > `.env` >
+  config.toml. Missing files are silently ignored.
+- **`bosshogg version`** — prints the CLI version. `--json` emits
+  `{"version":"2026.4.11"}` for agent-readable version checks.
+- **Skill fixes** — corrected two broken evals (eval-02 skipped prose
+  confirmation before `--yes`; eval-06 referenced non-existent `--all-active`
+  flag and wrong `persons` table column). Added `binary_path` and `auth_source`
+  remediation entries to skill preflight docs. Added pagination, context-switch
+  invalidation, and cross-product playbook pointer to skill section 5.
+
 ## [2026.4.10] — 2026-04-25
 
 Bugfix: `experiment delete` was issuing a hard `DELETE` against an endpoint that only

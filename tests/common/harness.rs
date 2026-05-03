@@ -63,8 +63,12 @@ env_id = "{env_id}"
 
     /// Build a `Command` invocation of `bosshogg` with env vars already set.
     /// Callers add their own `.args([...])`.
+    ///
+    /// `current_dir` is set to the harness temp dir so that `.env` / `.env.local`
+    /// files in the project root are not picked up by the binary.
     pub fn cmd(&self) -> Command {
         let mut c = Command::cargo_bin("bosshogg").expect("cargo_bin bosshogg");
+        c.current_dir(self.config_path.parent().expect("config parent dir"));
         c.env("BOSSHOGG_CONFIG", &self.config_path);
         c.env("BOSSHOGG_ALLOW_HTTP", "1");
         c

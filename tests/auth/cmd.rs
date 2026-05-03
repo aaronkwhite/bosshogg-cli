@@ -18,6 +18,7 @@ api_key = "phx_abc"
 
     Command::cargo_bin("bosshogg")
         .unwrap()
+        .current_dir(tmp.path()) // no .env files in tmp, preventing project-root .env.local pickup
         .env("BOSSHOGG_CONFIG", &cfg)
         .env_remove("POSTHOG_CLI_TOKEN")
         .env_remove("POSTHOG_CLI_API_KEY")

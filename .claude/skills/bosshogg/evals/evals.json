@@ -17,9 +17,10 @@
     "expected_tool_cascade": [
       "bosshogg doctor --json",
       "bosshogg flag get checkout-redesign --json",
+      "<prose confirmation to user: current rollout, what will change, ok to proceed?>",
       "bosshogg flag update checkout-redesign --disabled --yes --json"
     ],
-    "notes": "Destructive; must preflight, then confirm, then act with --yes."
+    "notes": "Destructive; must preflight, get current state, confirm in prose with the user (not silently), then re-run with --yes only after user says yes. Skill section 8 is explicit: --yes must never be added without prior prose confirmation."
   },
   {
     "id": "eval-03",
@@ -54,11 +55,11 @@
     "multi_step": true,
     "expected_tool_cascade": [
       "bosshogg doctor --json",
-      "bosshogg query run --file find-person.sql --json",
-      "bosshogg query run --file recent-events.sql --json",
-      "bosshogg flag evaluate --distinct-id you@example.com --all-active --json"
+      "bosshogg query run \"SELECT id, properties.email FROM persons WHERE properties.email = 'you@example.com' LIMIT 1\" --json",
+      "bosshogg query run \"SELECT event, timestamp, properties FROM events WHERE person_id = '<resolved_person_uuid>' ORDER BY timestamp DESC LIMIT 20\" --json",
+      "bosshogg flag list --active --json"
     ],
-    "notes": "Debug-a-user playbook. M1 uses HogQL for person resolution (person subcommand lands M4)."
+    "notes": "Debug-a-user playbook. Uses HogQL for person resolution (bosshogg person get lands M4+). DO NOT use `bosshogg flag evaluate` here — that subcommand requires a phc_ project token, not a phx_ personal key, and --all-active is not a valid flag. Use `bosshogg flag list --active` to enumerate flags instead. See references/cross-product-playbooks.md for the full debug-a-user tree."
   },
   {
     "id": "eval-07",

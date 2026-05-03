@@ -1,5 +1,7 @@
 # MCP gaps: bosshogg vs PostHog MCP decision matrix
 
+_Last verified: 2026-05-03. The PostHog MCP adds tools regularly — re-verify this matrix when PostHog ships a major MCP update._
+
 Use `bosshogg` for reads and simple writes. Reach for the PostHog MCP when the task needs a tool `bosshogg` does not expose (chart rendering, wizards, notebook authoring). This matrix is the authoritative tiebreaker.
 
 Format: **Task | Use this | Command | Fallback if unavailable**.

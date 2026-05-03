@@ -186,6 +186,7 @@ pub fn command_name(cmd: &crate::cli::Commands) -> &'static str {
     use crate::cli::Commands;
     match cmd {
         Commands::Configure(_) => "configure",
+        Commands::Login(_) => "login",
         Commands::Whoami => "whoami",
         Commands::Doctor(_) => "doctor",
         Commands::Schema(_) => "schema",
@@ -225,6 +226,7 @@ pub fn command_name(cmd: &crate::cli::Commands) -> &'static str {
         Commands::LlmAnalytics(_) => "llm-analytics",
         Commands::Use(_) => "use",
         Commands::Completion(_) => "completion",
+        Commands::Version => "version",
     }
 }
 
