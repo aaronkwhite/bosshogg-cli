@@ -14,6 +14,8 @@ cargo fmt --all
 ./scripts/preflight.sh                               # gate before any tag push
 ```
 
+`bosshogg` is symlinked to `bh` (`/opt/homebrew/bin/bh -> /opt/homebrew/bin/bosshogg`). Use either interchangeably in the shell; prefer `bosshogg` in scripts and docs for clarity.
+
 `--features test-harness` is required for anything that spawns the binary. Without it, `BOSSHOGG_ALLOW_HTTP` is compiled out and subprocess tests that hit wiremock over `http://` will fail. Release builds always enforce `https_only(true)`.
 
 ## What this is

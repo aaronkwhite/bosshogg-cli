@@ -36,6 +36,7 @@ mod insight;
 mod insight_variable;
 mod llm_analytics;
 mod login;
+mod logout;
 mod org;
 mod person;
 mod project;

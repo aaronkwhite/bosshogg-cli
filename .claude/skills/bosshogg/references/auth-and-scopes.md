@@ -51,11 +51,18 @@ bosshogg config use-context prod
 bosshogg use prod          # shorthand
 ```
 
-Remove a context:
+Remove a context (logout):
 
 ```bash
-bosshogg config delete-context dev --yes
+bosshogg logout                       # current context
+bosshogg logout --context dev         # specific context
+bosshogg logout --all                 # every context
+bosshogg config delete-context dev --yes  # equivalent low-level form
 ```
+
+`logout` is local-only — it deletes the saved credentials but does NOT revoke
+the personal API key on PostHog. To revoke the key itself, visit account
+settings → Personal API Keys.
 
 Configs travel well: copy `~/.config/bosshogg/config.toml` between machines (after redacting keys if any were stored plaintext).
 

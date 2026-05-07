@@ -1,0 +1,5 @@
+{
+  "ok": true,
+  "deleted": ["us"],
+  "note": "Local credentials removed. To revoke the API key on PostHog, visit account settings."
+}

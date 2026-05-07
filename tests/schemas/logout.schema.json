@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bosshogg://logout",
+  "title": "bosshogg logout --json",
+  "type": "object",
+  "required": ["ok", "deleted", "note"],
+  "properties": {
+    "ok": { "type": "boolean", "const": true },
+    "deleted": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "note": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

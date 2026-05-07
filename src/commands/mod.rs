@@ -29,6 +29,7 @@ pub mod insight;
 pub mod insight_variable;
 pub mod llm_analytics;
 pub mod login;
+pub mod logout;
 pub mod org;
 pub mod person;
 pub mod project;

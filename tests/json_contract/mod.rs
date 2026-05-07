@@ -79,5 +79,12 @@ fn login_success_fixture_matches_schema() {
     assert_schema(&as_string, "login");
 }
 
+#[test]
+fn logout_success_fixture_matches_schema() {
+    let fixture = load_fixture("logout_success");
+    let as_string = serde_json::to_string(&fixture).unwrap();
+    assert_schema(&as_string, "logout");
+}
+
 // Note: End-to-end fixture test via assert_cmd + wiremock is deferred to rest_shapes.rs
 // which mocks at the serde level, avoiding the HTTPS-only client restriction in tests.

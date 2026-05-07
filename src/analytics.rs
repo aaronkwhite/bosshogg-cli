@@ -187,6 +187,7 @@ pub fn command_name(cmd: &crate::cli::Commands) -> &'static str {
     match cmd {
         Commands::Configure(_) => "configure",
         Commands::Login(_) => "login",
+        Commands::Logout(_) => "logout",
         Commands::Whoami => "whoami",
         Commands::Doctor(_) => "doctor",
         Commands::Schema(_) => "schema",

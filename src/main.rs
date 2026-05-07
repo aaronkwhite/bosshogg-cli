@@ -266,6 +266,7 @@ async fn run(cli: Cli) -> bosshogg::Result<()> {
 
         // --- Excluded commands: keep original primitive signatures ---
         Some(Commands::Login(args)) => commands::login::execute(args, json).await?,
+        Some(Commands::Logout(args)) => commands::logout::execute(args, json)?,
         Some(Commands::Configure(args)) => commands::configure::execute(args, json, debug).await?,
         Some(Commands::Doctor(args)) => {
             commands::doctor::execute(args, json, debug, cli.context.as_deref()).await?

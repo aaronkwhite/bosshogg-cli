@@ -9,7 +9,23 @@ and this project adheres to [Calendar Versioning](https://calver.org/) —
 The changelog uses dates in `YYYY-MM-DD` form. Each release also maps to a
 crates.io publication and a GitHub Release with prebuilt tarballs.
 
-## [Unreleased]
+## [2026.5.0] — 2026-05-07
+
+Logout shipped for the Toronto demo loop — the missing piece that lets the
+login flow be demonstrated repeatedly on stage without manually editing config
+files.
+
+### Added
+
+- **`bosshogg logout`** — remove saved credentials from local config. Defaults
+  to the current context; `--context <name>` targets one specific context;
+  `--all` wipes every context and clears the current selection. Local-only
+  operation: the help text and output explicitly note that the personal API
+  key is **NOT** revoked on PostHog (that requires visiting account settings —
+  the JSON `note` field surfaces this so agents understand the boundary).
+  `--json` output validates against `tests/schemas/logout.schema.json` with
+  the standard `{ok, deleted[], note}` envelope. Idempotent: `logout --all`
+  on an empty config returns `{ok:true, deleted:[]}` rather than erroring.
 
 ## [2026.4.11] — 2026-04-25
 

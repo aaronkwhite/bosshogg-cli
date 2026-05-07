@@ -16,7 +16,7 @@ use crate::commands::{
     evaluation::EvaluationArgs, event::EventArgs, event_definition::EventDefinitionArgs,
     experiment::ExperimentArgs, flag::FlagArgs, group::GroupArgs, hog_function::HogFunctionArgs,
     insight::InsightArgs, insight_variable::InsightVariableArgs, llm_analytics::LlmAnalyticsArgs,
-    login::LoginArgs, org::OrgArgs, person::PersonArgs, project::ProjectArgs,
+    login::LoginArgs, logout::LogoutArgs, org::OrgArgs, person::PersonArgs, project::ProjectArgs,
     property_definition::PropertyDefinitionArgs, query::QueryArgs, role::RoleArgs,
     schema::SchemaArgs, session_recording::SessionRecordingArgs,
     session_recording_playlist::SessionRecordingPlaylistArgs, survey::SurveyArgs, use_cmd::UseArgs,
@@ -67,6 +67,8 @@ pub enum Commands {
     Configure(ConfigureArgs),
     /// Authenticate via browser device-flow and save credentials to config.
     Login(LoginArgs),
+    /// Remove saved credentials. Local only — does NOT revoke the API key on PostHog.
+    Logout(LogoutArgs),
     Whoami,
     Doctor(DoctorArgs),
     Schema(SchemaArgs),

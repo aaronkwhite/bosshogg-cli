@@ -94,6 +94,9 @@ One-liner recipes for the 80% case. Lean on these before reaching for HogQL or R
 | Task | Command |
 |---|---|
 | Authenticate via browser (new installs) | `bosshogg login` (opens browser) or `bosshogg login --no-browser` (prints URL) |
+| Remove saved credentials (current context) | `bosshogg logout --json` |
+| Remove credentials for a specific context | `bosshogg logout --context <name> --json` |
+| Wipe every saved context | `bosshogg logout --all --json` |
 | Check CLI version | `bosshogg version --json` |
 | Ground HogQL in the active project schema | `bosshogg schema hogql --json` (cache via `scripts/hogql-schema-dump.sh`) |
 | Run a HogQL query (inline) | `bosshogg query run "SELECT count() FROM events WHERE event = '$pageview'" --json` |
