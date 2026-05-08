@@ -47,7 +47,7 @@ if [[ -n "$version" ]]; then
     ok "CHANGELOG has entry for $version"
 
     step "Cargo.toml version matches $version"
-    cargo_version=$(sed -n 's/^version = "\\(.*\\)"/\\1/p' Cargo.toml | head -1)
+    cargo_version=$(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
     if [[ "$cargo_version" != "$version" ]]; then
         fail "Cargo.toml version is '$cargo_version', expected '$version'"
     fi
