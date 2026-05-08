@@ -31,6 +31,11 @@ pub struct LoginArgs {
     /// Defaults to "us", "eu", or "login" based on the host.
     #[arg(long)]
     pub context: Option<String>,
+
+    /// Allow plaintext http:// for the device-flow request and persist
+    /// `allow_http = true` on the saved context. Self-hosted opt-in only.
+    #[arg(long)]
+    pub allow_http: bool,
 }
 
 #[derive(Deserialize)]
@@ -64,8 +69,13 @@ struct UsersMeResponse {
     organization: Option<OrgStub>,
 }
 
-fn anon_client() -> reqwest::Result<reqwest::Client> {
-    let http_ok = cfg!(feature = "test-harness") && std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok();
+fn anon_client(allow_http: bool) -> reqwest::Result<reqwest::Client> {
+    let http_ok = allow_http || std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok();
+    if http_ok {
+        tracing::warn!(
+            "TLS downgraded for login: API key will travel unencrypted; only safe on trusted networks"
+        );
+    }
     reqwest::Client::builder()
         .https_only(!http_ok)
         .user_agent(concat!("bosshogg/", env!("CARGO_PKG_VERSION")))
@@ -116,8 +126,16 @@ fn extract_project_id(team: TeamStub) -> Option<String> {
 }
 
 pub async fn execute(args: LoginArgs, json_mode: bool) -> Result<()> {
-    let client = anon_client().map_err(|e| BosshoggError::Config(format!("HTTP client: {e}")))?;
     let host = args.host.trim_end_matches('/');
+    let env_allow_http = std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok();
+    let allow_http = args.allow_http || env_allow_http;
+    if host.starts_with("http://") && !allow_http {
+        return Err(BosshoggError::Config(
+            "host is http://; pass --allow-http (or set BOSSHOGG_ALLOW_HTTP=1) to confirm an unencrypted self-hosted login".into(),
+        ));
+    }
+    let client =
+        anon_client(allow_http).map_err(|e| BosshoggError::Config(format!("HTTP client: {e}")))?;
 
     // --- Step 1: request device code ---
     let dc_resp = client
@@ -253,6 +271,7 @@ pub async fn execute(args: LoginArgs, json_mode: bool) -> Result<()> {
             // env_id = project_id: best-effort default; overridable via `bosshogg configure`
             env_id: project_id.clone(),
             org_id,
+            allow_http,
         },
     );
     if cfg.current_context.is_none() {

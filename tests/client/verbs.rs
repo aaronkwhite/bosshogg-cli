@@ -22,6 +22,7 @@ fn mk_client(base_url: &str) -> Client {
         env_id: Some("1".into()),
         org_id: None,
         context_name: Some("test".into()),
+        allow_http: false,
     };
     Client::for_test(auth, false).unwrap()
 }
@@ -225,4 +226,40 @@ async fn get_paginated_respects_limit_cap() {
         .await
         .unwrap();
     assert_eq!(out.len(), 1);
+}
+
+/// Self-hosted users sometimes front PostHog at a subpath (reverse proxy at
+/// `https://analytics.example.com/posthog/`). Verify `Client::url()` composes
+/// `host` + `path` such that the request lands at `/posthog/api/...`.
+#[tokio::test]
+async fn host_with_subpath_preserves_prefix() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/posthog/api/projects/1/feature_flags/42/"))
+        .and(bearer_token("phx_test"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"id": 42, "key": "sub"})))
+        .mount(&server)
+        .await;
+
+    let host_with_subpath = format!("{}/posthog", server.uri());
+    let c = mk_client(&host_with_subpath);
+    let flag: Flag = c.get("/api/projects/1/feature_flags/42/").await.unwrap();
+    assert_eq!(flag.key, "sub");
+}
+
+/// Trailing slash on host should be tolerated — the existing `trim_end_matches('/')`
+/// in `Client::url` covers this even when configure validation rejects it.
+#[tokio::test]
+async fn host_with_trailing_slash_does_not_double_up() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/projects/1/feature_flags/42/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"id": 42, "key": "ts"})))
+        .mount(&server)
+        .await;
+
+    let host_with_slash = format!("{}/", server.uri());
+    let c = mk_client(&host_with_slash);
+    let flag: Flag = c.get("/api/projects/1/feature_flags/42/").await.unwrap();
+    assert_eq!(flag.key, "ts");
 }

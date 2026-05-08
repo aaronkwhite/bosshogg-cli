@@ -78,6 +78,7 @@ pub async fn execute(
             checks.push(check_key_alive(&client).await);
             checks.push(check_project_access(&client, auth.project_id.as_deref()).await);
             checks.push(check_env_access(&client, auth.env_id.as_deref()).await);
+            checks.push(check_instance_version(&client).await);
         }
     }
 
@@ -304,6 +305,38 @@ async fn check_env_access(client: &Client, env_id: Option<&str>) -> Check {
             ok: false,
             message: format!("{e}"),
             remediation: Some("verify env_id and key scopes".into()),
+        },
+    }
+}
+
+/// Probe `/api/environments/?limit=1` — present in PostHog 1.43+ (mid-2024).
+/// On Cloud this always succeeds; on a stale self-hosted instance it 404s
+/// and the check warns (without failing) that some bosshogg commands may
+/// surface `feature_not_available` (exit 61) against this host.
+async fn check_instance_version(client: &Client) -> Check {
+    match client
+        .get::<Value>("/api/environments/?limit=1")
+        .await
+    {
+        Ok(_) => Check {
+            name: "instance_version",
+            ok: true,
+            message: "instance supports /api/environments/ (PostHog 1.43+)".into(),
+            remediation: None,
+        },
+        Err(BosshoggError::NotFound(_)) => Check {
+            name: "instance_version",
+            ok: true,
+            message: "instance is older than PostHog 1.43; /api/environments/ missing".into(),
+            remediation: Some(
+                "self-hosted: upgrade if you want experiment/survey environments. Cloud: report this — should never 404.".into(),
+            ),
+        },
+        Err(e) => Check {
+            name: "instance_version",
+            ok: false,
+            message: format!("version probe failed: {e}"),
+            remediation: Some("network reachable? key has read scope?".into()),
         },
     }
 }

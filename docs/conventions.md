@@ -128,7 +128,9 @@ Exit codes are stable. Scripts can rely on them.
 | 40 | Rate limited. |
 | 50–52 | Upstream / network / timeout. |
 | 60 | Schema drift. |
+| 61 | Feature not available (Cloud-only paid feature, or self-hosted version too old). |
 | 70 | Internal bug. |
+| 71 | Config error. |
 | 130 | Interrupted by SIGINT. |
 
 ## Environment variables
@@ -147,6 +149,7 @@ BossHogg reuses `@posthog/cli`'s variable names where they exist, so CI configur
 | `NO_COLOR` | Disable color | standard |
 | `RUST_LOG` / `BOSSHOGG_LOG` | `tracing` env filter | — |
 | `DO_NOT_TRACK` | Set to `1` to disable anonymous self-tracking telemetry. Equivalent to `bosshogg config analytics off`. | standard |
+| `BOSSHOGG_ALLOW_HTTP` | Set to `1` to allow plaintext `http://` requests for self-hosted PostHog. Per-context `allow_http = true` is the persistent equivalent. Bosshogg logs a warning on every plaintext request. | — |
 
 ## Auth resolution precedence
 

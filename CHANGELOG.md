@@ -9,6 +9,57 @@ and this project adheres to [Calendar Versioning](https://calver.org/) —
 The changelog uses dates in `YYYY-MM-DD` form. Each release also maps to a
 crates.io publication and a GitHub Release with prebuilt tarballs.
 
+## [2026.5.1] — 2026-05-08
+
+Self-hosted PostHog support. Most of the design was already in place — this
+release closes the three real gaps (HTTP opt-in, telemetry leak, validation
+strictness) and adds enough doctoring + error mapping to claim self-hosted
+support honestly.
+
+### Added
+
+- **Self-hosted opt-in for plaintext `http://`** — per-context `allow_http`
+  field in `~/.config/bosshogg/config.toml`, `--allow-http` flag on
+  `bosshogg login` and `bosshogg config set-context`, and the
+  `BOSSHOGG_ALLOW_HTTP=1` env var now works in release builds (previously
+  gated behind the `test-harness` cargo feature). Every plaintext request
+  emits a `tracing::warn!` so unsafe deployments are visible in logs. Cloud
+  contexts continue to enforce HTTPS unconditionally.
+- **`bosshogg configure` accepts `http://` for self-hosted** — when the user
+  picks the `self-hosted` region and pastes an `http://` host, the wizard
+  prompts for explicit confirmation and persists `allow_http = true` on the
+  context. The scriptable path (`bosshogg config set-context`) stays
+  permissive for CI use.
+- **Exit code `61` `FEATURE_NOT_AVAILABLE`** — new `BosshoggError` variant
+  mapped from HTTP `402 Payment Required`. Distinguishes "Cloud-only paid
+  feature, or self-hosted version too old" from a vanilla `404 NOT_FOUND`.
+  JSON envelope includes a hint pointing the user at `bosshogg doctor`.
+- **`bosshogg doctor` instance version probe** — new `instance_version`
+  check probes `/api/environments/?limit=1` (introduced in PostHog 1.43,
+  mid-2024). Reports OK on modern instances; warns (without failing) when
+  the endpoint 404s, suggesting an upgrade or pointing at exit-code `61`
+  for affected commands.
+- **Subpath host support** — hosts like
+  `https://analytics.example.com/posthog` now correctly route requests to
+  `/posthog/api/...`. Added wiremock test coverage for both subpath and
+  trailing-slash host forms.
+
+### Changed
+
+- **Self-hosted contexts auto-disable telemetry** — when the active context
+  has `region = "self-hosted"`, `bosshogg`'s anonymous usage stats no longer
+  fire (previously: events were queued and flushed to `app.posthog.com/batch/`
+  regardless of context). Privacy is the whole point of self-hosting; bosshogg
+  now respects that without requiring `DO_NOT_TRACK=1`.
+- **`validate_host` is now tolerant** — trailing slashes are silently
+  trimmed during normalization rather than rejected. Matches ecosystem
+  expectations (PostHog SDKs and the official `posthog-cli` accept both
+  forms). Scheme validation unchanged.
+- **`bosshogg login` rejects `http://` without explicit opt-in** — passing
+  `--host http://...` without `--allow-http` (or `BOSSHOGG_ALLOW_HTTP=1`)
+  now errors with a clear message. Prevents accidental plaintext logins
+  on Cloud hosts that mistakenly start with `http://`.
+
 ## [2026.5.0] — 2026-05-07
 
 Logout shipped for the Toronto demo loop — the missing piece that lets the

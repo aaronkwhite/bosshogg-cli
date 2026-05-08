@@ -62,6 +62,9 @@ pub struct ResolvedAuth {
     pub org_id: Option<String>,
     /// The context (if any) whose values populated non-key fields.
     pub context_name: Option<String>,
+    /// Allow plaintext `http://` requests. True when `BOSSHOGG_ALLOW_HTTP` is set
+    /// or the active context has `allow_http = true` (self-hosted opt-in).
+    pub allow_http: bool,
 }
 
 pub fn resolve_auth(
@@ -121,6 +124,9 @@ pub fn resolve_auth(
         .or_else(|| std::env::var("POSTHOG_ORG_ID").ok())
         .or_else(|| ctx.and_then(|(_, c)| c.org_id.clone()));
 
+    let allow_http = std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok()
+        || ctx.map(|(_, c)| c.allow_http).unwrap_or(false);
+
     Ok(ResolvedAuth {
         api_key,
         host,
@@ -128,6 +134,7 @@ pub fn resolve_auth(
         env_id,
         org_id,
         context_name: ctx.map(|(n, _)| n.to_string()),
+        allow_http,
     })
 }
 
@@ -149,15 +156,14 @@ impl Client {
             HeaderValue::from_static(concat!("bosshogg/", env!("CARGO_PKG_VERSION"))),
         );
 
-        let http_allowed_in_test_harness =
-            cfg!(feature = "test-harness") && std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok();
-        if http_allowed_in_test_harness {
+        if auth.allow_http {
             tracing::warn!(
-                "TLS downgraded via BOSSHOGG_ALLOW_HTTP (test-harness feature); never use in production"
+                host = %auth.host,
+                "TLS downgraded via BOSSHOGG_ALLOW_HTTP or context.allow_http; plaintext is unsafe over public networks"
             );
         }
         let http = reqwest::Client::builder()
-            .https_only(!http_allowed_in_test_harness)
+            .https_only(!auth.allow_http)
             .gzip(true)
             .connect_timeout(Duration::from_secs(10))
             .timeout(Duration::from_secs(60))
@@ -424,6 +430,9 @@ fn is_soft_delete_path(path: &str) -> bool {
 fn map_status(status: u16, body: &str, retry_after: Option<u64>) -> BosshoggError {
     match status {
         401 => BosshoggError::InvalidApiKey,
+        402 => BosshoggError::FeatureNotAvailable(
+            first_line(body).unwrap_or_else(|| "paid feature unavailable".into()),
+        ),
         403 => {
             if let Some(scope) = extract_scope(body) {
                 BosshoggError::MissingScope {

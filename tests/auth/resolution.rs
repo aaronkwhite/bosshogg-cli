@@ -16,6 +16,7 @@ fn base_cfg() -> Config {
             project_id: Some("999999".into()),
             env_id: None,
             org_id: None,
+            allow_http: false,
         },
     );
     cfg.current_context = Some("prod".into());
@@ -52,6 +53,7 @@ fn named_context_override_beats_env() {
                 project_id: None,
                 env_id: None,
                 org_id: None,
+                allow_http: false,
             },
         );
         let resolved = resolve_auth(None, Some("staging"), &cfg).unwrap();

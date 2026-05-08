@@ -173,13 +173,15 @@ All 31 GA PostHog resources + 1 nested group (Personal API Key-accessible):
 
 </details>
 
-**Agent-native output throughout.** `--json` everywhere, stable schemas validated in CI, structured errors `{error, code, message, hint, retry_with}`, deterministic exit codes (10 auth / 20 not-found / 30 bad-request / 40 rate-limit / 50 upstream / 60 schema-drift / 70 internal).
+**Agent-native output throughout.** `--json` everywhere, stable schemas validated in CI, structured errors `{error, code, message, hint, retry_with}`, deterministic exit codes (10 auth / 20 not-found / 30 bad-request / 40 rate-limit / 50 upstream / 60 schema-drift / 61 feature-not-available / 70 internal / 71 config).
+
+**Cloud and self-hosted.** Works against PostHog Cloud (US, EU) out of the box. Self-hosted PostHog is a first-class target: arbitrary host URLs, optional plaintext `http://` for internal networks (per-context opt-in via `--allow-http` or `BOSSHOGG_ALLOW_HTTP=1`), subpath-aware routing, and `bosshogg doctor` probes the instance version so you know up front when a Cloud-only paid feature will error cleanly with `61 FEATURE_NOT_AVAILABLE`. Self-hosted contexts auto-disable the anonymous self-tracking telemetry — privacy is the whole point.
 
 ## Safety
 
 Security and data-safety properties baked in from day one:
 
-- **HTTPS-only.** `reqwest` is configured with `.https_only(true)` in all release builds. The `BOSSHOGG_ALLOW_HTTP` escape hatch is feature-gated behind `test-harness` and never compiled into release binaries.
+- **HTTPS-only by default.** `reqwest` is configured with `.https_only(true)` for every Cloud context. Self-hosted users opt into plaintext `http://` per-context via `--allow-http`, the `BOSSHOGG_ALLOW_HTTP=1` env var, or by confirming the prompt in `bosshogg configure`. Every plaintext request emits a `tracing::warn!` so unsafe deployments are visible in logs.
 - **Auth redaction.** `Authorization:` headers are stripped from `--debug` output. Error bodies are truncated to 200 chars. No tokens or PII leak to logs.
 - **Soft-delete routing.** Resources that PostHog soft-deletes (flags, insights, dashboards, cohorts, actions, annotations, hog-functions) are routed through the correct soft-delete path. Hard-delete resources (persons, event-definitions, etc.) are routed correctly and gated on `--yes` or interactive TTY confirmation.
 - **HogQL auto-LIMIT.** `bosshogg query run` auto-injects `LIMIT 100` when the query has no LIMIT clause. Bypass with `--no-limit` intentionally. Injection is logged in `--debug`.

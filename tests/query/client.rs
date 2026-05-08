@@ -14,6 +14,7 @@ fn mk_client(base_url: &str) -> Client {
         env_id: Some("42".into()),
         org_id: None,
         context_name: Some("test".into()),
+        allow_http: false,
     };
     Client::for_test(auth, false).unwrap()
 }

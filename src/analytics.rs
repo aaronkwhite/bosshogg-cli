@@ -12,8 +12,10 @@
 //! `SCREAMING_SNAKE` `error_code` + numeric `exit_code`. No identifiers,
 //! no flag values, no stdout/stderr, no auth material.
 //!
-//! Opt-out: `DO_NOT_TRACK=1`, `bosshogg config analytics off`, or build
-//! with `--features test-harness` (auto-disables for the test suite).
+//! Opt-out: `DO_NOT_TRACK=1`, `bosshogg config analytics off`, build
+//! with `--features test-harness` (auto-disables for the test suite),
+//! or use a `region = "self-hosted"` context (auto-disabled — we never
+//! report the activity of a self-hosted user back to PostHog Cloud).
 //!
 //! The PostHog token below is a write-only public project key
 //! (`phc_*`) — same project as the user's other CLIs. It cannot read
@@ -31,12 +33,21 @@ const POSTHOG_BATCH_URL: &str = "https://app.posthog.com/batch/";
 /// 1. `cfg!(feature = "test-harness")` → disabled (test suite never emits).
 /// 2. `DO_NOT_TRACK=1` → disabled.
 /// 3. Config `analytics_enabled = false` → disabled.
-/// 4. Otherwise → enabled.
+/// 4. Active context region is `"self-hosted"` → disabled (never leak
+///    self-hosted activity to PostHog Cloud — privacy is the whole point
+///    of self-hosting).
+/// 5. Otherwise → enabled.
 pub fn is_enabled() -> bool {
     if cfg!(feature = "test-harness") {
         return false;
     }
-    crate::config::is_analytics_enabled()
+    if !crate::config::is_analytics_enabled() {
+        return false;
+    }
+    if crate::config::active_region(None).as_deref() == Some("self-hosted") {
+        return false;
+    }
+    true
 }
 
 /// Captured per-invocation. Built in `main.rs` after dispatch returns.

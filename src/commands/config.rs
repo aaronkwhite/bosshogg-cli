@@ -65,6 +65,10 @@ pub struct SetContextArgs {
     /// Project public token (phc_) used by `bosshogg capture` and `bosshogg flag evaluate`.
     #[arg(long = "project-token")]
     pub project_token: Option<String>,
+    /// Persist `allow_http = true` on the context (self-hosted plaintext opt-in).
+    /// `--no-allow-http` clears the flag.
+    #[arg(long, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
+    pub allow_http: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -265,6 +269,10 @@ async fn set_context(args: SetContextArgs, json_mode: bool) -> Result<()> {
         .clone()
         .or_else(|| region_to_host(args.region.as_deref()))
         .unwrap_or_else(|| "https://us.posthog.com".to_string());
+    // Trim trailing slashes silently — ecosystem expectation. Schemes are
+    // not validated here (the scriptable path is intentionally permissive
+    // so users can paste any host); the wizard does scheme validation.
+    let host = host.trim_end_matches('/').to_string();
 
     let existing = cfg.contexts.get(&args.name).cloned();
     let ctx = Context {
@@ -285,6 +293,9 @@ async fn set_context(args: SetContextArgs, json_mode: bool) -> Result<()> {
         org_id: args
             .org
             .or_else(|| existing.as_ref().and_then(|e| e.org_id.clone())),
+        allow_http: args
+            .allow_http
+            .unwrap_or_else(|| existing.as_ref().map(|e| e.allow_http).unwrap_or(false)),
     };
 
     let name = args.name.clone();

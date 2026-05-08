@@ -34,6 +34,9 @@ pub enum BosshoggError {
     #[error("not found: {0}")]
     NotFound(String),
 
+    #[error("feature not available on this PostHog instance: {0}")]
+    FeatureNotAvailable(String),
+
     #[error("HogQL error: {0}")]
     HogQL(String),
 
@@ -71,6 +74,7 @@ impl BosshoggError {
             Self::ServerError { .. } => 50,
             Self::Http(_) => 51,
             Self::Json(_) => 60,
+            Self::FeatureNotAvailable(_) => 61,
             Self::Io(_) | Self::Toml(_) => 70,
             Self::Config(_) => 71,
         }
@@ -88,6 +92,7 @@ impl BosshoggError {
             Self::ServerError { .. } => "UPSTREAM",
             Self::Http(_) => "NETWORK",
             Self::Json(_) => "SCHEMA_DRIFT",
+            Self::FeatureNotAvailable(_) => "FEATURE_NOT_AVAILABLE",
             Self::Io(_) | Self::Toml(_) => "INTERNAL",
             Self::Config(_) => "CONFIG",
         }

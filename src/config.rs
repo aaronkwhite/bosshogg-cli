@@ -51,6 +51,14 @@ pub struct Context {
     pub env_id: Option<String>,
     #[serde(default)]
     pub org_id: Option<String>,
+    /// Allow plaintext `http://` requests. Self-hosted opt-in only —
+    /// PostHog Cloud always uses HTTPS. Defaults to false.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub allow_http: bool,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
 }
 
 /// Resolves to `$BOSSHOGG_CONFIG` if set, else `~/.config/bosshogg/config.toml`.
@@ -227,6 +235,7 @@ mod tests {
                     project_id: Some("999999".into()),
                     env_id: None,
                     org_id: None,
+                    allow_http: false,
                 },
             );
             cfg.current_context = Some("prod-us".into());

@@ -72,6 +72,7 @@ mod tests {
             env_id: None,
             org_id: None,
             context_name: None,
+            allow_http: false,
         };
         Client::for_test(auth, false).expect("test client build should not fail")
     }

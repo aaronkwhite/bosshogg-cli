@@ -108,6 +108,9 @@ fn hint_for(err: &BosshoggError) -> Option<&'static str> {
         Config(_) => {
             "Run `bosshogg configure`, or set the env var named in the message (POSTHOG_CLI_*)."
         }
+        FeatureNotAvailable(_) => {
+            "This feature is gated to PostHog Cloud paid plans, or your self-hosted version doesn't support it. Check `bosshogg doctor` for instance details."
+        }
         _ => return None,
     })
 }

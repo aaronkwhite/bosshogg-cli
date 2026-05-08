@@ -1,5 +1,5 @@
 use clap::Args;
-use dialoguer::{Input, Password, Select, theme::ColorfulTheme};
+use dialoguer::{Confirm, Input, Password, Select, theme::ColorfulTheme};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -47,16 +47,33 @@ impl Region {
     }
 }
 
-pub fn validate_host(host: &str) -> Result<()> {
-    if !host.starts_with("https://") {
+/// Validate + normalize a host URL. Trailing slashes are trimmed silently
+/// (ecosystem expectation: `host` is a tolerant base URL). Returns the
+/// canonical form that should be persisted.
+pub fn normalize_host(host: &str, allow_http: bool) -> Result<String> {
+    let trimmed = host.trim_end_matches('/');
+    let scheme_ok =
+        trimmed.starts_with("https://") || (allow_http && trimmed.starts_with("http://"));
+    if !scheme_ok {
+        let expected = if allow_http {
+            "https:// or http://"
+        } else {
+            "https://"
+        };
         return Err(BosshoggError::Config(format!(
-            "host must start with https:// (got '{host}')"
+            "host must start with {expected} (got '{host}')"
         )));
     }
-    if host.ends_with('/') {
-        return Err(BosshoggError::Config("host must not end with '/'".into()));
+    if trimmed.is_empty() {
+        return Err(BosshoggError::Config("host is empty".into()));
     }
-    Ok(())
+    Ok(trimmed.to_string())
+}
+
+/// Back-compat shim — returns `Ok(())` when the host normalizes successfully.
+/// New code should call `normalize_host` and use the returned canonical form.
+pub fn validate_host(host: &str, allow_http: bool) -> Result<()> {
+    normalize_host(host, allow_http).map(|_| ())
 }
 
 pub fn validate_key(key: &str) -> Result<()> {
@@ -99,15 +116,30 @@ pub async fn execute(args: ConfigureArgs, json_mode: bool, debug: bool) -> Resul
         _ => Region::SelfHosted,
     };
 
-    let host = if matches!(region, Region::SelfHosted) {
+    let (host, allow_http) = if matches!(region, Region::SelfHosted) {
         let h: String = Input::with_theme(&theme)
-            .with_prompt("Host URL (https://...)")
+            .with_prompt("Host URL (https:// or http://)")
             .interact_text()
             .map_err(|e| BosshoggError::Config(format!("prompt: {e}")))?;
-        validate_host(&h)?;
-        h
+        let needs_http = h.starts_with("http://");
+        if needs_http {
+            let confirmed = Confirm::with_theme(&theme)
+                .with_prompt(
+                    "Plaintext http:// — your API key will travel unencrypted. Allow for this context?",
+                )
+                .default(false)
+                .interact()
+                .map_err(|e| BosshoggError::Config(format!("prompt: {e}")))?;
+            if !confirmed {
+                return Err(BosshoggError::Config(
+                    "aborted: re-run with an https:// host or confirm http:// at the prompt".into(),
+                ));
+            }
+        }
+        let normalized = normalize_host(&h, needs_http)?;
+        (normalized, needs_http)
     } else {
-        region.default_host().to_string()
+        (region.default_host().to_string(), false)
     };
 
     let api_key: String = Password::with_theme(&theme)
@@ -125,6 +157,7 @@ pub async fn execute(args: ConfigureArgs, json_mode: bool, debug: bool) -> Resul
         env_id: None,
         org_id: None,
         context_name: Some(name.clone()),
+        allow_http,
     };
     let probe_client = Client::from_resolved(probe_auth, debug)
         .map_err(|e| BosshoggError::Config(format!("failed to build probe client: {e}")))?;
@@ -182,6 +215,7 @@ pub async fn execute(args: ConfigureArgs, json_mode: bool, debug: bool) -> Resul
             project_id: project_id.clone(),
             env_id: env_id.clone(),
             org_id: org_id.clone(),
+            allow_http,
         },
     );
     cfg.current_context = Some(name.clone());
@@ -218,10 +252,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn host_must_be_https() {
-        assert!(validate_host("http://example.com").is_err());
-        assert!(validate_host("https://us.posthog.com/").is_err());
-        assert!(validate_host("https://us.posthog.com").is_ok());
+    fn host_must_be_https_by_default() {
+        assert!(validate_host("http://example.com", false).is_err());
+        // Trailing slash is now silently trimmed, not rejected.
+        assert!(validate_host("https://us.posthog.com/", false).is_ok());
+        assert!(validate_host("https://us.posthog.com", false).is_ok());
+    }
+
+    #[test]
+    fn host_accepts_http_when_allowed() {
+        assert!(validate_host("http://posthog.internal", true).is_ok());
+        assert!(validate_host("https://posthog.example.com", true).is_ok());
+    }
+
+    #[test]
+    fn normalize_trims_trailing_slash() {
+        assert_eq!(
+            normalize_host("https://us.posthog.com/", false).unwrap(),
+            "https://us.posthog.com"
+        );
+        assert_eq!(
+            normalize_host("https://us.posthog.com///", false).unwrap(),
+            "https://us.posthog.com"
+        );
+        assert_eq!(
+            normalize_host("https://analytics.example.com/posthog/", false).unwrap(),
+            "https://analytics.example.com/posthog"
+        );
     }
 
     #[test]

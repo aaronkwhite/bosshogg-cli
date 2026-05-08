@@ -33,6 +33,13 @@ async fn doctor_runs_all_checks_and_emits_json_array() {
         })))
         .mount(&h.server)
         .await;
+    Mock::given(method("GET"))
+        .and(path("/api/environments/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "results": [{"id": 999999, "name": "main"}]
+        })))
+        .mount(&h.server)
+        .await;
 
     h.cmd()
         .args(["doctor", "--json"])
@@ -41,5 +48,6 @@ async fn doctor_runs_all_checks_and_emits_json_array() {
         .stdout(contains("\"name\":\"key_alive\""))
         .stdout(contains("\"name\":\"project_access\""))
         .stdout(contains("\"name\":\"env_access\""))
+        .stdout(contains("\"name\":\"instance_version\""))
         .stdout(contains("\"summary\":{\"ok\":true"));
 }
