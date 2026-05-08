@@ -212,6 +212,33 @@ git clone https://github.com/aaronkwhite/bosshogg-cli && cd bosshogg
 cargo install --path .
 ```
 
+## Self-hosted PostHog
+
+bosshogg works against PostHog Cloud (US, EU) and self-hosted instances. Pick the line that matches your setup:
+
+```bash
+# PostHog Cloud (US is the default — drop --host for US)
+bosshogg login --host https://eu.posthog.com
+
+# Self-hosted on https
+bosshogg login --host https://posthog.your-domain.com
+
+# Self-hosted on plaintext http (lab / intranet / behind a corp VPN)
+bosshogg login --host http://posthog.internal --allow-http
+```
+
+`bosshogg login` runs PostHog's browser device-flow. If your instance predates `/api/cli-auth/device-code/`, it'll bail out and tell you to use `bosshogg configure` to paste a personal API key instead.
+
+A few things to know about self-hosted mode:
+
+- `bosshogg doctor` runs an `instance_version` probe (`/api/environments/?limit=1`, added in PostHog 1.43, mid-2024). Older instances get a warning rather than a hard fail.
+- Reverse proxies at a subpath work — pass `--host https://analytics.mycorp.com/posthog/` and requests land at `/posthog/api/...`.
+- Cloud-only paid features (subscriptions, advanced paths, SSO/RBAC, some batch-export specifics) return exit code `61 FEATURE_NOT_AVAILABLE` instead of a confusing 404, with a hint pointing at `bosshogg doctor`.
+- The anonymous usage telemetry that's on by default for Cloud users **auto-disables on self-hosted contexts** — nothing leaves your network. Confirm with `bosshogg config analytics status`.
+- `BOSSHOGG_ALLOW_HTTP=1` is the env-var equivalent of `--allow-http` if you're scripting in CI. Cloud contexts always require https regardless.
+
+Full setup notes (CI env vars, scope-by-error troubleshooting, region tagging) are in [the skill reference](./.claude/skills/bosshogg/references/auth-and-scopes.md).
+
 ## Positioning
 
 BossHogg is **complementary to**, not a replacement for, PostHog's first-party tools:
