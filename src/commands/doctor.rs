@@ -313,11 +313,13 @@ async fn check_env_access(client: &Client, env_id: Option<&str>) -> Check {
 /// On Cloud this always succeeds; on a stale self-hosted instance it 404s
 /// and the check warns (without failing) that some bosshogg commands may
 /// surface `feature_not_available` (exit 61) against this host.
+///
+/// Errors that are already surfaced by earlier checks (auth, scope,
+/// network, rate-limit) are reported as `inconclusive` rather than failed,
+/// to avoid duplicate noise — `key_alive` and `project_access` already
+/// covered the real failure.
 async fn check_instance_version(client: &Client) -> Check {
-    match client
-        .get::<Value>("/api/environments/?limit=1")
-        .await
-    {
+    match client.get::<Value>("/api/environments/?limit=1").await {
         Ok(_) => Check {
             name: "instance_version",
             ok: true,
@@ -332,11 +334,25 @@ async fn check_instance_version(client: &Client) -> Check {
                 "self-hosted: upgrade if you want experiment/survey environments. Cloud: report this — should never 404.".into(),
             ),
         },
+        // Errors covered by other checks: don't double-fail. Leave ok=true
+        // with an "inconclusive" message so the user sees we tried.
+        Err(
+            BosshoggError::InvalidApiKey
+            | BosshoggError::MissingApiKey
+            | BosshoggError::MissingScope { .. }
+            | BosshoggError::Http(_)
+            | BosshoggError::RateLimit { .. },
+        ) => Check {
+            name: "instance_version",
+            ok: true,
+            message: "version probe inconclusive (auth/network/rate-limit — see key_alive)".into(),
+            remediation: None,
+        },
         Err(e) => Check {
             name: "instance_version",
             ok: false,
             message: format!("version probe failed: {e}"),
-            remediation: Some("network reachable? key has read scope?".into()),
+            remediation: Some("instance reachable? unexpected upstream response".into()),
         },
     }
 }

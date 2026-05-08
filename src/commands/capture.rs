@@ -108,14 +108,15 @@ pub async fn execute(
     let host = ctx.host.trim_end_matches('/').to_string();
 
     // Build a minimal reqwest client — no Authorization header (capture API
-    // takes project token in the body). HTTPS-only is enforced to match the
-    // main Client's posture; the test-harness feature permits a BOSSHOGG_ALLOW_HTTP
-    // bypass exactly as in src/client/mod.rs so wiremock integration tests work.
-    let http_allowed_in_test_harness =
-        cfg!(feature = "test-harness") && std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok();
-    if http_allowed_in_test_harness {
+    // takes project token in the body). HTTPS-only is enforced for Cloud;
+    // self-hosted users opt into plaintext via per-context `allow_http=true`
+    // or `BOSSHOGG_ALLOW_HTTP=1` (matches the main Client's posture).
+    let allow_http =
+        ctx.allow_http || std::env::var("BOSSHOGG_ALLOW_HTTP").ok().as_deref() == Some("1");
+    if allow_http && host.starts_with("http://") {
         tracing::warn!(
-            "TLS downgraded via BOSSHOGG_ALLOW_HTTP (test-harness feature); never use in production"
+            host = %host,
+            "TLS downgraded via BOSSHOGG_ALLOW_HTTP or context.allow_http; plaintext is unsafe over public networks"
         );
     }
     let mut capture_headers = HeaderMap::new();
@@ -124,7 +125,7 @@ pub async fn execute(
         HeaderValue::from_static(concat!("bosshogg/", env!("CARGO_PKG_VERSION"))),
     );
     let http = reqwest::Client::builder()
-        .https_only(!http_allowed_in_test_harness)
+        .https_only(!allow_http)
         .gzip(true)
         .timeout(Duration::from_secs(30))
         .default_headers(capture_headers)

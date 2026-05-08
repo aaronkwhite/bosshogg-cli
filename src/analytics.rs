@@ -41,10 +41,19 @@ pub fn is_enabled() -> bool {
     if cfg!(feature = "test-harness") {
         return false;
     }
-    if !crate::config::is_analytics_enabled() {
+    is_enabled_inner(
+        crate::config::is_analytics_enabled(),
+        crate::config::active_region(None).as_deref(),
+    )
+}
+
+/// Pure inner of `is_enabled()` — testable without the test-harness
+/// short-circuit getting in the way.
+fn is_enabled_inner(config_says_enabled: bool, active_region: Option<&str>) -> bool {
+    if !config_says_enabled {
         return false;
     }
-    if crate::config::active_region(None).as_deref() == Some("self-hosted") {
+    if active_region == Some("self-hosted") {
         return false;
     }
     true
@@ -130,14 +139,27 @@ fn track_to_dir(dir: &Path, event: &Event) -> bool {
 }
 
 /// Flush the on-disk queue to PostHog with a 5-second per-request timeout.
+///
+/// Re-checks `is_enabled()` at flush time: if the user has set
+/// `DO_NOT_TRACK=1`, switched to a self-hosted context, or run
+/// `bosshogg config analytics off` since the queue accumulated, the queue
+/// is dropped (truncated) instead of transmitted. Stale events from a
+/// prior context never escape.
 pub async fn flush() {
     let Some(dir) = crate::config::data_dir() else {
         return;
     };
-    flush_dir(&dir, POSTHOG_BATCH_URL).await;
+    if !is_enabled() {
+        // User opted out (or switched to self-hosted) after queueing.
+        // Truncate the queue so we don't accumulate forever.
+        let queue_path = dir.join("analytics_queue.jsonl");
+        let _ = fs::write(&queue_path, "");
+        return;
+    }
+    flush_dir(&dir, POSTHOG_BATCH_URL, true).await;
 }
 
-async fn flush_dir(dir: &Path, url: &str) {
+async fn flush_dir(dir: &Path, url: &str, https_only: bool) {
     let queue_path = dir.join("analytics_queue.jsonl");
 
     let contents = match fs::read_to_string(&queue_path) {
@@ -159,7 +181,12 @@ async fn flush_dir(dir: &Path, url: &str) {
         "batch": events,
     });
 
+    // https_only(true) — defense in depth. The hardcoded `POSTHOGG_BATCH_URL`
+    // is already https, but a 3xx redirect to plaintext would be silently
+    // followed without this flag.
     let client = match reqwest::Client::builder()
+        .https_only(https_only)
+        .user_agent(concat!("bosshogg/", env!("CARGO_PKG_VERSION")))
         .timeout(Duration::from_secs(5))
         .build()
     {
@@ -370,7 +397,7 @@ mod tests {
         assert_eq!(fs::read_to_string(&queue_path).unwrap().lines().count(), 2);
 
         let url = format!("{}/batch/", server.uri());
-        flush_dir(&dir, &url).await;
+        flush_dir(&dir, &url, false).await;
 
         let after = fs::read_to_string(&queue_path).unwrap();
         assert!(after.is_empty());
@@ -395,7 +422,7 @@ mod tests {
         let before = fs::read_to_string(&queue_path).unwrap();
 
         let url = format!("{}/batch/", server.uri());
-        flush_dir(&dir, &url).await;
+        flush_dir(&dir, &url, false).await;
 
         let after = fs::read_to_string(&queue_path).unwrap();
         assert_eq!(before, after);
@@ -405,7 +432,7 @@ mod tests {
     #[tokio::test]
     async fn flush_noop_on_empty_queue() {
         let dir = fresh_dir("flush-empty");
-        flush_dir(&dir, "http://127.0.0.1:1/batch/").await;
+        flush_dir(&dir, "http://127.0.0.1:1/batch/", false).await;
         assert!(!dir.join("analytics_queue.jsonl").exists());
         let _ = fs::remove_dir_all(&dir);
     }
@@ -415,5 +442,26 @@ mod tests {
         // The test suite is built with `--features test-harness`, so
         // is_enabled() must always return false here regardless of env.
         assert!(!is_enabled());
+    }
+
+    #[test]
+    fn is_enabled_inner_blocks_self_hosted_region() {
+        // Self-hosted region short-circuits to false even when config
+        // and DO_NOT_TRACK both say enabled. Privacy invariant.
+        assert!(!is_enabled_inner(true, Some("self-hosted")));
+    }
+
+    #[test]
+    fn is_enabled_inner_allows_us_and_eu_regions() {
+        assert!(is_enabled_inner(true, Some("us")));
+        assert!(is_enabled_inner(true, Some("eu")));
+        assert!(is_enabled_inner(true, None));
+    }
+
+    #[test]
+    fn is_enabled_inner_blocks_when_config_disabled() {
+        // Even on a Cloud region, config off wins.
+        assert!(!is_enabled_inner(false, Some("us")));
+        assert!(!is_enabled_inner(false, None));
     }
 }

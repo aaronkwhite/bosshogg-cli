@@ -9,6 +9,78 @@ and this project adheres to [Calendar Versioning](https://calver.org/) —
 The changelog uses dates in `YYYY-MM-DD` form. Each release also maps to a
 crates.io publication and a GitHub Release with prebuilt tarballs.
 
+## [2026.5.2] — 2026-05-08
+
+Security and correctness follow-up to 2026.5.1's self-hosted support.
+Two parallel Opus code reviews surfaced real defects in the prior
+release; this patch closes all of them. Recommended upgrade for anyone
+on 2026.5.1.
+
+### Security
+
+- **`bosshogg capture` now honors per-context `allow_http`.** In
+  2026.5.1, `capture.rs` still used the old `cfg!(feature = "test-harness")`
+  + `BOSSHOGG_ALLOW_HTTP` gate that's compiled out of release. Self-hosted
+  users couldn't run `capture` against an `http://` host even with an
+  opted-in context. Now reads `Context.allow_http` like every other code
+  path. (HIGH)
+- **`bosshogg config set-context` now validates the host scheme.** The
+  scriptable path was a backdoor: `bosshogg config set-context cloud-prod
+  --host http://attacker.com --allow-http=true` would silently flip an
+  existing Cloud context to plaintext with no prompt or warning. The
+  command now refuses `http://` unless `--allow-http=true` is also passed
+  (matching the `bosshogg login` behaviour) and emits a `tracing::warn!`
+  on save. The wizard, login, and `set-context` paths now share the same
+  `normalize_host` helper. (HIGH)
+- **Region detection no longer accepts substring forgery.** `region_for`
+  used `host.contains("eu.posthog.com")`, which matched
+  `https://eu.posthog.com.attacker.com` as an EU Cloud context. Combined
+  with the wrong region tag, the new "auto-disable telemetry on
+  self-hosted" guard wouldn't trigger — defeating the whole privacy
+  point. Replaced with exact-authority matching (`authority_of(host)`
+  returns the lowercased host[:port], compared against the Cloud DNS
+  names). New unit tests cover the substring-attack vectors that used
+  to pass. (MED)
+- **`analytics::flush()` now re-checks `is_enabled()`.** Previously,
+  events queued under a Cloud context would still flush even after the
+  user set `DO_NOT_TRACK=1` or switched to a self-hosted context. Now
+  the queue is dropped (truncated) at flush time when telemetry is
+  disabled. (MED)
+- **Telemetry flusher now sets `https_only(true)` and a User-Agent.**
+  Defense in depth: the URL is hardcoded https, but a 3xx redirect
+  would otherwise be silently followed. (MED)
+- **`BOSSHOGG_ALLOW_HTTP` strict `"1"` check.** Previously any non-empty
+  value (including `=` and `=0`) activated the bypass. Now matches
+  `DO_NOT_TRACK` semantics exactly. (LOW)
+
+### Fixed
+
+- **Skill no longer claims a `--legacy-endpoints` flag** that doesn't
+  exist anywhere in the source. Replaced with an honest "open an issue"
+  note for users on pre-1.43 PostHog instances.
+- **`docs/conventions.md` "HTTPS only" claim updated** to reflect that
+  HTTPS-only is conditional on context — Cloud is always strict, self-hosted
+  can opt into plaintext per context.
+- **`bosshogg config set-context --allow-http` doc comment fixed.**
+  Previously claimed `--no-allow-http` clears the flag; that flag never
+  existed. Documented form is now `--allow-http=false`.
+- **`bosshogg doctor` instance_version probe** no longer double-fails
+  on auth/network/rate-limit errors that other checks already surfaced.
+  Reports "inconclusive" instead.
+- **TLS-downgrade warning no longer fires for `https://` hosts** when
+  `BOSSHOGG_ALLOW_HTTP=1` is set in env (e.g. for tests). Now gated on
+  `host.starts_with("http://")` at both the login and main client
+  callsites.
+
+### Tests
+
+- Added resolution tests for `BOSSHOGG_ALLOW_HTTP` (strict `"1"`-only,
+  empty/`0`/`true` reject), per-context `allow_http` propagation, and
+  env-or-context precedence.
+- Refactored `analytics::is_enabled` into a pure inner function so the
+  self-hosted region short-circuit is testable without the test-harness
+  feature getting in the way. Three new cases cover the matrix.
+
 ## [2026.5.1] — 2026-05-08
 
 Self-hosted PostHog support. Most of the design was already in place — this

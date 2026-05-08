@@ -120,3 +120,103 @@ fn missing_everywhere_returns_missing_api_key() {
         },
     );
 }
+
+// ── allow_http resolution ────────────────────────────────────────────────
+
+#[test]
+fn allow_http_default_is_false() {
+    temp_env::with_vars_unset(
+        [
+            "POSTHOG_CLI_TOKEN",
+            "POSTHOG_CLI_API_KEY",
+            "POSTHOG_API_KEY",
+            "BOSSHOGG_ALLOW_HTTP",
+        ],
+        || {
+            let cfg = base_cfg();
+            let resolved = resolve_auth(None, None, &cfg).unwrap();
+            assert!(!resolved.allow_http);
+        },
+    );
+}
+
+#[test]
+fn allow_http_env_var_strict_one() {
+    temp_env::with_vars_unset(
+        [
+            "POSTHOG_CLI_TOKEN",
+            "POSTHOG_CLI_API_KEY",
+            "POSTHOG_API_KEY",
+        ],
+        || {
+            // Strict "1" — empty and "0" must NOT activate.
+            for (val, expected) in [
+                (Some("1"), true),
+                (Some("0"), false),
+                (Some(""), false),
+                (Some("true"), false),
+                (None, false),
+            ] {
+                temp_env::with_var("BOSSHOGG_ALLOW_HTTP", val, || {
+                    let cfg = base_cfg();
+                    let resolved = resolve_auth(None, None, &cfg).unwrap();
+                    assert_eq!(
+                        resolved.allow_http, expected,
+                        "BOSSHOGG_ALLOW_HTTP={val:?} should resolve to allow_http={expected}",
+                    );
+                });
+            }
+        },
+    );
+}
+
+#[test]
+fn allow_http_propagates_from_context() {
+    temp_env::with_vars_unset(
+        [
+            "POSTHOG_CLI_TOKEN",
+            "POSTHOG_CLI_API_KEY",
+            "POSTHOG_API_KEY",
+            "BOSSHOGG_ALLOW_HTTP",
+        ],
+        || {
+            let mut cfg = base_cfg();
+            cfg.contexts.insert(
+                "onprem".into(),
+                Context {
+                    host: "http://posthog.internal".into(),
+                    region: Some("self-hosted".into()),
+                    api_key: Some("phx_onprem".into()),
+                    project_token: None,
+                    project_id: None,
+                    env_id: None,
+                    org_id: None,
+                    allow_http: true,
+                },
+            );
+            let resolved = resolve_auth(None, Some("onprem"), &cfg).unwrap();
+            assert!(resolved.allow_http);
+            assert_eq!(resolved.host, "http://posthog.internal");
+        },
+    );
+}
+
+#[test]
+fn allow_http_env_or_context_wins() {
+    // Either source enabling allow_http is sufficient.
+    temp_env::with_vars_unset(
+        [
+            "POSTHOG_CLI_TOKEN",
+            "POSTHOG_CLI_API_KEY",
+            "POSTHOG_API_KEY",
+        ],
+        || {
+            // Env on, context off → allowed.
+            temp_env::with_var("BOSSHOGG_ALLOW_HTTP", Some("1"), || {
+                let cfg = base_cfg(); // base_cfg sets allow_http: false on the prod context
+                let resolved = resolve_auth(None, None, &cfg).unwrap();
+                assert!(resolved.allow_http);
+            });
+        },
+    );
+}

@@ -1,6 +1,7 @@
 use clap::{Args, Subcommand};
 use serde::Serialize;
 
+use crate::commands::configure::normalize_host;
 use crate::config::{self, Context};
 use crate::error::{BosshoggError, Result};
 use crate::output;
@@ -65,8 +66,9 @@ pub struct SetContextArgs {
     /// Project public token (phc_) used by `bosshogg capture` and `bosshogg flag evaluate`.
     #[arg(long = "project-token")]
     pub project_token: Option<String>,
-    /// Persist `allow_http = true` on the context (self-hosted plaintext opt-in).
-    /// `--no-allow-http` clears the flag.
+    /// Persist `allow_http` on the context (self-hosted plaintext opt-in).
+    /// Pass `--allow-http` (or `--allow-http=true`) to set; `--allow-http=false`
+    /// to clear; omit to preserve the existing context's value.
     #[arg(long, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
     pub allow_http: Option<bool>,
 }
@@ -264,15 +266,36 @@ async fn set_context(args: SetContextArgs, json_mode: bool) -> Result<()> {
         None
     };
 
-    let host = args
+    let raw_host = args
         .host
         .clone()
         .or_else(|| region_to_host(args.region.as_deref()))
         .unwrap_or_else(|| "https://us.posthog.com".to_string());
-    // Trim trailing slashes silently — ecosystem expectation. Schemes are
-    // not validated here (the scriptable path is intentionally permissive
-    // so users can paste any host); the wizard does scheme validation.
-    let host = host.trim_end_matches('/').to_string();
+
+    // Resolve allow_http BEFORE the scheme check, since the check depends on it.
+    let resolved_allow_http = args
+        .allow_http
+        .unwrap_or_else(|| existing_allow_http(&cfg, &args.name));
+
+    // Shared normalization with the configure wizard: trim trailing slashes
+    // silently, then validate scheme. Rejects http:// unless allow_http is set.
+    // Prevents `set-context cloud-prod --host http://attacker.com` silently
+    // downgrading a Cloud context.
+    let host = normalize_host(&raw_host, resolved_allow_http).map_err(|e| match e {
+        BosshoggError::Config(msg) if raw_host.starts_with("http://") => {
+            BosshoggError::Config(format!(
+                "{msg}; pass --allow-http=true to confirm plaintext is intended (self-hosted only)"
+            ))
+        }
+        other => other,
+    })?;
+    if host.starts_with("http://") {
+        tracing::warn!(
+            context = %args.name,
+            host = %host,
+            "saving plaintext http:// host on context — every request will travel unencrypted"
+        );
+    }
 
     let existing = cfg.contexts.get(&args.name).cloned();
     let ctx = Context {
@@ -293,9 +316,7 @@ async fn set_context(args: SetContextArgs, json_mode: bool) -> Result<()> {
         org_id: args
             .org
             .or_else(|| existing.as_ref().and_then(|e| e.org_id.clone())),
-        allow_http: args
-            .allow_http
-            .unwrap_or_else(|| existing.as_ref().map(|e| e.allow_http).unwrap_or(false)),
+        allow_http: resolved_allow_http,
     };
 
     let name = args.name.clone();
@@ -329,4 +350,12 @@ fn region_to_host(region: Option<&str>) -> Option<String> {
         Some("eu") => Some("https://eu.posthog.com".into()),
         _ => None,
     }
+}
+
+/// Existing context's allow_http flag, or false if the context is new.
+fn existing_allow_http(cfg: &crate::config::Config, name: &str) -> bool {
+    cfg.contexts
+        .get(name)
+        .map(|c| c.allow_http)
+        .unwrap_or(false)
 }

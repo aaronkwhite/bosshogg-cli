@@ -222,9 +222,11 @@ For the LLM-observability workflow (queries via `bosshogg query` through the `$a
 
 API error response bodies are clipped to 200 chars in debug output and logs. Prevents accidental token/PII leakage. Lifted from the `lin` playbook's security review.
 
-### HTTPS only
+### HTTPS by default; per-context plaintext opt-in for self-hosted
 
-`reqwest` client is configured with `.https_only(true)`. Rejects redirects to non-HTTPS. Prevents a PostHog response that redirects to `http://` from being followed.
+`reqwest` client is configured with `.https_only(true)` for every Cloud context. Rejects redirects to non-HTTPS. Prevents a PostHog response that redirects to `http://` from being followed.
+
+Self-hosted users on internal networks can opt into plaintext per-context via `--allow-http` (on `bosshogg login` or `bosshogg config set-context`), `BOSSHOGG_ALLOW_HTTP=1`, or by confirming the prompt in `bosshogg configure`. Both `bosshogg login` and `bosshogg config set-context` refuse `http://` hosts unless the opt-in is explicit. Every plaintext request emits a `tracing::warn!`. The anonymous self-tracking telemetry endpoint stays `https_only(true)` regardless of context.
 
 ### Auth header redaction
 

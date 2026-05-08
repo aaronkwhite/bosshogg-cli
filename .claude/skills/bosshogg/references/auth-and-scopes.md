@@ -215,7 +215,7 @@ Every plaintext request emits a `tracing::warn!`. Cloud contexts always enforce 
 
 **Cloud-only paid features** (subscriptions, advanced paths, SSO/RBAC, certain batch-export specifics) return exit code `61 FEATURE_NOT_AVAILABLE` on self-hosted instead of a confusing 404. The JSON error envelope includes a hint pointing at `bosshogg doctor`.
 
-Older self-hosted instances may not implement `/api/environments/:eid/query/` (the modern HogQL path). If `bosshogg query run` returns 404, pass `--legacy-endpoints` to fall back to `/api/projects/:pid/query/`.
+Older self-hosted instances may not implement `/api/environments/:eid/query/` (the modern HogQL path). If `bosshogg query run` returns 404 there, your instance predates PostHog 1.43 — upgrade, or open an issue and we'll add a `--legacy-endpoints` fallback.
 
 ## CI setup
 

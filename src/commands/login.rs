@@ -69,10 +69,11 @@ struct UsersMeResponse {
     organization: Option<OrgStub>,
 }
 
-fn anon_client(allow_http: bool) -> reqwest::Result<reqwest::Client> {
-    let http_ok = allow_http || std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok();
-    if http_ok {
+fn anon_client(allow_http: bool, host: &str) -> reqwest::Result<reqwest::Client> {
+    let http_ok = allow_http || std::env::var("BOSSHOGG_ALLOW_HTTP").ok().as_deref() == Some("1");
+    if http_ok && host.starts_with("http://") {
         tracing::warn!(
+            host = %host,
             "TLS downgraded for login: API key will travel unencrypted; only safe on trusted networks"
         );
     }
@@ -84,26 +85,48 @@ fn anon_client(allow_http: bool) -> reqwest::Result<reqwest::Client> {
         .build()
 }
 
+/// Extract the authority (host[:port]) from an `http(s)://...` URL via simple
+/// string ops. Used to classify region by exact match — substring matching
+/// (`host.contains("eu.posthog.com")`) is forgeable: `eu.posthog.com.attacker.com`
+/// would have matched as EU. Returns lowercase since DNS is case-insensitive.
+fn authority_of(host: &str) -> Option<String> {
+    let after_scheme = host
+        .strip_prefix("https://")
+        .or_else(|| host.strip_prefix("http://"))?;
+    let end = after_scheme.find('/').unwrap_or(after_scheme.len());
+    let authority = &after_scheme[..end];
+    let host_only = authority
+        .split_once(':')
+        .map(|(h, _)| h)
+        .unwrap_or(authority);
+    if host_only.is_empty() {
+        return None;
+    }
+    Some(host_only.to_ascii_lowercase())
+}
+
+fn cloud_region_of(host: &str) -> Option<&'static str> {
+    match authority_of(host).as_deref() {
+        Some("us.posthog.com") => Some("us"),
+        Some("eu.posthog.com") => Some("eu"),
+        _ => None,
+    }
+}
+
 fn context_name_for(host: &str, override_name: Option<String>) -> String {
     override_name.unwrap_or_else(|| {
-        if host.contains("eu.posthog.com") {
-            "eu".into()
-        } else if host.contains("us.posthog.com") {
-            "us".into()
-        } else {
-            "login".into()
-        }
+        cloud_region_of(host)
+            .map(str::to_string)
+            .unwrap_or_else(|| "login".into())
     })
 }
 
 fn region_for(host: &str) -> Option<String> {
-    if host.contains("eu.posthog.com") {
-        Some("eu".into())
-    } else if host.contains("us.posthog.com") {
-        Some("us".into())
-    } else {
-        Some("self-hosted".into())
-    }
+    Some(
+        cloud_region_of(host)
+            .map(str::to_string)
+            .unwrap_or_else(|| "self-hosted".into()),
+    )
 }
 
 fn open_browser(url: &str) {
@@ -127,15 +150,15 @@ fn extract_project_id(team: TeamStub) -> Option<String> {
 
 pub async fn execute(args: LoginArgs, json_mode: bool) -> Result<()> {
     let host = args.host.trim_end_matches('/');
-    let env_allow_http = std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok();
+    let env_allow_http = std::env::var("BOSSHOGG_ALLOW_HTTP").ok().as_deref() == Some("1");
     let allow_http = args.allow_http || env_allow_http;
     if host.starts_with("http://") && !allow_http {
         return Err(BosshoggError::Config(
             "host is http://; pass --allow-http (or set BOSSHOGG_ALLOW_HTTP=1) to confirm an unencrypted self-hosted login".into(),
         ));
     }
-    let client =
-        anon_client(allow_http).map_err(|e| BosshoggError::Config(format!("HTTP client: {e}")))?;
+    let client = anon_client(allow_http, host)
+        .map_err(|e| BosshoggError::Config(format!("HTTP client: {e}")))?;
 
     // --- Step 1: request device code ---
     let dc_resp = client
@@ -300,4 +323,45 @@ pub async fn execute(args: LoginArgs, json_mode: bool) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cloud_region_exact_match_only() {
+        assert_eq!(cloud_region_of("https://us.posthog.com"), Some("us"));
+        assert_eq!(cloud_region_of("https://us.posthog.com/"), Some("us"));
+        assert_eq!(cloud_region_of("https://eu.posthog.com"), Some("eu"));
+        assert_eq!(cloud_region_of("https://EU.POSTHOG.COM"), Some("eu"));
+        assert_eq!(cloud_region_of("https://us.posthog.com:443"), Some("us"));
+    }
+
+    #[test]
+    fn cloud_region_rejects_substring_attacks() {
+        // The substring trick — would have passed under the old `host.contains(...)`.
+        assert_eq!(cloud_region_of("https://eu.posthog.com.attacker.com"), None);
+        assert_eq!(cloud_region_of("https://attacker.com/eu.posthog.com"), None);
+        assert_eq!(cloud_region_of("https://prefix-us.posthog.com"), None);
+        assert_eq!(
+            cloud_region_of("https://posthog-self-hosted.example.com"),
+            None
+        );
+    }
+
+    #[test]
+    fn region_for_falls_back_to_self_hosted() {
+        assert_eq!(region_for("https://us.posthog.com").as_deref(), Some("us"));
+        assert_eq!(region_for("https://eu.posthog.com").as_deref(), Some("eu"));
+        assert_eq!(
+            region_for("https://posthog.example.com").as_deref(),
+            Some("self-hosted")
+        );
+        // The exact attack from the security review: this MUST NOT classify as eu.
+        assert_eq!(
+            region_for("https://eu.posthog.com.attacker.com").as_deref(),
+            Some("self-hosted")
+        );
+    }
 }

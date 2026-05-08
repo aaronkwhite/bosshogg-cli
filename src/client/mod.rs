@@ -124,7 +124,7 @@ pub fn resolve_auth(
         .or_else(|| std::env::var("POSTHOG_ORG_ID").ok())
         .or_else(|| ctx.and_then(|(_, c)| c.org_id.clone()));
 
-    let allow_http = std::env::var("BOSSHOGG_ALLOW_HTTP").is_ok()
+    let allow_http = std::env::var("BOSSHOGG_ALLOW_HTTP").ok().as_deref() == Some("1")
         || ctx.map(|(_, c)| c.allow_http).unwrap_or(false);
 
     Ok(ResolvedAuth {
@@ -156,7 +156,7 @@ impl Client {
             HeaderValue::from_static(concat!("bosshogg/", env!("CARGO_PKG_VERSION"))),
         );
 
-        if auth.allow_http {
+        if auth.allow_http && auth.host.starts_with("http://") {
             tracing::warn!(
                 host = %auth.host,
                 "TLS downgraded via BOSSHOGG_ALLOW_HTTP or context.allow_http; plaintext is unsafe over public networks"
