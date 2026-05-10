@@ -5,7 +5,9 @@
 //! flushes the queue to PostHog `/batch/` on exit with a 3-second timeout.
 //! Failures keep the queue intact for the next run.
 //!
-//! Captured properties are coarse and non-identifying: the command name
+//! Captured properties are coarse and non-identifying: a constant
+//! `app: "bosshogg"` so dashboards can partition this CLI's events from
+//! peer CLIs that share the same PostHog project, the command name
 //! (e.g. `flag.list`), which top-level flags were set, success bool,
 //! `duration_ms`, `version`, `os`, `arch`, the active context's `region`
 //! (`us` / `eu` / `self-hosted`), and on failure the error's
@@ -96,6 +98,7 @@ fn track_to_dir(dir: &Path, event: &Event) -> bool {
     };
 
     let mut properties = serde_json::json!({
+        "app": "bosshogg",
         "command": event.command,
         "flags": event.flags,
         "success": event.success,
@@ -335,6 +338,7 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(queue.trim()).unwrap();
         assert_eq!(parsed["event"], "command_executed");
         let p = &parsed["properties"];
+        assert_eq!(p["app"], "bosshogg");
         assert_eq!(p["command"], "experiment.archive");
         assert_eq!(p["flags"][0], "--json");
         assert_eq!(p["flags"][1], "--yes");

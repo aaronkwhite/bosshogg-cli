@@ -9,6 +9,24 @@ and this project adheres to [Calendar Versioning](https://calver.org/) —
 The changelog uses dates in `YYYY-MM-DD` form. Each release also maps to a
 crates.io publication and a GitHub Release with prebuilt tarballs.
 
+## [2026.5.3] — 2026-05-10
+
+Telemetry hygiene patch. The PostHog write token bosshogg ships with
+points at a project shared by the maintainer's other CLIs. With no
+distinguishing property, dashboards filtering on `event =
+'command_executed'` couldn't tell bosshogg events apart from peer-CLI
+events. This release adds a single constant property so that filter
+becomes trivial.
+
+### Changed
+
+- **`src/analytics.rs` now emits `app: "bosshogg"`** on every
+  `command_executed` event, alongside the existing `command`, `flags`,
+  `success`, `duration_ms`, `version`, `os`, `arch`, `region`,
+  `error_code`, `exit_code` properties. Additive only — no consumer of
+  the prior shape breaks. Dashboards that want bosshogg-only data should
+  add `properties.app = 'bosshogg'`. (LOW)
+
 ## [2026.5.2] — 2026-05-08
 
 Security and correctness follow-up to 2026.5.1's self-hosted support.
