@@ -19,6 +19,10 @@
 </p>
 
 <p align="center">
+  <strong>Raw data → dashboard → live survey. One prompt.</strong>
+</p>
+
+<p align="center">
   <a href="https://youtu.be/dkNYeYNgnPA">
     <img src="https://img.youtube.com/vi/dkNYeYNgnPA/maxresdefault.jpg" alt="BossHogg demo — query data, build a dashboard, launch a survey" width="900">
   </a>
