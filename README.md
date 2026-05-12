@@ -18,6 +18,12 @@
   <img src="https://img.shields.io/badge/posthog%20resources-31%20GA-FF6A00" alt="31 PostHog resources">
 </p>
 
+<p align="center">
+  <a href="https://youtu.be/dkNYeYNgnPA">
+    <img src="https://img.youtube.com/vi/dkNYeYNgnPA/maxresdefault.jpg" alt="BossHogg demo — query data, build a dashboard, launch a survey" width="900">
+  </a>
+</p>
+
 Query events with HogQL, manage feature flags, inspect persons and cohorts, debug insights, and operate 31 PostHog resources from your terminal — or from Claude Code, Cursor, and other coding agents. Ships a Claude Code skill that loads at **~200 idle tokens** instead of the **~44,000 tokens** the PostHog MCP server costs every agent session.
 
 <details>
@@ -66,10 +72,6 @@ ln -s "$(command -v bosshogg)" /usr/local/bin/bh   # or anywhere on PATH
 ```
 
 Then `bh flag list`, `bh query run "SELECT …"`, etc.
-
-<p align="center">
-  <img src="images/demo.gif" alt="BossHogg demo: doctor, flag list, HogQL query" width="900">
-</p>
 
 ## Why BossHogg over the PostHog MCP server?
 
