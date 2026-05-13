@@ -19,6 +19,10 @@
 </p>
 
 <p align="center">
+  <a href="https://www.producthunt.com/products/bosshogg?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-bosshogg" target="_blank" rel="noopener noreferrer"><img alt="BossHogg - The agent-first CLI for PostHog | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1145680&theme=light&t=1778636809036"></a>
+</p>
+
+<p align="center">
   <strong>Raw data → dashboard → live survey. One prompt.</strong>
 </p>
 
