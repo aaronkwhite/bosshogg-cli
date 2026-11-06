@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://www.producthunt.com/products/bosshogg?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-bosshogg" target="_blank" rel="noopener noreferrer"><img alt="BossHogg - Agent-first CLI for PostHog analytics and feature flags | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1145680&theme=light&t=1778688885932"></a>
+</p>
+
 <h1 align="center">BossHogg</h1>
 
 <p align="center">
@@ -16,10 +20,6 @@
   <img src="https://img.shields.io/badge/rust-1.78%2B-orange" alt="Rust 1.78+">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
   <img src="https://img.shields.io/badge/posthog%20resources-31%20GA-FF6A00" alt="31 PostHog resources">
-</p>
-
-<p align="center">
-  <a href="https://www.producthunt.com/products/bosshogg?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-bosshogg" target="_blank" rel="noopener noreferrer"><img alt="BossHogg - The agent-first CLI for PostHog | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1145680&theme=light&t=1778636809036"></a>
 </p>
 
 <p align="center">
