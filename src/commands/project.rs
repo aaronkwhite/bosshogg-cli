@@ -258,7 +258,7 @@ fn print_project(project: &Project, json_mode: bool) {
             println!("Timezone:   {tz}");
         }
         if let Some(token) = project.api_token.as_deref() {
-            println!("Token:      {token}");
+            println!("Token:      {}", token_display(token));
         }
         if let Some(c) = project.created_at.as_deref() {
             println!("Created:    {c}");
@@ -269,9 +269,22 @@ fn print_project(project: &Project, json_mode: bool) {
     }
 }
 
+/// Text view masks the project token so it doesn't land in screenshots or
+/// terminal logs. `--json` keeps the full value (agents read it from there).
+fn token_display(token: &str) -> String {
+    format!("{} (full value: --json)", crate::util::redact_key(token))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn text_view_masks_project_token() {
+        let shown = token_display("phc_abcdefghijklmnop1234");
+        assert!(!shown.contains("abcdefghijklmnop"));
+        assert!(shown.starts_with("phc_***1234"));
+    }
 
     #[test]
     fn project_roundtrip() {

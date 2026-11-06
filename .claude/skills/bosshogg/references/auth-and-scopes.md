@@ -15,7 +15,7 @@ PostHog uses granular scopes on personal API keys. All setup paths lead to `boss
 
 ## Context management
 
-Contexts are kubectl-style: named bundles of `(host, project_id, env_id, key)` stored in `~/.config/bosshogg/config.toml` with `0600` perms.
+Contexts are kubectl-style: named bundles of `(host, project_id, env_id, key)` stored in `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`) with `0600` perms.
 
 Create a context interactively:
 
@@ -64,7 +64,7 @@ bosshogg config delete-context dev --yes  # equivalent low-level form
 the personal API key on PostHog. To revoke the key itself, visit account
 settings → Personal API Keys.
 
-Configs travel well: copy `~/.config/bosshogg/config.toml` between machines (after redacting keys if any were stored plaintext).
+Configs travel well: copy `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`) between machines (after redacting keys if any were stored plaintext).
 
 ## Key types
 
@@ -172,7 +172,7 @@ Resolution precedence (high to low):
 1. `--api-key <key>` flag
 2. `--profile <name>` flag
 3. `POSTHOG_CLI_TOKEN` / `POSTHOG_CLI_API_KEY` / `POSTHOG_API_KEY`
-4. Default profile in `~/.config/bosshogg/config.toml`
+4. Default profile in `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`)
 5. `.env` / `.env.local` in cwd
 
 `bosshogg` does **not** search `current_exe().parent()` for `.env` (lesson from the `lin` security review — a credential-hijack vector).

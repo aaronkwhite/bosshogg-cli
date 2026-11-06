@@ -72,7 +72,7 @@ src/
     safe.rs             # Blob-safety rules — replay never-stdout,
                         #   LLM-trace summarize-default, size guards.
                         #   Day-one enforcement even before M8.
-  config.rs             # TOML, multi-profile, ~/.config/bosshogg/config.toml
+  config.rs             # TOML, multi-profile, <OS config dir>/bosshogg/config.toml
   util.rs               # UUID / short_id detection, date parsing
 tests/
   query_validation.rs   # Ping the API; verify REST shapes match our structs
@@ -199,7 +199,7 @@ Order matters, and we've stolen it directly from the `lin` playbook's post-revie
 1. **`--api-key <key>`** — highest priority, for one-off invocations and tests.
 2. **`--context <name>`** (alias `--profile` kept for @posthog/cli habit) — named context from config; its `api_key` field.
 3. **`POSTHOG_CLI_TOKEN`** / **`POSTHOG_CLI_API_KEY`** / **`POSTHOG_API_KEY`** env var — for CI, scripts, and agents. We reuse `@posthog/cli`'s variable names for drop-in CI compat; fall back to `POSTHOG_API_KEY`.
-4. **Current context** (`current_context` field) in `~/.config/bosshogg/config.toml`.
+4. **Current context** (`current_context` field) in `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`).
 5. **`.env` / `.env.local`** in the current directory. (Do NOT look at `current_exe().parent()` — see the `lin` security review findings for why.)
 
 Host resolution chain, similar:
@@ -213,7 +213,7 @@ Host resolution chain, similar:
 ## Config file
 
 ```toml
-# ~/.config/bosshogg/config.toml
+# ~/.config/bosshogg/config.toml  (macOS: ~/Library/Application Support/bosshogg/config.toml)
 # File perms enforced to 0600 on save.
 current_context = "prod-us"
 
@@ -346,7 +346,7 @@ Same baseline as the `lin` playbook, with PostHog-specific additions:
 | `comfy-table` | Tables |
 | `console` | Terminal detection + styling |
 | `dialoguer` (fuzzy-select) | Interactive prompts |
-| `dirs` | `~/.config/bosshogg/` |
+| `dirs` | `~/.config/bosshogg/` (Linux), `~/Library/Application Support/bosshogg/` (macOS) |
 | `termimad` | Markdown rendering (insight/dashboard descriptions) |
 | `toml` | Config file |
 | `dashmap` | Concurrent name-ID maps where needed |

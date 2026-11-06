@@ -9,6 +9,25 @@ and this project adheres to [Calendar Versioning](https://calver.org/) —
 The changelog uses dates in `YYYY-MM-DD` form. Each release also maps to a
 crates.io publication and a GitHub Release with prebuilt tarballs.
 
+## [2026.11.1] — 2026-11-06
+
+Follow-up fixes to 2026.11.0.
+
+### Changed
+
+- **`project get` / `project current` text view masks the project
+  token** (`phc_***abcd (full value: --json)`) so it doesn't end up in
+  screenshots or terminal logs. `--json` output is unchanged and still
+  carries the full `api_token`. (LOW)
+- **`FEATURE_NOT_AVAILABLE` hint no longer points at `bosshogg doctor`**,
+  which stopped reporting instance details in 2026.11.0. (LOW)
+
+### Docs
+
+- Config file location corrected everywhere: `~/.config/bosshogg/` on
+  Linux, `~/Library/Application Support/bosshogg/` on macOS. The code
+  was always right; the docs only named the Linux path.
+
 ## [2026.11.0] — 2026-11-06
 
 PostHog API catch-up. On 2026-06-01 PostHog rolled back its

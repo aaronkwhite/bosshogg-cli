@@ -1,4 +1,5 @@
-//! TOML-backed config at `~/.config/bosshogg/config.toml`.
+//! TOML-backed config in the OS config dir: `~/.config/bosshogg/config.toml`
+//! on Linux, `~/Library/Application Support/bosshogg/config.toml` on macOS.
 //!
 //! Named **contexts** (kubectl/gh-style) carry host, region, API key,
 //! project token (phc_ public key for flag evaluation), project/env/org
@@ -61,7 +62,8 @@ fn is_false(b: &bool) -> bool {
     !*b
 }
 
-/// Resolves to `$BOSSHOGG_CONFIG` if set, else `~/.config/bosshogg/config.toml`.
+/// Resolves to `$BOSSHOGG_CONFIG` if set, else `bosshogg/config.toml` under the
+/// OS config dir (`~/.config` on Linux, `~/Library/Application Support` on macOS).
 ///
 /// Falls back to `./bosshogg-config.toml` only if no home directory can be
 /// determined (rare; CI containers mostly).
@@ -144,7 +146,7 @@ pub fn save(config: &Config) -> Result<()> {
 
 /// Directory where bosshogg stores per-user state (config, analytics queue,
 /// install id). Resolves under `$BOSSHOGG_CONFIG`'s parent if set, otherwise
-/// `~/.config/bosshogg`. Returns `None` only if no home directory is
+/// `bosshogg/` under the OS config dir (see [`config_path`]). Returns `None` only if no home directory is
 /// resolvable AND `$BOSSHOGG_CONFIG` is unset (rare; CI containers).
 pub fn data_dir() -> Option<PathBuf> {
     if let Ok(p) = std::env::var("BOSSHOGG_CONFIG") {

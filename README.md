@@ -185,7 +185,7 @@ All 31 GA PostHog resources + 1 nested group (Personal API Key-accessible):
 
 **Agent-native output throughout.** `--json` everywhere, stable schemas validated in CI, structured errors `{error, code, message, hint, retry_with}`, deterministic exit codes (10 auth / 20 not-found / 30 bad-request / 40 rate-limit / 50 upstream / 60 schema-drift / 61 feature-not-available / 70 internal / 71 config).
 
-**Cloud and self-hosted.** Works against PostHog Cloud (US, EU) out of the box. Self-hosted PostHog is a first-class target: arbitrary host URLs, optional plaintext `http://` for internal networks (per-context opt-in via `--allow-http` or `BOSSHOGG_ALLOW_HTTP=1`), subpath-aware routing, and `bosshogg doctor` probes the instance version so you know up front when a Cloud-only paid feature will error cleanly with `61 FEATURE_NOT_AVAILABLE`. Self-hosted contexts auto-disable the anonymous self-tracking telemetry — privacy is the whole point.
+**Cloud and self-hosted.** Works against PostHog Cloud (US, EU) out of the box. Self-hosted PostHog is a first-class target: arbitrary host URLs, optional plaintext `http://` for internal networks (per-context opt-in via `--allow-http` or `BOSSHOGG_ALLOW_HTTP=1`), subpath-aware routing, and Cloud-only paid features error cleanly with `61 FEATURE_NOT_AVAILABLE` instead of a confusing 404. Self-hosted contexts auto-disable the anonymous self-tracking telemetry — privacy is the whole point.
 
 ## Safety
 
@@ -197,7 +197,7 @@ Security and data-safety properties baked in from day one:
 - **HogQL auto-LIMIT.** `bosshogg query run` auto-injects `LIMIT 100` when the query has no LIMIT clause. Bypass with `--no-limit` intentionally. Injection is logged in `--debug`.
 - **Snapshot never-stdout.** Session recording snapshot blobs are suppressed from stdout by default; use `--out <file>` to write the full blob.
 - **`--yes` gating on destructive ops.** Hard deletes and `bosshogg capture` (which writes to real production data) require `--yes` or interactive confirmation. No accidental bulk deletions.
-- **Config file at `0600`.** `~/.config/bosshogg/config.toml` is written with `mode(0o600)`. The `configure` command probes `/api/users/@me/` before persisting the key — failed auth never writes secrets to disk.
+- **Config file at `0600`.** `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`) is written with `mode(0o600)`. The `configure` command probes `/api/users/@me/` before persisting the key — failed auth never writes secrets to disk.
 
 ## Install
 
@@ -242,7 +242,7 @@ bosshogg login --host http://posthog.internal --allow-http
 A few things to know about self-hosted mode:
 
 - Reverse proxies at a subpath work — pass `--host https://analytics.mycorp.com/posthog/` and requests land at `/posthog/api/...`.
-- Cloud-only paid features (subscriptions, advanced paths, SSO/RBAC, some batch-export specifics) return exit code `61 FEATURE_NOT_AVAILABLE` instead of a confusing 404, with a hint pointing at `bosshogg doctor`.
+- Cloud-only paid features (subscriptions, advanced paths, SSO/RBAC, some batch-export specifics) return exit code `61 FEATURE_NOT_AVAILABLE` instead of a confusing 404, with a hint explaining why.
 - The anonymous usage telemetry that's on by default for Cloud users **auto-disables on self-hosted contexts** — nothing leaves your network. Confirm with `bosshogg config analytics status`.
 - `BOSSHOGG_ALLOW_HTTP=1` is the env-var equivalent of `--allow-http` if you're scripting in CI. Cloud contexts always require https regardless.
 

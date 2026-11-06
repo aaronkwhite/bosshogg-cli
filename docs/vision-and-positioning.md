@@ -28,7 +28,7 @@ Two bets:
 
 - A **single-binary Rust CLI** wrapping the PostHog REST + Query API.
 - **Agent-native by default:** `--json` on every subcommand, stable JSON schemas, structured errors, deterministic exit codes, `--help` is the source of truth for flags.
-- **Multi-profile, multi-region:** US, EU, and self-hosted in one `~/.config/bosshogg/config.toml`.
+- **Multi-profile, multi-region:** US, EU, and self-hosted in one `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`).
 - **HogQL is first class:** `bosshogg query` is the central command; `bosshogg events`, `bosshogg flags evaluate`, etc. all route through the Query API where it makes sense.
 - **Ships a Claude Code skill** (`.claude/skills/bosshogg/`) from the first commit. Future clients (Cursor, Codex, Gemini, Windsurf, …) get the same skill via the skills spec.
 - **Explicitly complementary** to `@posthog/cli` (reuses its env var names for CI drop-in) and `posthog-rs` (sends data *out*; SDK sends data *in*).

@@ -42,7 +42,7 @@ These are enforced in every release build:
 - **Auth header redaction.** `Authorization:` headers are replaced with
   `Bearer <redacted>` in `--debug` output. Error bodies are truncated to 200 chars. No
   tokens or PII leak to logs.
-- **Config file permissions.** `~/.config/bosshogg/config.toml` is written with
+- **Config file permissions.** `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`) is written with
   `mode(0o600)`. The `configure` command verifies the API key against PostHog before
   writing — a failed auth never persists credentials to disk.
 - **Destructive-op gating.** Hard deletes and `bosshogg capture` require `--yes` or

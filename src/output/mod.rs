@@ -115,7 +115,7 @@ fn hint_for(err: &BosshoggError) -> Option<&'static str> {
             "PostHog does not allow this action with a personal API key. Do it in the PostHog web app instead."
         }
         FeatureNotAvailable(_) => {
-            "This feature is gated to PostHog Cloud paid plans, or your self-hosted version doesn't support it. Check `bosshogg doctor` for instance details."
+            "This feature is gated to PostHog Cloud paid plans, or your self-hosted version doesn't support it. Upgrade the plan or the self-hosted instance."
         }
         _ => return None,
     })

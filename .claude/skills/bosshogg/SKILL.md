@@ -61,7 +61,7 @@ Prefer the wrapper at `scripts/doctor.sh` if the user asked for a classified sum
 Three setup paths:
 
 1. **Browser login** (easiest for new users): `bosshogg login`. Opens PostHog in a browser, walks through the device-code authorization flow, saves a personal API key and project info to config. Use `--no-browser` to print the URL instead of opening the browser (for SSH/CI). Use `--context <name>` to override the default context name (derived from host: "us", "eu", or "login").
-2. **Interactive** (recommended when you already have a personal API key): `bosshogg configure`. Upserts a named context in `~/.config/bosshogg/config.toml` with `host`, `project_id`, `env_id`, and stores the key with `0600` perms.
+2. **Interactive** (recommended when you already have a personal API key): `bosshogg configure`. Upserts a named context in `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`) with `host`, `project_id`, `env_id`, and stores the key with `0600` perms.
 3. **Env-var only** (required in CI): set one of `POSTHOG_CLI_TOKEN`, `POSTHOG_CLI_API_KEY`, `POSTHOG_API_KEY` (resolved in that order). Also set `POSTHOG_CLI_HOST` and `POSTHOG_CLI_PROJECT_ID` if not using US Cloud defaults.
 
 **`.env` / `.env.local` auto-loading**: `bosshogg` silently loads `.env.local` then `.env` from the current working directory at startup. Variables already in the process env are NOT overwritten. This means you can put `POSTHOG_CLI_TOKEN=phx_...` in a project-local `.env.local` and it will be picked up automatically.

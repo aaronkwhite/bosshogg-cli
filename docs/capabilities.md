@@ -44,7 +44,7 @@ bosshogg schema hogql | jq '.tables[0]'
 ## Meta commands
 
 ### `bosshogg configure`
-Interactive first-run wizard. Prompts for name, host/region, personal API key, default project/env. Writes to `~/.config/bosshogg/config.toml`. Thin wrapper over `config set-context`.
+Interactive first-run wizard. Prompts for name, host/region, personal API key, default project/env. Writes to `~/.config/bosshogg/config.toml` (macOS: `~/Library/Application Support/bosshogg/config.toml`). Thin wrapper over `config set-context`.
 
 ### `bosshogg whoami`
 `GET /api/users/@me/`. Returns current user, current project, and the scope set on the active key. Used by `doctor` internally.

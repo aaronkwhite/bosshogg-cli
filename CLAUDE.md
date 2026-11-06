@@ -33,7 +33,7 @@ src/
   commands/<noun>.rs one file per PostHog resource — args, dispatch, HTTP calls in one place
   commands/util.rs   shared: read_json_file, env_id_required, gate_destructive
   commands/context.rs CommandContext — Client + json_mode + yes, threaded through handlers
-  config.rs          TOML at ~/.config/bosshogg/config.toml; multi-context
+  config.rs          TOML in the OS config dir (~/.config/bosshogg on Linux, ~/Library/Application Support/bosshogg on macOS); multi-context
   output/            print_json, table, detail views, interactive prompts, blob safety
   analytics.rs       anonymous self-tracking telemetry (queue-then-flush to PostHog /batch/, `DO_NOT_TRACK` honored)
 tests/
