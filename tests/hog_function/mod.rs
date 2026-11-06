@@ -38,7 +38,7 @@ fn hog_fn_fixture(id: &str, name: &str, fn_type: &str) -> serde_json::Value {
 async fn hog_function_list_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/hog_functions/"))
+        .and(path("/api/projects/999999/hog_functions/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -66,7 +66,7 @@ async fn hog_function_list_returns_results() {
 async fn hog_function_get_by_id() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/hog_functions/uuid-abc/"))
+        .and(path("/api/projects/999999/hog_functions/uuid-abc/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(hog_fn_fixture(
             "uuid-abc",
             "My Function",
@@ -89,7 +89,7 @@ async fn hog_function_get_by_id() {
 async fn hog_function_create_with_template() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/hog_functions/"))
+        .and(path("/api/projects/999999/hog_functions/"))
         .and(body_partial_json(json!({
             "name": "New Function",
             "template_id": "template-xyz"
@@ -125,7 +125,7 @@ async fn hog_function_create_with_template() {
 async fn hog_function_update_name_patches() {
     let h = TestHarness::new().await;
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/hog_functions/uuid-55/"))
+        .and(path("/api/projects/999999/hog_functions/uuid-55/"))
         .and(body_partial_json(json!({"name": "Renamed Function"})))
         .respond_with(ResponseTemplate::new(200).set_body_json(hog_fn_fixture(
             "uuid-55",
@@ -160,9 +160,7 @@ async fn hog_function_delete_issues_soft_delete() {
     // Use a proper hex UUID so is_soft_delete_path recognises it as an id segment.
     let fn_id = "aabbccdd-eeff-0011-2233-445566778899";
     Mock::given(method("PATCH"))
-        .and(path(format!(
-            "/api/environments/999999/hog_functions/{fn_id}/"
-        )))
+        .and(path(format!("/api/projects/999999/hog_functions/{fn_id}/")))
         .and(body_partial_json(json!({"deleted": true})))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(json!({"id": fn_id, "deleted": true})),
@@ -184,7 +182,7 @@ async fn hog_function_delete_issues_soft_delete() {
 async fn hog_function_enable_patches_enabled_true() {
     let h = TestHarness::new().await;
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/hog_functions/uuid-e1/"))
+        .and(path("/api/projects/999999/hog_functions/uuid-e1/"))
         .and(body_partial_json(json!({"enabled": true})))
         .respond_with(ResponseTemplate::new(200).set_body_json(hog_fn_fixture(
             "uuid-e1",
@@ -209,7 +207,7 @@ async fn hog_function_disable_patches_enabled_false() {
     let mut disabled_fixture = hog_fn_fixture("uuid-d1", "My Function", "destination");
     disabled_fixture["enabled"] = json!(false);
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/hog_functions/uuid-d1/"))
+        .and(path("/api/projects/999999/hog_functions/uuid-d1/"))
         .and(body_partial_json(json!({"enabled": false})))
         .respond_with(ResponseTemplate::new(200).set_body_json(disabled_fixture))
         .mount(&h.server)
@@ -229,7 +227,7 @@ async fn hog_function_invoke_posts_event() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/hog_functions/uuid-inv/invocations/",
+            "/api/projects/999999/hog_functions/uuid-inv/invocations/",
         ))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(json!({"status": "success", "logs": []})),
@@ -261,9 +259,7 @@ async fn hog_function_invoke_posts_event() {
 async fn hog_function_logs_returns_entries() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/hog_functions/uuid-log/logs/",
-        ))
+        .and(path("/api/projects/999999/hog_functions/uuid-log/logs/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
                 {"timestamp": "2026-04-01T00:00:00Z", "level": "INFO", "message": "executed ok"}
@@ -285,9 +281,7 @@ async fn hog_function_logs_returns_entries() {
 async fn hog_function_metrics_returns_data() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/hog_functions/uuid-m1/metrics/",
-        ))
+        .and(path("/api/projects/999999/hog_functions/uuid-m1/metrics/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "successes": 100,
             "failures": 2
@@ -309,7 +303,7 @@ async fn hog_function_enable_backfills_posts() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/hog_functions/uuid-bf/enable_backfills/",
+            "/api/projects/999999/hog_functions/uuid-bf/enable_backfills/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)

@@ -1,6 +1,6 @@
 //! Integration tests for `bosshogg evaluation` subcommands.
 //!
-//! Note: evaluations use `/api/environments/{project_id}/evaluations/`
+//! Note: evaluations use `/api/projects/{project_id}/evaluations/`
 //! (the `env_id` configured in the test harness = "999999").
 
 use crate::common::TestHarness;
@@ -31,7 +31,7 @@ fn evaluation_fixture(id: &str, name: &str) -> serde_json::Value {
 async fn evaluation_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/evaluations/"))
+        .and(path("/api/projects/999999/evaluations/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -59,7 +59,7 @@ async fn evaluation_list() {
 async fn evaluation_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/evaluations/ev-abc/"))
+        .and(path("/api/projects/999999/evaluations/ev-abc/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(evaluation_fixture("ev-abc", "My Eval")),
         )
@@ -80,7 +80,7 @@ async fn evaluation_get() {
 async fn evaluation_test_hog() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/evaluations/test_hog/"))
+        .and(path("/api/projects/999999/evaluations/test_hog/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
                 {
@@ -132,7 +132,7 @@ async fn evaluation_test_hog() {
 async fn evaluation_test_hog_human_output() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/evaluations/test_hog/"))
+        .and(path("/api/projects/999999/evaluations/test_hog/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
                 {

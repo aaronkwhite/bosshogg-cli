@@ -47,7 +47,7 @@
     {
       "name": "query_bucket_reachable",
       "ok": true,
-      "detail": "POST /api/environments/999999/query/ -> 200 in 180ms",
+      "detail": "POST /api/projects/999999/query/ -> 200 in 180ms",
       "hint": null,
       "remediation": null
     },

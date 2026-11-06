@@ -79,7 +79,7 @@ pub enum DatasetItemCommand {
         #[arg(long)]
         outputs_file: Option<PathBuf>,
     },
-    /// Delete a dataset item by ID.
+    /// Delete (archive) a dataset item by ID.
     Delete {
         /// Dataset item UUID.
         id: String,
@@ -284,10 +284,15 @@ async fn delete_item(cx: &CommandContext, id: String) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
-    cx.confirm(&format!("hard-delete dataset item `{id}`; continue?"))?;
+    cx.confirm(&format!("archive dataset item `{id}`; continue?"))?;
 
-    client
-        .delete(&format!("/api/projects/{project_id}/dataset_items/{id}/"))
+    // PostHog no longer accepts DELETE on dataset_items with a personal API key;
+    // archive is the supported removal path (reversible in the PostHog UI).
+    let _: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/dataset_items/{id}/archive/"),
+            &json!({}),
+        )
         .await?;
 
     if cx.json_mode {
@@ -303,7 +308,7 @@ async fn delete_item(cx: &CommandContext, id: String) -> Result<()> {
             id,
         });
     } else {
-        println!("Deleted dataset item {id}");
+        println!("Archived dataset item {id}");
     }
     Ok(())
 }

@@ -222,7 +222,7 @@ async fn status(cx: &CommandContext, id: String) -> Result<()> {
         .env_id()
         .ok_or_else(|| BosshoggError::Config("no env_id".into()))?;
     let v: Value = client
-        .get(&format!("/api/environments/{env}/query/{id}/"))
+        .get(&format!("/api/projects/{env}/query/{id}/"))
         .await?;
     if cx.json_mode {
         output::print_json(&v);
@@ -240,7 +240,7 @@ async fn cancel(cx: &CommandContext, id: String) -> Result<()> {
         .env_id()
         .ok_or_else(|| BosshoggError::Config("no env_id".into()))?;
     client
-        .delete(&format!("/api/environments/{env}/query/{id}/"))
+        .delete(&format!("/api/projects/{env}/query/{id}/"))
         .await?;
     if cx.json_mode {
         #[derive(Serialize)]
@@ -266,7 +266,7 @@ async fn log_cmd(cx: &CommandContext, id: String) -> Result<()> {
         .env_id()
         .ok_or_else(|| BosshoggError::Config("no env_id".into()))?;
     let v: Value = client
-        .get(&format!("/api/environments/{env}/query/{id}/log/"))
+        .get(&format!("/api/projects/{env}/query/{id}/log/"))
         .await?;
     if cx.json_mode {
         output::print_json(&v);

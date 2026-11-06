@@ -54,7 +54,7 @@ async fn dump_hogql(cx: &CommandContext) -> Result<()> {
         BosshoggError::Config("no env_id set — run `bosshogg configure` or pass --env".into())
     })?;
 
-    let path = format!("/api/environments/{env_id}/query/");
+    let path = format!("/api/projects/{env_id}/query/");
     let body = json!({ "query": { "kind": "DatabaseSchemaQuery" } });
     let resp: Value = client.post(&path, &body).await?;
 

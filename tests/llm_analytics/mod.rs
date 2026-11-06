@@ -55,7 +55,7 @@ fn review_queue_item_fixture(id: &str) -> serde_json::Value {
 async fn llm_analytics_models_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/llm_analytics/models/"))
+        .and(path("/api/projects/999999/llm_analytics/models/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "models": ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
         })))
@@ -76,7 +76,7 @@ async fn llm_analytics_evaluation_summary() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_summary/",
+            "/api/projects/999999/llm_analytics/evaluation_summary/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "overall_assessment": "Generally good quality with some issues.",
@@ -114,7 +114,7 @@ async fn llm_analytics_evaluation_reports_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_reports/",
+            "/api/projects/999999/llm_analytics/evaluation_reports/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
@@ -144,7 +144,7 @@ async fn llm_analytics_evaluation_reports_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_reports/er-abc/",
+            "/api/projects/999999/llm_analytics/evaluation_reports/er-abc/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(eval_report_fixture("er-abc")))
         .mount(&h.server)
@@ -171,7 +171,7 @@ async fn llm_analytics_evaluation_reports_create() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_reports/",
+            "/api/projects/999999/llm_analytics/evaluation_reports/",
         ))
         .respond_with(ResponseTemplate::new(201).set_body_json(eval_report_fixture("er-new")))
         .mount(&h.server)
@@ -206,7 +206,7 @@ async fn llm_analytics_evaluation_reports_update() {
     let h = TestHarness::new().await;
     Mock::given(method("PATCH"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_reports/er-upd/",
+            "/api/projects/999999/llm_analytics/evaluation_reports/er-upd/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(eval_report_fixture("er-upd")))
         .mount(&h.server)
@@ -239,7 +239,7 @@ async fn llm_analytics_evaluation_reports_delete() {
     // delete sends PATCH {"deleted": true}
     Mock::given(method("PATCH"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_reports/er-del/",
+            "/api/projects/999999/llm_analytics/evaluation_reports/er-del/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "er-del",
@@ -270,7 +270,7 @@ async fn llm_analytics_evaluation_reports_generate() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_reports/er-gen/generate/",
+            "/api/projects/999999/llm_analytics/evaluation_reports/er-gen/generate/",
         ))
         .respond_with(ResponseTemplate::new(202))
         .mount(&h.server)
@@ -298,7 +298,7 @@ async fn llm_analytics_evaluation_reports_runs() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/llm_analytics/evaluation_reports/er-runs/runs/",
+            "/api/projects/999999/llm_analytics/evaluation_reports/er-runs/runs/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
@@ -335,9 +335,7 @@ async fn llm_analytics_evaluation_reports_runs() {
 async fn llm_analytics_provider_keys_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/llm_analytics/provider_keys/",
-        ))
+        .and(path("/api/projects/999999/llm_analytics/provider_keys/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -366,7 +364,7 @@ async fn llm_analytics_provider_keys_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/llm_analytics/provider_keys/pk-abc/",
+            "/api/projects/999999/llm_analytics/provider_keys/pk-abc/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(provider_key_fixture("pk-abc")))
         .mount(&h.server)
@@ -387,7 +385,7 @@ async fn llm_analytics_provider_keys_validate() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/llm_analytics/provider_keys/pk-val/validate/",
+            "/api/projects/999999/llm_analytics/provider_keys/pk-val/validate/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "pk-val",
@@ -423,7 +421,7 @@ async fn llm_analytics_review_queue_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/llm_analytics/review_queue_items/",
+            "/api/projects/999999/llm_analytics/review_queue_items/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,

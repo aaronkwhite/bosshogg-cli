@@ -32,7 +32,7 @@ fn person_fixture(uuid: &str, distinct_id: &str) -> serde_json::Value {
 /// Mount the distinct_id resolution mock (GET /persons/?distinct_id=...).
 async fn mount_resolve_mock(server: &MockServer, uuid: &str, distinct_id: &str) {
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/persons/"))
+        .and(path("/api/projects/999999/persons/"))
         .and(query_param("distinct_id", distinct_id))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
@@ -50,7 +50,7 @@ async fn mount_resolve_mock(server: &MockServer, uuid: &str, distinct_id: &str) 
 async fn person_list_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/persons/"))
+        .and(path("/api/projects/999999/persons/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -78,7 +78,7 @@ async fn person_list_returns_results() {
 async fn person_list_with_distinct_id_filter() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/persons/"))
+        .and(path("/api/projects/999999/persons/"))
         .and(query_param("distinct_id", TEST_DISTINCT_ID))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
@@ -114,9 +114,7 @@ async fn person_get_resolves_uuid_then_fetches() {
 
     // Step 2: GET by UUID
     Mock::given(method("GET"))
-        .and(path(format!(
-            "/api/environments/999999/persons/{TEST_UUID}/"
-        )))
+        .and(path(format!("/api/projects/999999/persons/{TEST_UUID}/")))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(person_fixture(TEST_UUID, TEST_DISTINCT_ID)),
         )
@@ -142,9 +140,7 @@ async fn person_delete_issues_hard_delete() {
 
     // Step 2: DELETE (hard — persons not in SOFT_DELETE_RESOURCES)
     Mock::given(method("DELETE"))
-        .and(path(format!(
-            "/api/environments/999999/persons/{TEST_UUID}/"
-        )))
+        .and(path(format!("/api/projects/999999/persons/{TEST_UUID}/")))
         .respond_with(ResponseTemplate::new(204))
         .mount(&h.server)
         .await;
@@ -167,7 +163,7 @@ async fn person_update_property_posts() {
 
     Mock::given(method("POST"))
         .and(path(format!(
-            "/api/environments/999999/persons/{TEST_UUID}/update_property/"
+            "/api/projects/999999/persons/{TEST_UUID}/update_property/"
         )))
         .and(body_partial_json(json!({"$set": {"plan": "enterprise"}})))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
@@ -201,7 +197,7 @@ async fn person_delete_property_posts() {
 
     Mock::given(method("POST"))
         .and(path(format!(
-            "/api/environments/999999/persons/{TEST_UUID}/delete_property/"
+            "/api/projects/999999/persons/{TEST_UUID}/delete_property/"
         )))
         .and(body_partial_json(json!({"$unset": ["plan"]})))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
@@ -233,7 +229,7 @@ async fn person_split_posts_main_distinct_id() {
 
     Mock::given(method("POST"))
         .and(path(format!(
-            "/api/environments/999999/persons/{TEST_UUID}/split/"
+            "/api/projects/999999/persons/{TEST_UUID}/split/"
         )))
         .and(body_partial_json(json!({"main_distinct_id": "main_user"})))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))

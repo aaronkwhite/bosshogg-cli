@@ -4,7 +4,7 @@ Human-readable render of [`../research/capability-schema.yaml`](../research/capa
 
 ## At a glance
 
-- **1 central command**: `bosshogg query run` (HogQL over `POST /api/environments/:env_id/query/`)
+- **1 central command**: `bosshogg query run` (HogQL over `POST /api/projects/:env_id/query/`)
 - **31 resource command groups + 1 nested-group resource (`llm-analytics`)** covering the Personal API Key-accessible GA surface
 - **~195 subcommands** at v2026.4.9 (LLM analytics complete; self-tracking telemetry added)
 - **Agent utilities**: `bosshogg doctor`, `bosshogg schema hogql`, `bosshogg auth token`
@@ -128,7 +128,7 @@ Grouped by milestone and purpose. All names are singular.
 |---|---|---|
 | `org list` / `get` / `current` / `switch` | `/organizations/…` | create/delete deferred |
 | `project list` / `get` / `current` / `switch` | `/organizations/:org_id/projects/…` | read-focused |
-| `project reset-token` | PATCH `/projects/:id/reset_token/` | mutating but narrow |
+| `project reset-token` | PATCH `/projects/:id/reset_token/` | mutating but narrow; PostHog rejects personal API keys here (403) |
 
 ### Insight / Dashboard / Cohort — M3
 

@@ -150,7 +150,7 @@ async fn list_groups(
     let client = &cx.client;
     let env_id = env_id_required(client)?;
 
-    let path = format!("/api/environments/{env_id}/groups/?group_type_index={group_type_index}");
+    let path = format!("/api/projects/{env_id}/groups/?group_type_index={group_type_index}");
     let results: Vec<Group> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -181,7 +181,7 @@ async fn find_group(cx: &CommandContext, group_type_index: i32, group_key: Strin
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let path = format!(
-        "/api/environments/{env_id}/groups/find/?group_type_index={group_type_index}&group_key={}",
+        "/api/projects/{env_id}/groups/find/?group_type_index={group_type_index}&group_key={}",
         urlencoding::encode(&group_key)
     );
     let group: Group = client.get(&path).await?;
@@ -200,7 +200,7 @@ async fn property_definitions(cx: &CommandContext, group_type_index: Option<i32>
         None => String::new(),
     };
 
-    let path = format!("/api/environments/{env_id}/groups/property_definitions/{qs}");
+    let path = format!("/api/projects/{env_id}/groups/property_definitions/{qs}");
     let v: Value = client.get(&path).await?;
 
     if cx.json_mode {
@@ -234,7 +234,7 @@ async fn property_values(cx: &CommandContext, key: String, group_type_index: i32
     let env_id = env_id_required(client)?;
 
     let path = format!(
-        "/api/environments/{env_id}/groups/property_values/?key={}&group_type_index={group_type_index}",
+        "/api/projects/{env_id}/groups/property_values/?key={}&group_type_index={group_type_index}",
         urlencoding::encode(&key)
     );
     let v: Value = client.get(&path).await?;
@@ -265,7 +265,7 @@ async fn related_groups(
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let path = format!(
-        "/api/environments/{env_id}/groups/related/?group_type_index={group_type_index}&group_key={}",
+        "/api/projects/{env_id}/groups/related/?group_type_index={group_type_index}&group_key={}",
         urlencoding::encode(&group_key)
     );
     let v: Value = client.get(&path).await?;
@@ -296,7 +296,7 @@ async fn activity_groups(cx: &CommandContext, group_type_index: i32) -> Result<(
     let env_id = env_id_required(client)?;
 
     let path =
-        format!("/api/environments/{env_id}/groups/activity/?group_type_index={group_type_index}");
+        format!("/api/projects/{env_id}/groups/activity/?group_type_index={group_type_index}");
     let v: Value = client.get(&path).await?;
 
     if cx.json_mode {
@@ -338,7 +338,7 @@ async fn update_property(
     });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/groups/update_property/"),
+            &format!("/api/projects/{env_id}/groups/update_property/"),
             &body,
         )
         .await?;
@@ -373,7 +373,7 @@ async fn delete_property(
     });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/groups/delete_property/"),
+            &format!("/api/projects/{env_id}/groups/delete_property/"),
             &body,
         )
         .await?;

@@ -75,7 +75,7 @@ Key hygiene:
 EU and self-host:
 
 - **EU Cloud:** `POSTHOG_CLI_HOST=https://eu.posthog.com` (or `bosshogg login --host https://eu.posthog.com`).
-- **Self-hosted PostHog:** pass `--host https://posthog.example.com` to `bosshogg login` or `bosshogg config set-context`. `bosshogg doctor` verifies the host answers, reports the detected region, and runs an `instance_version` probe (`/api/environments/?limit=1`) — a 404 there means the instance predates PostHog 1.43 (mid-2024) and some commands may surface exit code `61 FEATURE_NOT_AVAILABLE`.
+- **Self-hosted PostHog:** pass `--host https://posthog.example.com` to `bosshogg login` or `bosshogg config set-context`. `bosshogg doctor` verifies the host answers and reports the detected region.
 - **Plaintext `http://` self-hosted:** opt in with `--allow-http` on `bosshogg login` / `bosshogg config set-context`, or set `BOSSHOGG_ALLOW_HTTP=1`. Persistent equivalent: `allow_http = true` on the saved context. Cloud hosts always require HTTPS regardless. Every plaintext request emits a `tracing::warn!` — visible with `--debug` or `RUST_LOG=warn`.
 - **Subpath hosts** (reverse proxies): `--host https://analytics.example.com/posthog` is supported. Trailing slashes are normalized silently.
 - **Cloud-only features error cleanly.** When a paid Cloud feature is hit on self-hosted (`subscriptions`, advanced paths, SSO/RBAC, certain batch-export specifics), bosshogg returns exit code `61 FEATURE_NOT_AVAILABLE` rather than a confusing 404. The JSON error envelope includes a hint pointing at `bosshogg doctor`.

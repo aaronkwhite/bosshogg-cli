@@ -38,7 +38,7 @@ fn insight_fixture(id: i64, short_id: &str, name: &str) -> serde_json::Value {
 async fn insight_list_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -66,7 +66,7 @@ async fn insight_list_returns_results() {
 async fn insight_list_with_search_filter() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .and(query_param("search", "funnel"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1, "next": null, "previous": null,
@@ -91,7 +91,7 @@ async fn insight_get_by_short_id_resolves_then_fetches() {
 
     // Step 1: list with ?short_id= to resolve numeric id
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .and(query_param("short_id", "aAbBcC"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1, "next": null, "previous": null,
@@ -102,7 +102,7 @@ async fn insight_get_by_short_id_resolves_then_fetches() {
 
     // Step 2: fetch by numeric id
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/42/"))
+        .and(path("/api/projects/999999/insights/42/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(insight_fixture(
             42,
             "aAbBcC",
@@ -128,7 +128,7 @@ async fn insight_get_by_numeric_id() {
 
     // Should NOT hit the list endpoint — goes directly to /insights/55/
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/55/"))
+        .and(path("/api/projects/999999/insights/55/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(insight_fixture(
             55,
             "numId55",
@@ -153,7 +153,7 @@ async fn insight_refresh_appends_query_param() {
 
     // resolve short_id
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .and(query_param("short_id", "rRsStt"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1, "next": null, "previous": null,
@@ -164,7 +164,7 @@ async fn insight_refresh_appends_query_param() {
 
     // refresh call — must include ?refresh=true
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/77/"))
+        .and(path("/api/projects/999999/insights/77/"))
         .and(query_param("refresh", "true"))
         .respond_with(ResponseTemplate::new(200).set_body_json({
             let mut f = insight_fixture(77, "rRsStt", "Refresh Me");
@@ -189,7 +189,7 @@ async fn insight_create_posts_filters_body() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .and(body_partial_json(json!({
             "filters": {"events": [{"id": "$pageview"}]},
             "saved": false
@@ -229,7 +229,7 @@ async fn insight_update_name_patches() {
 
     // resolve short_id
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .and(query_param("short_id", "aBcDeF"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1, "next": null, "previous": null,
@@ -240,7 +240,7 @@ async fn insight_update_name_patches() {
 
     // PATCH with new name
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/insights/30/"))
+        .and(path("/api/projects/999999/insights/30/"))
         .and(body_partial_json(json!({"name": "New Name"})))
         .respond_with(ResponseTemplate::new(200).set_body_json({
             let mut f = insight_fixture(30, "aBcDeF", "New Name");
@@ -267,7 +267,7 @@ async fn insight_delete_issues_patch_deleted_true() {
 
     // resolve short_id
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .and(query_param("short_id", "dElEtE"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1, "next": null, "previous": null,
@@ -278,7 +278,7 @@ async fn insight_delete_issues_patch_deleted_true() {
 
     // soft-delete routes through PATCH {deleted: true}
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/insights/88/"))
+        .and(path("/api/projects/999999/insights/88/"))
         .and(body_partial_json(json!({"deleted": true})))
         .respond_with(ResponseTemplate::new(200).set_body_json({
             let mut f = insight_fixture(88, "dElEtE", "To Delete");
@@ -305,7 +305,7 @@ async fn insight_tag_add_appends_tag() {
 
     // resolve short_id
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/"))
+        .and(path("/api/projects/999999/insights/"))
         .and(query_param("short_id", "tAgTag"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1, "next": null, "previous": null,
@@ -316,7 +316,7 @@ async fn insight_tag_add_appends_tag() {
 
     // fetch current insight to read existing tags
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/50/"))
+        .and(path("/api/projects/999999/insights/50/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(insight_fixture(
             50,
             "tAgTag",
@@ -327,7 +327,7 @@ async fn insight_tag_add_appends_tag() {
 
     // PATCH with new tags list
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/insights/50/"))
+        .and(path("/api/projects/999999/insights/50/"))
         .and(body_partial_json(json!({"tags": ["prod"]})))
         .respond_with(ResponseTemplate::new(200).set_body_json({
             let mut f = insight_fixture(50, "tAgTag", "Tagged Insight");
@@ -395,7 +395,7 @@ async fn insight_activity_calls_correct_endpoint() {
 
     // resolve numeric id directly (no short_id lookup needed)
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/60/activity/"))
+        .and(path("/api/projects/999999/insights/60/activity/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
                 {
@@ -423,7 +423,7 @@ async fn insight_share_calls_sharing_endpoint() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/70/sharing/"))
+        .and(path("/api/projects/999999/insights/70/sharing/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "enabled": true,
             "access_token": "share_token_abc123"

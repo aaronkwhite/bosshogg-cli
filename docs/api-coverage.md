@@ -7,8 +7,8 @@ For the canonical bosshogg surface, see [`capabilities.md`](capabilities.md). Th
 ## 1. Snapshot versions
 
 - **bosshogg** — `Cargo.toml` v2026.4.9 (31 GA resources + 1 nested-group, ~272 verbs incl. meta)
-- **PostHog OpenAPI schema** — fetched 2026-04-24 from `https://us.posthog.com/api/schema/`, cached at `/tmp/ph-schema.yaml` (948 paths)
-- **PostHog MCP** — `github.com/PostHog/mcp` at commit `13aaf2c6e5317e01e61d3af24e7b0744f527ed3e` (main, 2026-01-19), `schema/tool-definitions.json` (44 tools)
+- **PostHog OpenAPI schema** — fetched 2026-11-06 from `https://us.posthog.com/api/schema/` (1964 paths; up from 948 on 2026-04-24). `/api/environments/` paths no longer appear in the schema — see [`api-notes.md`](api-notes.md)
+- **PostHog MCP** — `github.com/PostHog/mcp` at commit `13aaf2c6e5317e01e61d3af24e7b0744f527ed3e` (main, 2026-01-19), `schema/tool-definitions.json` (44 tools). As of 2026-11 the MCP server lives in the main repo at `PostHog/posthog/services/mcp`; the tool count here has not been re-taken
 
 Refresh instructions live in section 7.
 
@@ -16,7 +16,7 @@ Refresh instructions live in section 7.
 
 | Surface | Count | Notes |
 |---|---|---|
-| PostHog REST paths | 948 | grouped into ~60 top-level resources |
+| PostHog REST paths | 1964 | grouped into ~60 top-level resources |
 | PostHog MCP tools | 44 | curated agent-friendly subset |
 | bosshogg resources | 31 + 1 nested | GA Personal-API-Key-accessible (`llm-analytics` is the nested group) |
 | bosshogg verbs (resource) | ~258 | not counting meta |
@@ -111,7 +111,7 @@ Each gap is a verb or endpoint bosshogg doesn't expose. Grouped by recommendatio
 | Verb / endpoint | Source | Auth class | Reason |
 |---|---|---|---|
 | `dashboard tiles add (existing-insight binding)` — equivalent of MCP `add-insight-to-dashboard` | MCP | personal-api-key-OK | bosshogg's `dashboard tiles add` is the same call but the parity gap with MCP is naming; consider renaming or aliasing for transferability. |
-| ~~`error-tracking issues list`~~ — equivalent of MCP `list-errors` | MCP | personal-api-key-OK | **Closed in v2026.4.5** as `error-tracking issues list`. Maps to `GET /api/environments/{proj}/error_tracking/issues/`. |
+| ~~`error-tracking issues list`~~ — equivalent of MCP `list-errors` | MCP | personal-api-key-OK | **Closed in v2026.4.5** as `error-tracking issues list`. Maps to `GET /api/projects/{proj}/error_tracking/issues/`. |
 | ~~`error-tracking issues get`~~ (issue detail with stack/breadcrumbs) — equivalent of MCP `error-details` | MCP | personal-api-key-OK | **Closed in v2026.4.5** as `error-tracking issues get <id>`. |
 | `query nl-to-hogql` — equivalent of MCP `query-generate-hogql-from-question` | MCP | unknown — needs probe | Live-dogfood removed `query draft-sql` in v2026.4.3 (session-only). MCP exposes a different path (Max). Probe `/api/projects/:id/max_tools/` before re-attempting. |
 | ~~`survey stats <id>`~~ and ~~`survey project-stats`~~ — equivalents of MCP `survey-stats` / `surveys-global-stats` | MCP | personal-api-key-OK | **Closed in v2026.4.5** as `survey stats <id>` and `survey project-stats`. |
@@ -122,7 +122,7 @@ Each gap is a verb or endpoint bosshogg doesn't expose. Grouped by recommendatio
 | ~~`session-recording-playlist list / get / create / update / delete`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** Plus `recordings`, `add-recording`, `remove-recording`. Uses `{short_id}` in URL per spec. |
 | ~~`dashboard-template list / get / create / use`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** No dedicated "use/instantiate" endpoint in OpenAPI spec; `use` verb wraps `POST /dashboards/` with `use_template=<id>`. DELETE returns 405 (soft-delete via PATCH). |
 | ~~`insight-variable list / get / create / update / delete`~~ | REST | personal-api-key-OK | **Closed in v2026.4.6.** Hard DELETE. Path: `/api/projects/{proj}/insight_variables/`. |
-| ~~`error-tracking releases list / get / by-hash`~~ | REST | personal-api-key-OK | **Closed in v2026.4.7.** Source-map release lookup. Path: `/api/environments/{env}/error_tracking/releases/...`. |
+| ~~`error-tracking releases list / get / by-hash`~~ | REST | personal-api-key-OK | **Closed in v2026.4.7.** Source-map release lookup. Path: `/api/projects/{env}/error_tracking/releases/...`. |
 | ~~`error-tracking symbol-sets list / get / download / start-upload / finish-upload / bulk-delete / bulk-start-upload / bulk-finish-upload`~~ | REST | personal-api-key-OK | **Closed in v2026.4.7.** Source-map upload bracket. `download` returns presigned URL (`_SymbolSetDownloadResponse`). `finish_upload` is a PUT. |
 | `query-tab-state` (saved query history) | REST | unknown — needs probe | Useful for agent context recall; verify auth. |
 | `docs-search` — equivalent of MCP `docs-search` | MCP | n/a (public) | Wraps PostHog docs search. Trivial; consider as a `bosshogg help search` or skill-side instead of CLI verb. |

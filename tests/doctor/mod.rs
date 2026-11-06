@@ -1,6 +1,7 @@
 use crate::common::TestHarness;
+use predicates::prelude::*;
 use predicates::str::contains;
-use wiremock::matchers::{method, path};
+use wiremock::matchers::{method, path, path_regex};
 use wiremock::{Mock, ResponseTemplate};
 
 #[tokio::test]
@@ -26,18 +27,10 @@ async fn doctor_runs_all_checks_and_emits_json_array() {
         })))
         .mount(&h.server)
         .await;
-    Mock::given(method("GET"))
-        .and(path("/api/environments/999999/"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "id": 999999, "name": "main"
-        })))
-        .mount(&h.server)
-        .await;
-    Mock::given(method("GET"))
-        .and(path("/api/environments/"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "results": [{"id": 999999, "name": "main"}]
-        })))
+    // bosshogg no longer calls the deprecated /api/environments/ mount.
+    Mock::given(path_regex(r"^/api/environments/"))
+        .respond_with(ResponseTemplate::new(500))
+        .expect(0)
         .mount(&h.server)
         .await;
 
@@ -48,6 +41,6 @@ async fn doctor_runs_all_checks_and_emits_json_array() {
         .stdout(contains("\"name\":\"key_alive\""))
         .stdout(contains("\"name\":\"project_access\""))
         .stdout(contains("\"name\":\"env_access\""))
-        .stdout(contains("\"name\":\"instance_version\""))
+        .stdout(contains("\"name\":\"instance_version\"").not())
         .stdout(contains("\"summary\":{\"ok\":true"));
 }

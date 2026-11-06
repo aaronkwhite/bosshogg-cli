@@ -10,7 +10,7 @@ All resources below are generally available in PostHog's API, have stable shapes
 
 | Resource | Command group | Why it's in |
 |---|---|---|
-| **Query (HogQL)** | `bosshogg query` | Central command. Nearly every analytics use case routes through `POST /api/environments/:env_id/query/`. |
+| **Query (HogQL)** | `bosshogg query` | Central command. Nearly every analytics use case routes through `POST /api/projects/:env_id/query/`. |
 | **Endpoint** | `bosshogg endpoint` | Saved HogQL queries with CRUD, run, materialize preview, and an OpenAPI export — pairs naturally with `query`. (M5) |
 
 ### Identity / config

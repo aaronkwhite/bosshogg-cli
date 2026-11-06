@@ -31,7 +31,7 @@ async fn endpoint_list_returns_results() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/endpoints/"))
+        .and(path("/api/projects/999999/endpoints/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -60,7 +60,7 @@ async fn endpoint_get_by_name() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/endpoints/daily-signups/"))
+        .and(path("/api/projects/999999/endpoints/daily-signups/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(endpoint_fixture("daily-signups")))
         .mount(&h.server)
         .await;
@@ -80,7 +80,7 @@ async fn endpoint_create_with_query_file() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/endpoints/"))
+        .and(path("/api/projects/999999/endpoints/"))
         .and(body_partial_json(json!({"name": "new-endpoint"})))
         .respond_with(ResponseTemplate::new(201).set_body_json(endpoint_fixture("new-endpoint")))
         .mount(&h.server)
@@ -113,7 +113,7 @@ async fn endpoint_update_patches_description() {
     let h = TestHarness::new().await;
 
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/endpoints/my-endpoint/"))
+        .and(path("/api/projects/999999/endpoints/my-endpoint/"))
         .and(body_partial_json(
             json!({"description": "Updated description"}),
         ))
@@ -147,7 +147,7 @@ async fn endpoint_delete_issues_delete() {
     let h = TestHarness::new().await;
 
     Mock::given(method("DELETE"))
-        .and(path("/api/environments/999999/endpoints/old-endpoint/"))
+        .and(path("/api/projects/999999/endpoints/old-endpoint/"))
         .respond_with(ResponseTemplate::new(204))
         .mount(&h.server)
         .await;
@@ -168,9 +168,7 @@ async fn endpoint_run_returns_results() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/endpoints/daily-signups/run/",
-        ))
+        .and(path("/api/projects/999999/endpoints/daily-signups/run/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "columns": ["count"],
             "results": [[42]]
@@ -193,7 +191,7 @@ async fn endpoint_materialize_status_returns_data() {
 
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/endpoints/daily-signups/materialization_status/",
+            "/api/projects/999999/endpoints/daily-signups/materialization_status/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "status": "ready",
@@ -253,7 +251,7 @@ async fn endpoint_openapi_returns_spec() {
 
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/endpoints/daily-signups/openapi.json/",
+            "/api/projects/999999/endpoints/daily-signups/openapi.json/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "openapi": "3.0.0",

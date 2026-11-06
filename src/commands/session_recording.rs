@@ -181,7 +181,7 @@ async fn list_recordings(
         format!("?{}", params.join("&"))
     };
 
-    let path = format!("/api/environments/{env_id}/session_recordings/{query}");
+    let path = format!("/api/projects/{env_id}/session_recordings/{query}");
     let results: Vec<SessionRecording> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -225,9 +225,7 @@ async fn get_recording(
 
     // Always fetch the full raw Value so we can handle snapshots safely.
     let raw: Value = client
-        .get(&format!(
-            "/api/environments/{env_id}/session_recordings/{id}/"
-        ))
+        .get(&format!("/api/projects/{env_id}/session_recordings/{id}/"))
         .await?;
 
     if with_snapshots {
@@ -336,7 +334,7 @@ async fn update_recording(
 
     let updated: Value = client
         .patch(
-            &format!("/api/environments/{env_id}/session_recordings/{id}/"),
+            &format!("/api/projects/{env_id}/session_recordings/{id}/"),
             &Value::Object(body),
         )
         .await?;
@@ -365,9 +363,7 @@ async fn delete_recording(cx: &CommandContext, id: String) -> Result<()> {
 
     // session_recordings is NOT in SOFT_DELETE_RESOURCES — use hard delete.
     client
-        .delete(&format!(
-            "/api/environments/{env_id}/session_recordings/{id}/"
-        ))
+        .delete(&format!("/api/projects/{env_id}/session_recordings/{id}/"))
         .await?;
 
     if cx.json_mode {

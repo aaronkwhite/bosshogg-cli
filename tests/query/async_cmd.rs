@@ -10,7 +10,7 @@ async fn query_run_async_polls_until_complete() {
 
     // Enqueue response
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "query_status": { "id": "q-1", "complete": false }
         })))
@@ -20,7 +20,7 @@ async fn query_run_async_polls_until_complete() {
 
     // First poll: still running
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/query/q-1/"))
+        .and(path("/api/projects/999999/query/q-1/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "query_status": { "id": "q-1", "complete": false }
         })))
@@ -30,7 +30,7 @@ async fn query_run_async_polls_until_complete() {
 
     // Second poll: complete with results
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/query/q-1/"))
+        .and(path("/api/projects/999999/query/q-1/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "query_status": {
                 "id": "q-1",

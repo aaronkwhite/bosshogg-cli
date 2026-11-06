@@ -10,7 +10,7 @@ async fn schema_hogql_dumps_tables_and_columns() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .and(body_partial_json(json!({
             "query": { "kind": "DatabaseSchemaQuery" }
         })))

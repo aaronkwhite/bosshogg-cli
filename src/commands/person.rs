@@ -152,7 +152,7 @@ async fn resolve_uuid(client: &Client, env_id: &str, distinct_id: &str) -> Resul
     }
 
     let path = format!(
-        "/api/environments/{env_id}/persons/?distinct_id={}",
+        "/api/projects/{env_id}/persons/?distinct_id={}",
         urlencoding::encode(distinct_id)
     );
     let page: Page = client.get(&path).await?;
@@ -204,7 +204,7 @@ async fn list_persons(
         format!("?{}", qs_parts.join("&"))
     };
 
-    let path = format!("/api/environments/{env_id}/persons/{qs}");
+    let path = format!("/api/projects/{env_id}/persons/{qs}");
     let results: Vec<Person> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -240,7 +240,7 @@ async fn get_person(cx: &CommandContext, distinct_id: &str) -> Result<()> {
     let env_id = env_id_required(client)?;
     let uuid = resolve_uuid(client, env_id, distinct_id).await?;
     let person: Person = client
-        .get(&format!("/api/environments/{env_id}/persons/{uuid}/"))
+        .get(&format!("/api/projects/{env_id}/persons/{uuid}/"))
         .await?;
     print_person(&person, cx.json_mode);
     Ok(())
@@ -258,7 +258,7 @@ async fn delete_person(cx: &CommandContext, distinct_id: &str) -> Result<()> {
 
     let uuid = resolve_uuid(client, env_id, distinct_id).await?;
     client
-        .delete(&format!("/api/environments/{env_id}/persons/{uuid}/"))
+        .delete(&format!("/api/projects/{env_id}/persons/{uuid}/"))
         .await?;
 
     if cx.json_mode {
@@ -300,7 +300,7 @@ async fn update_property(
     let body = json!({ "$set": { &key: value } });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/persons/{uuid}/update_property/"),
+            &format!("/api/projects/{env_id}/persons/{uuid}/update_property/"),
             &body,
         )
         .await?;
@@ -327,7 +327,7 @@ async fn delete_property(cx: &CommandContext, distinct_id: &str, key: String) ->
     let body = json!({ "$unset": [&key] });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/persons/{uuid}/delete_property/"),
+            &format!("/api/projects/{env_id}/persons/{uuid}/delete_property/"),
             &body,
         )
         .await?;
@@ -347,9 +347,7 @@ async fn activity_person(cx: &CommandContext, distinct_id: &str) -> Result<()> {
     let env_id = env_id_required(client)?;
     let uuid = resolve_uuid(client, env_id, distinct_id).await?;
     let v: Value = client
-        .get(&format!(
-            "/api/environments/{env_id}/persons/{uuid}/activity/"
-        ))
+        .get(&format!("/api/projects/{env_id}/persons/{uuid}/activity/"))
         .await?;
 
     if cx.json_mode {
@@ -386,7 +384,7 @@ async fn split_person(
     let body = json!({ "main_distinct_id": main_distinct_id });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/persons/{uuid}/split/"),
+            &format!("/api/projects/{env_id}/persons/{uuid}/split/"),
             &body,
         )
         .await?;

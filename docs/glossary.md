@@ -92,7 +92,7 @@ PostHog terminology, especially the bits agents and newcomers often conflate.
 
 **Project** — PostHog's unit of product separation. Each project has its own events, persons, flags, etc. Projects have numeric IDs (often referred to as `team_id` in older API paths, for historical reasons).
 
-**Environment** — a scope *inside* a project, typically `production` / `staging`. PostHog is migrating the API from `/api/projects/:id/…` to `/api/environments/:id/…` — see [`api-notes.md`](api-notes.md). Conceptually: projects are what used to be called "teams"; environments are the newer split inside a project.
+**Environment** — a scope *inside* a project, typically `production` / `staging`. PostHog began migrating the API to `/api/environments/:id/…` and rolled it back in June 2026; `/api/projects/:id/…` is canonical again — see [`api-notes.md`](api-notes.md). Conceptually: projects are what used to be called "teams"; environments are the newer split inside a project.
 
 **Organization** — the top-level billing/permissions container. One org can contain many projects.
 

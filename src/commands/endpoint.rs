@@ -117,7 +117,7 @@ struct ListOutput {
 async fn list_endpoints(cx: &CommandContext) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/endpoints/");
+    let path = format!("/api/projects/{env_id}/endpoints/");
     let results: Vec<Endpoint> = client.get_paginated(&path, None).await?;
 
     if cx.json_mode {
@@ -152,7 +152,7 @@ async fn get_endpoint(cx: &CommandContext, name: &str) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let ep: Endpoint = client
-        .get(&format!("/api/environments/{env_id}/endpoints/{name}/"))
+        .get(&format!("/api/projects/{env_id}/endpoints/{name}/"))
         .await?;
     print_endpoint(&ep, cx.json_mode);
     Ok(())
@@ -180,7 +180,7 @@ async fn create_endpoint(
     }
 
     let created: Endpoint = client
-        .post(&format!("/api/environments/{env_id}/endpoints/"), &body)
+        .post(&format!("/api/projects/{env_id}/endpoints/"), &body)
         .await?;
 
     if cx.json_mode {
@@ -234,7 +234,7 @@ async fn update_endpoint(
 
     let updated: Endpoint = client
         .patch(
-            &format!("/api/environments/{env_id}/endpoints/{name}/"),
+            &format!("/api/projects/{env_id}/endpoints/{name}/"),
             &Value::Object(body),
         )
         .await?;
@@ -256,7 +256,7 @@ async fn delete_endpoint(cx: &CommandContext, name: &str) -> Result<()> {
     cx.confirm(&format!("delete endpoint `{name}`; continue?"))?;
 
     client
-        .delete(&format!("/api/environments/{env_id}/endpoints/{name}/"))
+        .delete(&format!("/api/projects/{env_id}/endpoints/{name}/"))
         .await?;
 
     if cx.json_mode {
@@ -283,7 +283,7 @@ async fn run_endpoint(cx: &CommandContext, name: &str) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let v: Value = client
-        .get(&format!("/api/environments/{env_id}/endpoints/{name}/run/"))
+        .get(&format!("/api/projects/{env_id}/endpoints/{name}/run/"))
         .await?;
     if cx.json_mode {
         output::print_json(&v);
@@ -301,7 +301,7 @@ async fn materialize_preview(cx: &CommandContext, name: &str) -> Result<()> {
     let body = json!({});
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/endpoints/{name}/materialization_preview/"),
+            &format!("/api/projects/{env_id}/endpoints/{name}/materialization_preview/"),
             &body,
         )
         .await?;
@@ -320,7 +320,7 @@ async fn materialize_status(cx: &CommandContext, name: &str) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/endpoints/{name}/materialization_status/"
+            "/api/projects/{env_id}/endpoints/{name}/materialization_status/"
         ))
         .await?;
     if cx.json_mode {
@@ -338,7 +338,7 @@ async fn openapi_endpoint(cx: &CommandContext, name: &str) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/endpoints/{name}/openapi.json/"
+            "/api/projects/{env_id}/endpoints/{name}/openapi.json/"
         ))
         .await?;
     if cx.json_mode {

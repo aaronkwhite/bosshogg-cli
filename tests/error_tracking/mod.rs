@@ -45,9 +45,7 @@ fn grouping_rule_fixture(id: &str) -> serde_json::Value {
 async fn error_tracking_fingerprints_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/error_tracking/fingerprints/",
-        ))
+        .and(path("/api/projects/999999/error_tracking/fingerprints/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -76,7 +74,7 @@ async fn error_tracking_fingerprints_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/fingerprints/fp-abc/",
+            "/api/projects/999999/error_tracking/fingerprints/fp-abc/",
         ))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(fingerprint_fixture("fp-abc", "hash999")),
@@ -99,7 +97,7 @@ async fn error_tracking_assignment_rules_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/assignment_rules/",
+            "/api/projects/999999/error_tracking/assignment_rules/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
@@ -125,7 +123,7 @@ async fn error_tracking_assignment_rules_create() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/assignment_rules/",
+            "/api/projects/999999/error_tracking/assignment_rules/",
         ))
         .respond_with(ResponseTemplate::new(201).set_body_json(assignment_rule_fixture("ar-new")))
         .mount(&h.server)
@@ -158,7 +156,7 @@ async fn error_tracking_assignment_rules_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/assignment_rules/ar-42/",
+            "/api/projects/999999/error_tracking/assignment_rules/ar-42/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(assignment_rule_fixture("ar-42")))
         .mount(&h.server)
@@ -184,7 +182,7 @@ async fn error_tracking_assignment_rules_delete() {
     let h = TestHarness::new().await;
     Mock::given(method("DELETE"))
         .and(path(
-            "/api/environments/999999/error_tracking/assignment_rules/ar-del/",
+            "/api/projects/999999/error_tracking/assignment_rules/ar-del/",
         ))
         .respond_with(ResponseTemplate::new(204))
         .mount(&h.server)
@@ -213,7 +211,7 @@ async fn error_tracking_assignment_rules_reorder() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/assignment_rules/reorder/",
+            "/api/projects/999999/error_tracking/assignment_rules/reorder/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -243,9 +241,7 @@ async fn error_tracking_assignment_rules_reorder() {
 async fn error_tracking_grouping_rules_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/error_tracking/grouping_rules/",
-        ))
+        .and(path("/api/projects/999999/error_tracking/grouping_rules/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
             "next": null,
@@ -269,9 +265,7 @@ async fn error_tracking_grouping_rules_list() {
 async fn error_tracking_grouping_rules_create() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path(
-            "/api/environments/999999/error_tracking/grouping_rules/",
-        ))
+        .and(path("/api/projects/999999/error_tracking/grouping_rules/"))
         .respond_with(ResponseTemplate::new(201).set_body_json(grouping_rule_fixture("gr-new")))
         .mount(&h.server)
         .await;
@@ -303,7 +297,7 @@ async fn error_tracking_grouping_rules_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/grouping_rules/gr-99/",
+            "/api/projects/999999/error_tracking/grouping_rules/gr-99/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(grouping_rule_fixture("gr-99")))
         .mount(&h.server)
@@ -322,9 +316,7 @@ async fn error_tracking_grouping_rules_get() {
 async fn error_tracking_resolve_github() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/error_tracking/resolve_github/",
-        ))
+        .and(path("/api/projects/999999/error_tracking/resolve_github/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"fingerprint": "abc123"})))
         .mount(&h.server)
         .await;
@@ -354,9 +346,7 @@ async fn error_tracking_resolve_github() {
 async fn error_tracking_resolve_gitlab() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/error_tracking/resolve_gitlab/",
-        ))
+        .and(path("/api/projects/999999/error_tracking/resolve_gitlab/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"fingerprint": "gl-fp-1"})))
         .mount(&h.server)
         .await;
@@ -402,7 +392,7 @@ fn issue_fixture(id: &str) -> serde_json::Value {
 async fn error_tracking_issues_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/error_tracking/issues/"))
+        .and(path("/api/projects/999999/error_tracking/issues/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -431,7 +421,7 @@ async fn error_tracking_issues_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/issues/issue-abc/",
+            "/api/projects/999999/error_tracking/issues/issue-abc/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(issue_fixture("issue-abc")))
         .mount(&h.server)
@@ -452,7 +442,7 @@ async fn error_tracking_issues_activity() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/issues/issue-x/activity/",
+            "/api/projects/999999/error_tracking/issues/issue-x/activity/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
@@ -479,9 +469,7 @@ async fn error_tracking_issues_activity() {
 async fn error_tracking_issues_activity_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/error_tracking/issues/activity/",
-        ))
+        .and(path("/api/projects/999999/error_tracking/issues/activity/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
                 {
@@ -508,7 +496,7 @@ async fn error_tracking_issues_assign() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/issues/issue-a/assign/",
+            "/api/projects/999999/error_tracking/issues/issue-a/assign/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -537,7 +525,7 @@ async fn error_tracking_issues_cohort() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/issues/issue-b/cohort/",
+            "/api/projects/999999/error_tracking/issues/issue-b/cohort/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"cohort_id": "cohort-1"})))
         .mount(&h.server)
@@ -564,7 +552,7 @@ async fn error_tracking_issues_merge() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/issues/issue-c/merge/",
+            "/api/projects/999999/error_tracking/issues/issue-c/merge/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -593,7 +581,7 @@ async fn error_tracking_issues_split() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/issues/issue-e/split/",
+            "/api/projects/999999/error_tracking/issues/issue-e/split/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -624,7 +612,7 @@ async fn error_tracking_issues_split() {
 async fn error_tracking_issues_bulk() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/error_tracking/issues/bulk/"))
+        .and(path("/api/projects/999999/error_tracking/issues/bulk/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
         .await;
@@ -669,7 +657,7 @@ fn release_fixture(id: &str, hash_id: &str) -> serde_json::Value {
 async fn error_tracking_releases_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/error_tracking/releases/"))
+        .and(path("/api/projects/999999/error_tracking/releases/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -698,7 +686,7 @@ async fn error_tracking_releases_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/releases/rel-abc/",
+            "/api/projects/999999/error_tracking/releases/rel-abc/",
         ))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(release_fixture("rel-abc", "hash-ccc")),
@@ -721,7 +709,7 @@ async fn error_tracking_releases_by_hash() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/releases/hash/deadbeef/",
+            "/api/projects/999999/error_tracking/releases/hash/deadbeef/",
         ))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(release_fixture("rel-xyz", "deadbeef")),
@@ -763,7 +751,7 @@ fn symbol_set_fixture(id: &str, ref_: &str) -> serde_json::Value {
 async fn error_tracking_symbol_sets_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/error_tracking/symbol_sets/"))
+        .and(path("/api/projects/999999/error_tracking/symbol_sets/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -792,7 +780,7 @@ async fn error_tracking_symbol_sets_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/symbol_sets/ss-abc/",
+            "/api/projects/999999/error_tracking/symbol_sets/ss-abc/",
         ))
         .respond_with(
             ResponseTemplate::new(200)
@@ -816,7 +804,7 @@ async fn error_tracking_symbol_sets_download() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/error_tracking/symbol_sets/ss-dl/download/",
+            "/api/projects/999999/error_tracking/symbol_sets/ss-dl/download/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "url": "https://storage.example.com/presigned-download-url"
@@ -844,7 +832,7 @@ async fn error_tracking_symbol_sets_start_upload() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/symbol_sets/start_upload/",
+            "/api/projects/999999/error_tracking/symbol_sets/start_upload/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "ss-new",
@@ -877,7 +865,7 @@ async fn error_tracking_symbol_sets_finish_upload() {
     let h = TestHarness::new().await;
     Mock::given(method("PUT"))
         .and(path(
-            "/api/environments/999999/error_tracking/symbol_sets/ss-fin/finish_upload/",
+            "/api/projects/999999/error_tracking/symbol_sets/ss-fin/finish_upload/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -903,7 +891,7 @@ async fn error_tracking_symbol_sets_bulk_delete() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/symbol_sets/bulk_delete/",
+            "/api/projects/999999/error_tracking/symbol_sets/bulk_delete/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -934,7 +922,7 @@ async fn error_tracking_symbol_sets_bulk_start_upload() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/symbol_sets/bulk_start_upload/",
+            "/api/projects/999999/error_tracking/symbol_sets/bulk_start_upload/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)
@@ -969,7 +957,7 @@ async fn error_tracking_symbol_sets_bulk_finish_upload() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/error_tracking/symbol_sets/bulk_finish_upload/",
+            "/api/projects/999999/error_tracking/symbol_sets/bulk_finish_upload/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
         .mount(&h.server)

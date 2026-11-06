@@ -1,11 +1,11 @@
 // src/commands/evaluation.rs
 //! `bosshogg evaluation` — list / get / test-hog.
 //!
-//! Evaluations live under the environments path:
-//!   `/api/environments/{project_id}/evaluations/`
+//! Evaluations live under the projects path:
+//!   `/api/projects/{project_id}/evaluations/`
 //!
 //! PostHog quirk: `{project_id}` here resolves from the env_id configured
-//! in the current context (same as other `/api/environments/` endpoints).
+//! in the current context (same as other `/api/projects/` endpoints).
 //!
 //! `test-hog` is synchronous — it runs Hog code against a sample of recent
 //! `$ai_generation` events and returns results immediately (no polling required).
@@ -108,7 +108,7 @@ struct EvaluationsListOutput {
 async fn list_evaluations(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/evaluations/");
+    let path = format!("/api/projects/{env_id}/evaluations/");
     let results: Vec<Evaluation> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -142,7 +142,7 @@ async fn get_evaluation(cx: &CommandContext, id: String) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let e: Evaluation = client
-        .get(&format!("/api/environments/{env_id}/evaluations/{id}/"))
+        .get(&format!("/api/projects/{env_id}/evaluations/{id}/"))
         .await?;
 
     if cx.json_mode {
@@ -189,7 +189,7 @@ async fn test_hog(
 
     let resp: Value = client
         .post(
-            &format!("/api/environments/{env_id}/evaluations/test_hog/"),
+            &format!("/api/projects/{env_id}/evaluations/test_hog/"),
             &body,
         )
         .await?;

@@ -213,7 +213,7 @@ async fn resolve_identifier_to_id(client: &Client, env_id: &str, identifier: &st
 
         // List with short_id filter to resolve.
         let path = format!(
-            "/api/environments/{env_id}/insights/?short_id={}",
+            "/api/projects/{env_id}/insights/?short_id={}",
             urlencoding::encode(identifier)
         );
         let hits: Vec<Insight> = client.get_paginated(&path, Some(10)).await?;
@@ -267,7 +267,7 @@ async fn list_insights(cx: &CommandContext, args: ListArgs) -> Result<()> {
         format!("?{joined}")
     };
 
-    let path = format!("/api/environments/{env_id}/insights/{query}");
+    let path = format!("/api/projects/{env_id}/insights/{query}");
     let results: Vec<Insight> = client.get_paginated(&path, args.limit).await?;
 
     if cx.json_mode {
@@ -302,7 +302,7 @@ async fn get_insight(cx: &CommandContext, args: GetArgs) -> Result<()> {
     let env_id = env_id_required(client)?;
     let id = resolve_identifier_to_id(client, env_id, &args.identifier).await?;
     let insight: Insight = client
-        .get(&format!("/api/environments/{env_id}/insights/{id}/"))
+        .get(&format!("/api/projects/{env_id}/insights/{id}/"))
         .await?;
     print_insight(&insight, cx.json_mode);
     Ok(())
@@ -316,7 +316,7 @@ async fn refresh_insight(cx: &CommandContext, args: RefreshArgs) -> Result<()> {
     let id = resolve_identifier_to_id(client, env_id, &args.identifier).await?;
     let insight: Insight = client
         .get(&format!(
-            "/api/environments/{env_id}/insights/{id}/?refresh=true"
+            "/api/projects/{env_id}/insights/{id}/?refresh=true"
         ))
         .await?;
     if cx.json_mode {
@@ -354,7 +354,7 @@ async fn create_insight(cx: &CommandContext, args: CreateArgs) -> Result<()> {
     }
 
     let created: Insight = client
-        .post(&format!("/api/environments/{env_id}/insights/"), &body)
+        .post(&format!("/api/projects/{env_id}/insights/"), &body)
         .await?;
 
     if cx.json_mode {
@@ -423,7 +423,7 @@ async fn update_insight(cx: &CommandContext, args: UpdateArgs) -> Result<()> {
 
     let updated: Insight = client
         .patch(
-            &format!("/api/environments/{env_id}/insights/{id}/"),
+            &format!("/api/projects/{env_id}/insights/{id}/"),
             &Value::Object(body),
         )
         .await?;
@@ -450,7 +450,7 @@ async fn delete_insight(cx: &CommandContext, args: DeleteArgs) -> Result<()> {
     let id = resolve_identifier_to_id(client, env_id, &args.identifier).await?;
     // client.delete routes soft-delete resources through PATCH {deleted: true}.
     client
-        .delete(&format!("/api/environments/{env_id}/insights/{id}/"))
+        .delete(&format!("/api/projects/{env_id}/insights/{id}/"))
         .await?;
 
     if cx.json_mode {
@@ -486,7 +486,7 @@ async fn tag_insight(cx: &CommandContext, args: TagArgs) -> Result<()> {
 
     // Fetch current tags first so we can compute the new list.
     let current: Insight = client
-        .get(&format!("/api/environments/{env_id}/insights/{id}/"))
+        .get(&format!("/api/projects/{env_id}/insights/{id}/"))
         .await?;
 
     let mut tags: Vec<String> = current.tags.clone();
@@ -503,7 +503,7 @@ async fn tag_insight(cx: &CommandContext, args: TagArgs) -> Result<()> {
     let tag_vals: Vec<Value> = tags.iter().map(|t| Value::String(t.clone())).collect();
     let updated: Insight = client
         .patch(
-            &format!("/api/environments/{env_id}/insights/{id}/"),
+            &format!("/api/projects/{env_id}/insights/{id}/"),
             &json!({ "tags": tag_vals }),
         )
         .await?;
@@ -539,9 +539,7 @@ async fn activity_insight(cx: &CommandContext, args: ActivityArgs) -> Result<()>
     let env_id = env_id_required(client)?;
     let id = resolve_identifier_to_id(client, env_id, &args.identifier).await?;
     let v: Value = client
-        .get(&format!(
-            "/api/environments/{env_id}/insights/{id}/activity/"
-        ))
+        .get(&format!("/api/projects/{env_id}/insights/{id}/activity/"))
         .await?;
     if cx.json_mode {
         output::print_json(&v);
@@ -566,9 +564,7 @@ async fn share_insight(cx: &CommandContext, args: ShareArgs) -> Result<()> {
     let env_id = env_id_required(client)?;
     let id = resolve_identifier_to_id(client, env_id, &args.identifier).await?;
     let v: Value = client
-        .get(&format!(
-            "/api/environments/{env_id}/insights/{id}/sharing/"
-        ))
+        .get(&format!("/api/projects/{env_id}/insights/{id}/sharing/"))
         .await?;
     if cx.json_mode {
         output::print_json(&v);

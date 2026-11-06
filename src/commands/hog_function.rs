@@ -216,7 +216,7 @@ async fn list_hog_functions(
         format!("?{joined}")
     };
 
-    let path = format!("/api/environments/{env_id}/hog_functions/{query}");
+    let path = format!("/api/projects/{env_id}/hog_functions/{query}");
     let results: Vec<HogFunction> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -250,7 +250,7 @@ async fn get_hog_function(cx: &CommandContext, id: String) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let f: HogFunction = client
-        .get(&format!("/api/environments/{env_id}/hog_functions/{id}/"))
+        .get(&format!("/api/projects/{env_id}/hog_functions/{id}/"))
         .await?;
     if cx.json_mode {
         output::print_json(&f);
@@ -297,7 +297,7 @@ async fn create_hog_function(
     }
 
     let created: HogFunction = client
-        .post(&format!("/api/environments/{env_id}/hog_functions/"), &body)
+        .post(&format!("/api/projects/{env_id}/hog_functions/"), &body)
         .await?;
 
     if cx.json_mode {
@@ -357,7 +357,7 @@ async fn update_hog_function(
 
     let updated: HogFunction = client
         .patch(
-            &format!("/api/environments/{env_id}/hog_functions/{id}/"),
+            &format!("/api/projects/{env_id}/hog_functions/{id}/"),
             &Value::Object(body),
         )
         .await?;
@@ -382,7 +382,7 @@ async fn delete_hog_function(cx: &CommandContext, id: String) -> Result<()> {
     cx.confirm(&format!("soft-delete hog function `{id}`; continue?"))?;
 
     client
-        .delete(&format!("/api/environments/{env_id}/hog_functions/{id}/"))
+        .delete(&format!("/api/projects/{env_id}/hog_functions/{id}/"))
         .await?;
 
     if cx.json_mode {
@@ -413,7 +413,7 @@ async fn enable_hog_function(cx: &CommandContext, id: String) -> Result<()> {
 
     let updated: HogFunction = client
         .patch(
-            &format!("/api/environments/{env_id}/hog_functions/{id}/"),
+            &format!("/api/projects/{env_id}/hog_functions/{id}/"),
             &json!({ "enabled": true }),
         )
         .await?;
@@ -436,7 +436,7 @@ async fn disable_hog_function(cx: &CommandContext, id: String) -> Result<()> {
 
     let updated: HogFunction = client
         .patch(
-            &format!("/api/environments/{env_id}/hog_functions/{id}/"),
+            &format!("/api/projects/{env_id}/hog_functions/{id}/"),
             &json!({ "enabled": false }),
         )
         .await?;
@@ -464,7 +464,7 @@ async fn invoke_hog_function(cx: &CommandContext, id: String, event_file: PathBu
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/hog_functions/{id}/invocations/"),
+            &format!("/api/projects/{env_id}/hog_functions/{id}/invocations/"),
             &body,
         )
         .await?;
@@ -510,7 +510,7 @@ async fn logs_hog_function(
         format!("?{joined}")
     };
 
-    let path = format!("/api/environments/{env_id}/hog_functions/{id}/logs/{query}");
+    let path = format!("/api/projects/{env_id}/hog_functions/{id}/logs/{query}");
     let v: Value = client.get(&path).await?;
 
     if cx.json_mode {
@@ -538,7 +538,7 @@ async fn metrics_hog_function(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/hog_functions/{id}/metrics/"
+            "/api/projects/{env_id}/hog_functions/{id}/metrics/"
         ))
         .await?;
     if cx.json_mode {
@@ -561,7 +561,7 @@ async fn enable_backfills(cx: &CommandContext, id: String) -> Result<()> {
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/hog_functions/{id}/enable_backfills/"),
+            &format!("/api/projects/{env_id}/hog_functions/{id}/enable_backfills/"),
             &json!({}),
         )
         .await?;

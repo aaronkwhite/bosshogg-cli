@@ -167,7 +167,7 @@ struct ListOutput {
 async fn list_batch_exports(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/batch_exports/");
+    let path = format!("/api/projects/{env_id}/batch_exports/");
     let results: Vec<BatchExport> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -202,7 +202,7 @@ async fn get_batch_export(cx: &CommandContext, id: String) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let e: BatchExport = client
-        .get(&format!("/api/environments/{env_id}/batch_exports/{id}/"))
+        .get(&format!("/api/projects/{env_id}/batch_exports/{id}/"))
         .await?;
     if cx.json_mode {
         output::print_json(&e);
@@ -244,7 +244,7 @@ async fn create_batch_export(
     }
 
     let created: BatchExport = client
-        .post(&format!("/api/environments/{env_id}/batch_exports/"), &body)
+        .post(&format!("/api/projects/{env_id}/batch_exports/"), &body)
         .await?;
 
     if cx.json_mode {
@@ -303,7 +303,7 @@ async fn update_batch_export(
 
     let updated: BatchExport = client
         .patch(
-            &format!("/api/environments/{env_id}/batch_exports/{id}/"),
+            &format!("/api/projects/{env_id}/batch_exports/{id}/"),
             &Value::Object(body),
         )
         .await?;
@@ -330,7 +330,7 @@ async fn delete_batch_export(cx: &CommandContext, id: String) -> Result<()> {
     // batch_exports is NOT in SOFT_DELETE_RESOURCES — use raw HTTP DELETE.
     // client.delete() will issue a true DELETE (not PATCH) for this path.
     client
-        .delete(&format!("/api/environments/{env_id}/batch_exports/{id}/"))
+        .delete(&format!("/api/projects/{env_id}/batch_exports/{id}/"))
         .await?;
 
     if cx.json_mode {
@@ -361,7 +361,7 @@ async fn pause_batch_export(cx: &CommandContext, id: String) -> Result<()> {
 
     let updated: BatchExport = client
         .patch(
-            &format!("/api/environments/{env_id}/batch_exports/{id}/"),
+            &format!("/api/projects/{env_id}/batch_exports/{id}/"),
             &json!({ "paused": true }),
         )
         .await?;
@@ -384,7 +384,7 @@ async fn unpause_batch_export(cx: &CommandContext, id: String) -> Result<()> {
 
     let updated: BatchExport = client
         .patch(
-            &format!("/api/environments/{env_id}/batch_exports/{id}/"),
+            &format!("/api/projects/{env_id}/batch_exports/{id}/"),
             &json!({ "paused": false }),
         )
         .await?;
@@ -419,7 +419,7 @@ async fn backfills_list(cx: &CommandContext, export_id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/batch_exports/{export_id}/backfills/"
+            "/api/projects/{env_id}/batch_exports/{export_id}/backfills/"
         ))
         .await?;
     if cx.json_mode {
@@ -450,7 +450,7 @@ async fn backfills_create(
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/batch_exports/{export_id}/backfills/"),
+            &format!("/api/projects/{env_id}/batch_exports/{export_id}/backfills/"),
             &body,
         )
         .await?;
@@ -478,7 +478,7 @@ async fn backfills_cancel(
     let v: Value = client
         .post(
             &format!(
-                "/api/environments/{env_id}/batch_exports/{export_id}/backfills/{backfill_id}/cancel/"
+                "/api/projects/{env_id}/batch_exports/{export_id}/backfills/{backfill_id}/cancel/"
             ),
             &json!({}),
         )
@@ -509,7 +509,7 @@ async fn runs_list(cx: &CommandContext, export_id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/batch_exports/{export_id}/runs/"
+            "/api/projects/{env_id}/batch_exports/{export_id}/runs/"
         ))
         .await?;
     if cx.json_mode {
@@ -525,7 +525,7 @@ async fn runs_get(cx: &CommandContext, export_id: String, run_id: String) -> Res
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/batch_exports/{export_id}/runs/{run_id}/"
+            "/api/projects/{env_id}/batch_exports/{export_id}/runs/{run_id}/"
         ))
         .await?;
     if cx.json_mode {
@@ -541,7 +541,7 @@ async fn runs_logs(cx: &CommandContext, export_id: String, run_id: String) -> Re
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/batch_exports/{export_id}/runs/{run_id}/logs/"
+            "/api/projects/{env_id}/batch_exports/{export_id}/runs/{run_id}/logs/"
         ))
         .await?;
     if cx.json_mode {
@@ -574,7 +574,7 @@ async fn runs_cancel(cx: &CommandContext, export_id: String, run_id: String) -> 
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/batch_exports/{export_id}/runs/{run_id}/cancel/"),
+            &format!("/api/projects/{env_id}/batch_exports/{export_id}/runs/{run_id}/cancel/"),
             &json!({}),
         )
         .await?;
@@ -597,7 +597,7 @@ async fn runs_retry(cx: &CommandContext, export_id: String, run_id: String) -> R
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/batch_exports/{export_id}/runs/{run_id}/retry/"),
+            &format!("/api/projects/{env_id}/batch_exports/{export_id}/runs/{run_id}/retry/"),
             &json!({}),
         )
         .await?;

@@ -8,7 +8,7 @@ use wiremock::{Mock, ResponseTemplate};
 async fn query_run_inline_returns_rows() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .and(body_partial_json(json!({
             "query": { "kind": "HogQLQuery" }
         })))

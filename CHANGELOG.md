@@ -9,6 +9,46 @@ and this project adheres to [Calendar Versioning](https://calver.org/) —
 The changelog uses dates in `YYYY-MM-DD` form. Each release also maps to a
 crates.io publication and a GitHub Release with prebuilt tarballs.
 
+## [2026.11.0] — 2026-11-06
+
+PostHog API catch-up. On 2026-06-01 PostHog rolled back its
+projects-to-environments API split: `/api/projects/:id/` is canonical
+again and `/api/environments/` is a deprecated alias that no longer
+appears in the API schema. PostHog also stopped accepting a few actions
+from personal API keys. This release moves bosshogg off the deprecated
+paths and handles the new restrictions.
+
+### Changed
+
+- **Every request now goes to `/api/projects/…`.** Insights, dashboards,
+  events, persons, groups, query, endpoints, session recordings, hog
+  functions, batch exports, error tracking, evaluations, LLM analytics
+  and schema all moved off `/api/environments/…`. Same ids, same
+  output. Verified read-only against PostHog Cloud. (MEDIUM)
+- **`dataset delete` and `dataset-item delete` now archive.** PostHog
+  returns 403 for `DELETE` on datasets with a personal API key; both
+  commands now call `POST …/archive/` (needs `dataset:write`). Archived
+  items can be restored in the PostHog web app. JSON output is
+  unchanged (`{ok, action: "delete", id}`); text output now says
+  "Archived". (HIGH — the old command always failed)
+- **`bosshogg doctor` drops the `instance_version` check.** It probed
+  `/api/environments/`, which PostHog has deprecated. Doctor now emits
+  8 checks. Consumers that looked up `instance_version` by name will no
+  longer find it. (LOW)
+
+### Added
+
+- **Hint for actions PostHog blocks for personal API keys.** A 403
+  containing "personal API key" (e.g. `project reset-token`) now carries
+  a `hint` telling you to use the PostHog web app. Code and exit code are
+  unchanged (`UPSTREAM`, 50). (LOW)
+
+### Docs
+
+- `docs/api-notes.md`, glossary, capabilities, v1-scope, api-coverage,
+  README and the agent skill updated for the rollback and the
+  personal-key restrictions.
+
 ## [2026.5.3] — 2026-05-10
 
 Telemetry hygiene patch. The PostHog write token bosshogg ships with

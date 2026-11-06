@@ -181,7 +181,7 @@ async fn list_dashboards(
         format!("?{joined}")
     };
 
-    let path = format!("/api/environments/{env_id}/dashboards/{query}");
+    let path = format!("/api/projects/{env_id}/dashboards/{query}");
     let results: Vec<Dashboard> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -216,7 +216,7 @@ async fn get_dashboard(cx: &CommandContext, id: i64) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let dashboard: Dashboard = client
-        .get(&format!("/api/environments/{env_id}/dashboards/{id}/"))
+        .get(&format!("/api/projects/{env_id}/dashboards/{id}/"))
         .await?;
     print_dashboard(&dashboard, cx.json_mode);
     Ok(())
@@ -229,7 +229,7 @@ async fn refresh_dashboard(cx: &CommandContext, id: i64) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/dashboards/{id}/run_insights/"
+            "/api/projects/{env_id}/dashboards/{id}/run_insights/"
         ))
         .await?;
     if cx.json_mode {
@@ -262,7 +262,7 @@ async fn create_dashboard(
     }
 
     let created: Dashboard = client
-        .post(&format!("/api/environments/{env_id}/dashboards/"), &body)
+        .post(&format!("/api/projects/{env_id}/dashboards/"), &body)
         .await?;
 
     if cx.json_mode {
@@ -320,7 +320,7 @@ async fn update_dashboard(
 
     let updated: Dashboard = client
         .patch(
-            &format!("/api/environments/{env_id}/dashboards/{id}/"),
+            &format!("/api/projects/{env_id}/dashboards/{id}/"),
             &Value::Object(body),
         )
         .await?;
@@ -342,7 +342,7 @@ async fn delete_dashboard(cx: &CommandContext, id: i64) -> Result<()> {
     cx.confirm(&format!("soft-delete dashboard `{id}`; continue?"))?;
 
     client
-        .delete(&format!("/api/environments/{env_id}/dashboards/{id}/"))
+        .delete(&format!("/api/projects/{env_id}/dashboards/{id}/"))
         .await?;
 
     if cx.json_mode {
@@ -394,7 +394,7 @@ async fn tiles_add(cx: &CommandContext, dashboard_id: i64, insight: i64) -> Resu
     // INSIGHT with an updated `dashboards` array. The legacy
     // `PATCH /dashboards/{id}/ {"tiles": [...]}` path is silently dropped
     // on current accounts — the response returns 200 but `tiles` stays empty.
-    let insight_path = format!("/api/environments/{env_id}/insights/{insight}/");
+    let insight_path = format!("/api/projects/{env_id}/insights/{insight}/");
 
     let current: Value = client.get(&insight_path).await?;
     let mut dashboards: Vec<i64> = current
@@ -432,7 +432,7 @@ async fn tiles_remove(cx: &CommandContext, dashboard_id: i64, tile: i64) -> Resu
     //
     // Since the input is a tile_id (not insight_id), we first GET the
     // dashboard to find the tile's insight.
-    let dash_path = format!("/api/environments/{env_id}/dashboards/{dashboard_id}/");
+    let dash_path = format!("/api/projects/{env_id}/dashboards/{dashboard_id}/");
     let dashboard: Dashboard = client.get(&dash_path).await?;
     let insight_id = dashboard
         .tiles
@@ -449,7 +449,7 @@ async fn tiles_remove(cx: &CommandContext, dashboard_id: i64, tile: i64) -> Resu
             BosshoggError::NotFound(format!("tile {tile} on dashboard {dashboard_id}"))
         })?;
 
-    let insight_path = format!("/api/environments/{env_id}/insights/{insight_id}/");
+    let insight_path = format!("/api/projects/{env_id}/insights/{insight_id}/");
     let current: Value = client.get(&insight_path).await?;
     let dashboards: Vec<i64> = current
         .get("dashboards")
@@ -480,9 +480,7 @@ async fn share_dashboard(cx: &CommandContext, id: i64) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let v: Value = client
-        .get(&format!(
-            "/api/environments/{env_id}/dashboards/{id}/sharing/"
-        ))
+        .get(&format!("/api/projects/{env_id}/dashboards/{id}/sharing/"))
         .await?;
     if cx.json_mode {
         output::print_json(&v);

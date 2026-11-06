@@ -3,9 +3,9 @@
 //! evaluation-reports / provider-keys / review-queue.
 //!
 //! All endpoints are environment-scoped:
-//!   `/api/environments/{project_id}/llm_analytics/...`
+//!   `/api/projects/{project_id}/llm_analytics/...`
 //! where `{project_id}` resolves from the configured `env_id` (same as
-//! other `/api/environments/` endpoints).
+//! other `/api/projects/` endpoints).
 //!
 //! Deferred (admin/setup flows, not shipped in this release):
 //!   - clustering_config / clustering_config/set_event_filters
@@ -246,7 +246,7 @@ async fn list_models(cx: &CommandContext) -> Result<()> {
     let env_id = env_id_required(client)?;
     // The models endpoint is a single GET — returns object, not a paginated list.
     let v: Value = client
-        .get(&format!("/api/environments/{env_id}/llm_analytics/models/"))
+        .get(&format!("/api/projects/{env_id}/llm_analytics/models/"))
         .await?;
 
     if cx.json_mode {
@@ -276,7 +276,7 @@ async fn evaluation_summary(
 
     let resp: Value = client
         .post(
-            &format!("/api/environments/{env_id}/llm_analytics/evaluation_summary/"),
+            &format!("/api/projects/{env_id}/llm_analytics/evaluation_summary/"),
             &body,
         )
         .await?;
@@ -345,7 +345,7 @@ struct EvaluationReportsListOutput {
 async fn list_evaluation_reports(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/llm_analytics/evaluation_reports/");
+    let path = format!("/api/projects/{env_id}/llm_analytics/evaluation_reports/");
     let results: Vec<EvaluationReport> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -379,7 +379,7 @@ async fn get_evaluation_report(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let r: EvaluationReport = client
         .get(&format!(
-            "/api/environments/{env_id}/llm_analytics/evaluation_reports/{id}/"
+            "/api/projects/{env_id}/llm_analytics/evaluation_reports/{id}/"
         ))
         .await?;
 
@@ -415,7 +415,7 @@ async fn create_evaluation_report(cx: &CommandContext, config_file: PathBuf) -> 
 
     let created: EvaluationReport = client
         .post(
-            &format!("/api/environments/{env_id}/llm_analytics/evaluation_reports/"),
+            &format!("/api/projects/{env_id}/llm_analytics/evaluation_reports/"),
             &body,
         )
         .await?;
@@ -441,7 +441,7 @@ async fn update_evaluation_report(
 
     let updated: EvaluationReport = client
         .patch(
-            &format!("/api/environments/{env_id}/llm_analytics/evaluation_reports/{id}/"),
+            &format!("/api/projects/{env_id}/llm_analytics/evaluation_reports/{id}/"),
             &body,
         )
         .await?;
@@ -466,7 +466,7 @@ async fn delete_evaluation_report(cx: &CommandContext, id: String) -> Result<()>
     // Use PATCH {"deleted": true} for soft-delete.
     let updated: EvaluationReport = client
         .patch(
-            &format!("/api/environments/{env_id}/llm_analytics/evaluation_reports/{id}/"),
+            &format!("/api/projects/{env_id}/llm_analytics/evaluation_reports/{id}/"),
             &json!({ "deleted": true }),
         )
         .await?;
@@ -498,7 +498,7 @@ async fn generate_evaluation_report(cx: &CommandContext, id: String) -> Result<(
     // POST /{id}/generate/ — returns 202 (no body).
     let _v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/llm_analytics/evaluation_reports/{id}/generate/"),
+            &format!("/api/projects/{env_id}/llm_analytics/evaluation_reports/{id}/generate/"),
             &json!({}),
         )
         .await
@@ -519,7 +519,7 @@ async fn list_evaluation_report_runs(
 ) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/llm_analytics/evaluation_reports/{id}/runs/");
+    let path = format!("/api/projects/{env_id}/llm_analytics/evaluation_reports/{id}/runs/");
     let results: Vec<Value> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -577,7 +577,7 @@ struct ProviderKeysListOutput {
 async fn list_provider_keys(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/llm_analytics/provider_keys/");
+    let path = format!("/api/projects/{env_id}/llm_analytics/provider_keys/");
     let results: Vec<LlmProviderKey> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -609,7 +609,7 @@ async fn get_provider_key(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let k: LlmProviderKey = client
         .get(&format!(
-            "/api/environments/{env_id}/llm_analytics/provider_keys/{id}/"
+            "/api/projects/{env_id}/llm_analytics/provider_keys/{id}/"
         ))
         .await?;
 
@@ -646,7 +646,7 @@ async fn validate_provider_key(cx: &CommandContext, id: String) -> Result<()> {
     // POST /{id}/validate/ with empty body; returns updated key with state.
     let k: LlmProviderKey = client
         .post(
-            &format!("/api/environments/{env_id}/llm_analytics/provider_keys/{id}/validate/"),
+            &format!("/api/projects/{env_id}/llm_analytics/provider_keys/{id}/validate/"),
             &json!({}),
         )
         .await
@@ -685,7 +685,7 @@ struct ReviewQueueListOutput {
 async fn list_review_queue(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/llm_analytics/review_queue_items/");
+    let path = format!("/api/projects/{env_id}/llm_analytics/review_queue_items/");
     let results: Vec<ReviewQueueItem> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {

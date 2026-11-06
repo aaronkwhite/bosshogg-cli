@@ -34,7 +34,7 @@ fn export_fixture(id: &str, name: &str, interval: &str) -> serde_json::Value {
 async fn batch_export_list_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/batch_exports/"))
+        .and(path("/api/projects/999999/batch_exports/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -62,7 +62,7 @@ async fn batch_export_list_returns_results() {
 async fn batch_export_get_by_id() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/batch_exports/exp-abc/"))
+        .and(path("/api/projects/999999/batch_exports/exp-abc/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(export_fixture(
             "exp-abc",
             "S3 Export",
@@ -85,7 +85,7 @@ async fn batch_export_get_by_id() {
 async fn batch_export_create_with_destination_file() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/batch_exports/"))
+        .and(path("/api/projects/999999/batch_exports/"))
         .and(body_partial_json(json!({"name": "New Export"})))
         .respond_with(ResponseTemplate::new(201).set_body_json(export_fixture(
             "exp-new",
@@ -127,7 +127,7 @@ async fn batch_export_create_with_destination_file() {
 async fn batch_export_update_name_patches() {
     let h = TestHarness::new().await;
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/batch_exports/exp-55/"))
+        .and(path("/api/projects/999999/batch_exports/exp-55/"))
         .and(body_partial_json(json!({"name": "Renamed Export"})))
         .respond_with(ResponseTemplate::new(200).set_body_json(export_fixture(
             "exp-55",
@@ -160,7 +160,7 @@ async fn batch_export_delete_issues_hard_delete() {
 
     // batch_exports is NOT in SOFT_DELETE_RESOURCES — expect true DELETE
     Mock::given(method("DELETE"))
-        .and(path("/api/environments/999999/batch_exports/exp-77/"))
+        .and(path("/api/projects/999999/batch_exports/exp-77/"))
         .respond_with(ResponseTemplate::new(204))
         .mount(&h.server)
         .await;
@@ -182,7 +182,7 @@ async fn batch_export_pause_patches_paused_true() {
     let mut paused_fixture = export_fixture("exp-p1", "S3 Export", "hour");
     paused_fixture["paused"] = json!(true);
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/batch_exports/exp-p1/"))
+        .and(path("/api/projects/999999/batch_exports/exp-p1/"))
         .and(body_partial_json(json!({"paused": true})))
         .respond_with(ResponseTemplate::new(200).set_body_json(paused_fixture))
         .mount(&h.server)
@@ -201,7 +201,7 @@ async fn batch_export_pause_patches_paused_true() {
 async fn batch_export_unpause_patches_paused_false() {
     let h = TestHarness::new().await;
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/batch_exports/exp-p2/"))
+        .and(path("/api/projects/999999/batch_exports/exp-p2/"))
         .and(body_partial_json(json!({"paused": false})))
         .respond_with(ResponseTemplate::new(200).set_body_json(export_fixture(
             "exp-p2",
@@ -224,9 +224,7 @@ async fn batch_export_unpause_patches_paused_false() {
 async fn batch_export_backfills_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/batch_exports/exp-b1/backfills/",
-        ))
+        .and(path("/api/projects/999999/batch_exports/exp-b1/backfills/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
             "results": [{"id": "bf-1", "start_at": "2026-01-01T00:00:00Z", "status": "running"}]
@@ -247,9 +245,7 @@ async fn batch_export_backfills_list() {
 async fn batch_export_backfills_create() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path(
-            "/api/environments/999999/batch_exports/exp-b2/backfills/",
-        ))
+        .and(path("/api/projects/999999/batch_exports/exp-b2/backfills/"))
         .and(body_partial_json(
             json!({"start_at": "2026-01-01T00:00:00Z"}),
         ))
@@ -282,7 +278,7 @@ async fn batch_export_backfills_cancel() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/batch_exports/exp-b3/backfills/bf-99/cancel/",
+            "/api/projects/999999/batch_exports/exp-b3/backfills/bf-99/cancel/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"status": "cancelled"})))
         .mount(&h.server)
@@ -309,7 +305,7 @@ async fn batch_export_backfills_cancel() {
 async fn batch_export_runs_list() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/batch_exports/exp-r1/runs/"))
+        .and(path("/api/projects/999999/batch_exports/exp-r1/runs/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
             "results": [{"id": "run-1", "status": "completed"}]
@@ -331,7 +327,7 @@ async fn batch_export_runs_get() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/batch_exports/exp-r2/runs/run-42/",
+            "/api/projects/999999/batch_exports/exp-r2/runs/run-42/",
         ))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(json!({"id": "run-42", "status": "running"})),
@@ -353,7 +349,7 @@ async fn batch_export_runs_logs() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
         .and(path(
-            "/api/environments/999999/batch_exports/exp-r3/runs/run-5/logs/",
+            "/api/projects/999999/batch_exports/exp-r3/runs/run-5/logs/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
@@ -377,7 +373,7 @@ async fn batch_export_runs_cancel() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/batch_exports/exp-r4/runs/run-10/cancel/",
+            "/api/projects/999999/batch_exports/exp-r4/runs/run-10/cancel/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"status": "cancelled"})))
         .mount(&h.server)
@@ -405,7 +401,7 @@ async fn batch_export_runs_retry() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
         .and(path(
-            "/api/environments/999999/batch_exports/exp-r5/runs/run-20/retry/",
+            "/api/projects/999999/batch_exports/exp-r5/runs/run-20/retry/",
         ))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"status": "retrying"})))
         .mount(&h.server)

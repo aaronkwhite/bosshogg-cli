@@ -50,6 +50,8 @@ Use `bosshogg configure` to set up a new context from scratch. Use these command
 
 `reset-token` rotates the `phc_...` project API token that SDK clients use for event capture and feature-flag evaluation.
 
+**PostHog currently rejects this with a personal API key** (`403 "This action does not support personal API key access"`, exit 50). With a personal key, rotate the token in the PostHog web app (Project settings) instead. The guidance below still applies to when and how to rotate.
+
 **Effect is immediate and irreversible:**
 - The old token stops working the moment the PATCH lands.
 - Every SDK, server-side integration, or CI environment sending events or evaluating flags with the old token will begin receiving 401 errors.

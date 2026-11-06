@@ -191,7 +191,7 @@ async fn get_event(cx: &CommandContext, uuid: &str) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let v: Value = client
-        .get(&format!("/api/environments/{env_id}/events/{uuid}/"))
+        .get(&format!("/api/projects/{env_id}/events/{uuid}/"))
         .await?;
     if cx.json_mode {
         output::print_json(&v);
@@ -220,7 +220,7 @@ async fn values(cx: &CommandContext, prop: &str, event: &str) -> Result<()> {
         urlencoding::encode(event)
     );
     let v: Value = client
-        .get(&format!("/api/environments/{env_id}/events/values/{qs}"))
+        .get(&format!("/api/projects/{env_id}/events/values/{qs}"))
         .await?;
 
     if cx.json_mode {

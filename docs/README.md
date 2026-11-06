@@ -12,7 +12,7 @@ This folder is the **design-time source of truth** for BossHogg. Implementation 
 6. [**Conventions**](conventions.md) — JSON output contract, error shape, exit codes, env vars, soft-delete behavior.
 7. [**Agent-first design**](agent-first.md) — The skill-over-MCP thesis; when to use BossHogg vs MCP; the Claude Code skill we ship with the repo.
 8. [**Naming**](naming.md) — Why `bosshogg`, why not `hog`, why not `phog`.
-9. [**PostHog API notes**](api-notes.md) — Non-obvious API quirks BossHogg has to handle: soft-delete, environments-vs-projects migration, rate-limit buckets, HogQL centrality, deprecated endpoints.
+9. [**PostHog API notes**](api-notes.md) — Non-obvious API quirks BossHogg has to handle: soft-delete, environments-vs-projects migration (rolled back), rate-limit buckets, HogQL centrality, deprecated endpoints.
 10. [**Glossary**](glossary.md) — PostHog terminology, especially for readers (and agents) new to the platform.
 11. [**Development**](development.md) — Build, test, toolchain, CI intent.
 

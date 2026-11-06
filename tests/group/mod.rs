@@ -29,7 +29,7 @@ fn group_fixture(type_index: i32, key: &str) -> serde_json::Value {
 async fn group_list_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/groups/"))
+        .and(path("/api/projects/999999/groups/"))
         .and(query_param("group_type_index", "0"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
@@ -58,7 +58,7 @@ async fn group_list_returns_results() {
 async fn group_list_with_type_filter() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/groups/"))
+        .and(path("/api/projects/999999/groups/"))
         .and(query_param("group_type_index", "2"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
@@ -82,7 +82,7 @@ async fn group_list_with_type_filter() {
 async fn group_find_fetches_single_group() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/groups/find/"))
+        .and(path("/api/projects/999999/groups/find/"))
         .and(query_param("group_type_index", "0"))
         .and(query_param("group_key", "acme_corp"))
         .respond_with(ResponseTemplate::new(200).set_body_json(group_fixture(0, "acme_corp")))
@@ -111,9 +111,7 @@ async fn group_find_fetches_single_group() {
 async fn group_property_definitions_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/groups/property_definitions/",
-        ))
+        .and(path("/api/projects/999999/groups/property_definitions/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [
                 {"name": "plan", "type": "String", "property_type": "String"},
@@ -137,7 +135,7 @@ async fn group_property_definitions_returns_results() {
 async fn group_update_property_posts() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/groups/update_property/"))
+        .and(path("/api/projects/999999/groups/update_property/"))
         .and(body_partial_json(json!({
             "group_type_index": 0,
             "group_key": "acme_corp",
@@ -173,7 +171,7 @@ async fn group_update_property_posts() {
 async fn group_delete_property_posts() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/groups/delete_property/"))
+        .and(path("/api/projects/999999/groups/delete_property/"))
         .and(body_partial_json(json!({
             "group_type_index": 0,
             "group_key": "acme_corp",

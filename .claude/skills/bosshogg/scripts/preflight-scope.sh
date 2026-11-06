@@ -67,7 +67,7 @@ case "$SCOPE" in
     ;;
   query:read)
     # SELECT 1 is the cheapest HogQL
-    URL="${HOST}/api/environments/${PROJECT}/query/"
+    URL="${HOST}/api/projects/${PROJECT}/query/"
     ;;
   insight:read)
     URL="${HOST}/api/projects/${PROJECT}/insights/?limit=1"
@@ -82,7 +82,7 @@ case "$SCOPE" in
     URL="${HOST}/api/projects/${PROJECT}/dashboards/?limit=1"
     ;;
   session_recording:read)
-    URL="${HOST}/api/environments/${PROJECT}/session_recordings/?limit=1"
+    URL="${HOST}/api/projects/${PROJECT}/session_recordings/?limit=1"
     ;;
   error_tracking:read)
     URL="${HOST}/api/projects/${PROJECT}/error_tracking/issue/?limit=1"
@@ -97,7 +97,7 @@ case "$SCOPE" in
     URL="${HOST}/api/projects/${PROJECT}/hog_functions/?limit=1"
     ;;
   batch_export:read)
-    URL="${HOST}/api/environments/${PROJECT}/batch_exports/?limit=1"
+    URL="${HOST}/api/projects/${PROJECT}/batch_exports/?limit=1"
     ;;
   *)
     printf 'PREFLIGHT: FAIL — unknown scope %s (this wrapper does not know a probe for it)\n' "$SCOPE" >&2

@@ -33,7 +33,7 @@ async fn hogql_wrapper_sends_hogql_query_kind() {
         captured_kind: Arc::clone(&captured),
     };
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(responder)
         .mount(&h.server)
         .await;
@@ -55,7 +55,7 @@ async fn events_wrapper_sends_events_query_kind() {
         captured_kind: Arc::clone(&captured),
     };
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(responder)
         .mount(&h.server)
         .await;
@@ -82,7 +82,7 @@ async fn trends_wrapper_sends_trends_query_kind() {
         captured_kind: Arc::clone(&captured),
     };
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(responder)
         .mount(&h.server)
         .await;
@@ -109,7 +109,7 @@ async fn funnel_wrapper_sends_funnel_query_kind() {
         captured_kind: Arc::clone(&captured),
     };
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(responder)
         .mount(&h.server)
         .await;
@@ -149,7 +149,7 @@ async fn events_wrapper_keeps_user_provided_kind() {
         captured_kind: Arc::clone(&captured),
     };
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(responder)
         .mount(&h.server)
         .await;

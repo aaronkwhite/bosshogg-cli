@@ -2,15 +2,11 @@
 
 Non-obvious details about PostHog's API that BossHogg has to handle correctly. Authoritative source is [`../research/posthog-api.md`](../research/posthog-api.md); this doc pulls out the surprises.
 
-## Environments vs projects — mid-migration
+## Environments vs projects — migration rolled back
 
-PostHog is moving from `/api/projects/:project_id/…` to `/api/environments/:env_id/…`. During the migration, many resources are **dual-mounted** — both paths work. A few are only available on one side.
+PostHog started moving from `/api/projects/:project_id/…` to `/api/environments/:env_id/…`, then reversed course on 2026-06-01 ([PostHog#60407](https://github.com/PostHog/posthog/pull/60407)). `/api/projects/:team_id/…` is canonical again. `/api/environments/…` still answers as a backward-compat alias but is deprecated and no longer appears in `/api/schema/`.
 
-Client rule: **prefer `/api/environments/:env_id/…` when both exist.** The config profile carries both `project_id` and `env_id`; the client picks the right path per resource based on a static route table.
-
-Affected (environment-path preferred): `query`, `endpoints`, `insights`, `dashboards`, `persons`, `events`, `session-recordings`, `hog-functions`, `batch-exports`, `subscriptions`, `groups`.
-
-Affected (project-path only): `feature_flags`, `cohorts`, `actions`, `annotations`, `experiments`, `surveys`, `event_definitions`, `property_definitions`, `error_tracking/*`, `early_access_feature`.
+Client rule (since v2026.11.0): **always use `/api/projects/…`.** Resources that used to take `env_id` still pass the `env_id` value — it is the team id the `/projects/` mount expects. bosshogg makes no `/api/environments/` calls.
 
 Org-scoped: `organizations`, `roles`.
 
@@ -28,7 +24,7 @@ BossHogg client normalizes: `bosshogg <r> delete <id>` always issues a `PATCH` f
 
 ## Events endpoint is deprecated
 
-`GET /api/environments/:env_id/events/` still works but is officially deprecated in favor of HogQL queries and batch exports. It also:
+`GET /api/projects/:env_id/events/` still works but is officially deprecated in favor of HogQL queries and batch exports. It also:
 
 - Caps `offset` at 50,000.
 - Caps the time window at 1 year.
@@ -38,7 +34,7 @@ BossHogg routes `bosshogg events list` through an `EventsQuery` via `POST /query
 
 ## HogQL / Query API is central and has its own rate bucket
 
-- Endpoint: `POST /api/environments/:env_id/query/`.
+- Endpoint: `POST /api/projects/:env_id/query/`.
 - Query kinds: `HogQLQuery`, `EventsQuery`, `TrendsQuery`, `FunnelsQuery`, plus more specific ones (retention, paths, stickiness, lifecycle, etc.).
 - Supports **sync** (blocking) and **async** (enqueue + poll) execution. Async is recommended for queries that might exceed a few seconds.
 - **Separate rate bucket**: 2400/hr. Distinct from the other buckets:
@@ -73,7 +69,7 @@ BossHogg emits JSON with the raw arrays; table rendering uses `columns` as heade
 
 ## Endpoints: materialized HogQL as REST
 
-`/api/environments/:env_id/endpoints/` is a powerful PostHog feature — **named, saved HogQL queries** callable as their own REST endpoints, with a materialization cache and auto-generated OpenAPI specs.
+`/api/projects/:env_id/endpoints/` is a powerful PostHog feature — **named, saved HogQL queries** callable as their own REST endpoints, with a materialization cache and auto-generated OpenAPI specs.
 
 Shape:
 
@@ -187,3 +183,12 @@ BossHogg normalizes all displayed times to the user's local timezone in TTY mode
 - Feature flags: https://posthog.com/docs/api/feature-flags
 - Endpoints: https://posthog.com/docs/api/endpoints
 - Notebooks (with beta warning): https://posthog.com/docs/api/notebooks
+
+## Personal API keys can't do everything
+
+Some actions reject personal API keys outright with `403 "This action does not support personal API key access"`, regardless of scopes. Seen 2026-11-06:
+
+- `DELETE /datasets/:id/` and `DELETE /dataset_items/:id/` — bosshogg's `dataset delete` / `dataset-item delete` use `POST …/archive/` instead (needs `dataset:write`).
+- `PATCH …/reset_token/` (both `/api/projects/:id/` and `/api/organizations/:org/projects/:id/`) — `project reset-token` can't succeed with a personal key; rotate in the web app.
+
+bosshogg reports these as `UPSTREAM` (exit 50) with a hint pointing at the web app.

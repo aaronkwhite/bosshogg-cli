@@ -132,9 +132,16 @@ async fn dataset_update() {
 #[tokio::test]
 async fn dataset_delete() {
     let h = TestHarness::new().await;
+    Mock::given(method("POST"))
+        .and(path("/api/projects/999999/datasets/ds-del/archive/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({})))
+        .expect(1)
+        .mount(&h.server)
+        .await;
+    // Hard DELETE is rejected for personal API keys; never send it.
     Mock::given(method("DELETE"))
-        .and(path("/api/projects/999999/datasets/ds-del/"))
-        .respond_with(ResponseTemplate::new(204))
+        .respond_with(ResponseTemplate::new(403))
+        .expect(0)
         .mount(&h.server)
         .await;
 

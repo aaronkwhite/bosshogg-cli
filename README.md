@@ -241,7 +241,6 @@ bosshogg login --host http://posthog.internal --allow-http
 
 A few things to know about self-hosted mode:
 
-- `bosshogg doctor` runs an `instance_version` probe (`/api/environments/?limit=1`, added in PostHog 1.43, mid-2024). Older instances get a warning rather than a hard fail.
 - Reverse proxies at a subpath work — pass `--host https://analytics.mycorp.com/posthog/` and requests land at `/posthog/api/...`.
 - Cloud-only paid features (subscriptions, advanced paths, SSO/RBAC, some batch-export specifics) return exit code `61 FEATURE_NOT_AVAILABLE` instead of a confusing 404, with a hint pointing at `bosshogg doctor`.
 - The anonymous usage telemetry that's on by default for Cloud users **auto-disables on self-hosted contexts** — nothing leaves your network. Confirm with `bosshogg config analytics status`.

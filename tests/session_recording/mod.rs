@@ -52,7 +52,7 @@ fn recording_with_snapshots_fixture(id: &str) -> serde_json::Value {
 async fn session_recording_list_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/session_recordings/"))
+        .and(path("/api/projects/999999/session_recordings/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -80,9 +80,7 @@ async fn session_recording_list_returns_results() {
 async fn session_recording_get_default_strips_snapshots() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/session_recordings/rec-snap/",
-        ))
+        .and(path("/api/projects/999999/session_recordings/rec-snap/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(recording_with_snapshots_fixture("rec-snap")),
         )
@@ -125,9 +123,7 @@ async fn session_recording_get_default_strips_snapshots() {
 async fn session_recording_get_with_snapshots_writes_to_file() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path(
-            "/api/environments/999999/session_recordings/rec-file/",
-        ))
+        .and(path("/api/projects/999999/session_recordings/rec-file/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(recording_with_snapshots_fixture("rec-file")),
         )
@@ -174,7 +170,7 @@ async fn session_recording_get_with_snapshots_writes_to_file() {
 async fn session_recording_update_patches_viewed() {
     let h = TestHarness::new().await;
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/session_recordings/rec-upd/"))
+        .and(path("/api/projects/999999/session_recordings/rec-upd/"))
         .respond_with(ResponseTemplate::new(200).set_body_json({
             let mut v = recording_fixture("rec-upd", "user-c");
             v["viewed"] = json!(true);
@@ -204,7 +200,7 @@ async fn session_recording_update_patches_viewed() {
 async fn session_recording_delete_hard_delete() {
     let h = TestHarness::new().await;
     Mock::given(method("DELETE"))
-        .and(path("/api/environments/999999/session_recordings/rec-del/"))
+        .and(path("/api/projects/999999/session_recordings/rec-del/"))
         .respond_with(ResponseTemplate::new(204))
         .mount(&h.server)
         .await;
@@ -259,7 +255,7 @@ env_id = "1"
 async fn session_recording_list_with_person_id() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/session_recordings/"))
+        .and(path("/api/projects/999999/session_recordings/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 1,
             "next": null,

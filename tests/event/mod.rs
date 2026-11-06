@@ -37,7 +37,7 @@ async fn event_list_uses_hogql() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .and(body_partial_json(json!({
             "query": { "kind": "HogQLQuery" }
         })))
@@ -66,7 +66,7 @@ async fn event_list_with_event_filter() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(query_response(json!([[
                 "pageview",
@@ -92,7 +92,7 @@ async fn event_list_with_limit() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(query_response(json!([]))))
         .mount(&h.server)
         .await;
@@ -112,7 +112,7 @@ async fn event_get_by_uuid() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/events/some-uuid-1234/"))
+        .and(path("/api/projects/999999/events/some-uuid-1234/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(event_fixture("some-uuid-1234", "pageview")),
         )
@@ -134,7 +134,7 @@ async fn event_values_returns_list() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/events/values/"))
+        .and(path("/api/projects/999999/events/values/"))
         .and(query_param("key", "$browser"))
         .and(query_param("event_name", "$pageview"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([
@@ -168,7 +168,7 @@ async fn event_list_with_distinct_id() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(query_response(json!([[
                 "pageview",
@@ -200,7 +200,7 @@ async fn event_list_with_time_range() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(query_response(json!([[
                 "pageview",

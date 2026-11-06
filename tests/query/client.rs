@@ -23,7 +23,7 @@ fn mk_client(base_url: &str) -> Client {
 async fn sync_query_returns_typed_response() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/42/query/"))
+        .and(path("/api/projects/42/query/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [["foo", 5], ["bar", 3]],
             "columns": ["event", "c"],
@@ -51,7 +51,7 @@ async fn sync_query_returns_typed_response() {
 async fn sync_query_preserves_existing_limit() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/42/query/"))
+        .and(path("/api/projects/42/query/"))
         .and(body_partial_json(json!({
             "query": {
                 "kind": "HogQLQuery",
@@ -77,7 +77,7 @@ async fn sync_query_preserves_existing_limit() {
 async fn async_query_polls_to_completion() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/42/query/"))
+        .and(path("/api/projects/42/query/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "query_status": {
                 "id": "qid-1",
@@ -87,7 +87,7 @@ async fn async_query_polls_to_completion() {
         .mount(&server)
         .await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/42/query/qid-1/"))
+        .and(path("/api/projects/42/query/qid-1/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "query_status": {"id": "qid-1", "complete": false}
         })))
@@ -95,7 +95,7 @@ async fn async_query_polls_to_completion() {
         .mount(&server)
         .await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/42/query/qid-1/"))
+        .and(path("/api/projects/42/query/qid-1/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "query_status": {
                 "id": "qid-1",
@@ -118,7 +118,7 @@ async fn async_query_polls_to_completion() {
 async fn hogql_syntax_error_maps_to_hogql_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/42/query/"))
+        .and(path("/api/projects/42/query/"))
         .respond_with(ResponseTemplate::new(400).set_body_json(json!({
             "type": "validation_error",
             "code": "invalid_query",

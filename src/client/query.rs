@@ -1,6 +1,6 @@
 //! HogQL + Query API wrapper.
 //!
-//! - Endpoint: `POST /api/environments/:env_id/query/`
+//! - Endpoint: `POST /api/projects/:env_id/query/`
 //! - Rate-limited at 2400/hr (docs/api-notes.md § HogQL).
 //! - Auto-injects `LIMIT 100` via `output::safe::inject_hogql_limit`.
 //! - `is_async = true` uses `query_status.id` and polls `GET /query/:id/`
@@ -102,7 +102,7 @@ impl Client {
     }
 
     /// POST an arbitrary query body (the inner object — must include its own
-    /// `kind` field) to `/api/environments/:env/query/` and return the raw
+    /// `kind` field) to `/api/projects/:env/query/` and return the raw
     /// JSON response. Handles both sync and async (poll-until-complete) paths.
     ///
     /// Returns `Value` because different query kinds have different response
@@ -113,7 +113,7 @@ impl Client {
             BosshoggError::Config("no env_id set — run `bosshogg configure` or pass --env".into())
         })?;
 
-        let path = format!("/api/environments/{env_id}/query/");
+        let path = format!("/api/projects/{env_id}/query/");
         let body = json!({
             "query": query,
             "async": is_async,
@@ -127,7 +127,7 @@ impl Client {
         // structurally constrained — the inner results are still opaque.
         let enqueue: AsyncEnqueueEnvelope = self.post(&path, &body).await?;
         let id = enqueue.query_status.id;
-        let poll_path = format!("/api/environments/{env_id}/query/{id}/");
+        let poll_path = format!("/api/projects/{env_id}/query/{id}/");
 
         let mut delay_ms: u64 = 500;
         let cap_ms: u64 = 10_000;

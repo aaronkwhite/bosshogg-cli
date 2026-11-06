@@ -197,8 +197,6 @@ bosshogg config set-context onprem \
 
 `bosshogg doctor` verifies the host answers and reports the detected region. If the key was issued on a different region than the host, you will see `region_mismatch` — re-issue on the right region.
 
-Doctor also runs an `instance_version` probe against `/api/environments/?limit=1` (introduced in PostHog 1.43, mid-2024). A 404 there means the self-hosted instance is older and some commands may surface exit code `61 FEATURE_NOT_AVAILABLE`.
-
 **Plaintext `http://` self-hosted:** opt in per-context with `--allow-http`:
 
 ```bash
@@ -215,7 +213,9 @@ Every plaintext request emits a `tracing::warn!`. Cloud contexts always enforce 
 
 **Cloud-only paid features** (subscriptions, advanced paths, SSO/RBAC, certain batch-export specifics) return exit code `61 FEATURE_NOT_AVAILABLE` on self-hosted instead of a confusing 404. The JSON error envelope includes a hint pointing at `bosshogg doctor`.
 
-Older self-hosted instances may not implement `/api/environments/:eid/query/` (the modern HogQL path). If `bosshogg query run` returns 404 there, your instance predates PostHog 1.43 — upgrade, or open an issue and we'll add a `--legacy-endpoints` fallback.
+If `bosshogg query run` returns 404 on a self-hosted instance, the instance predates the HogQL query API (`/api/projects/:id/query/`) — upgrade.
+
+**Personal-key-blocked actions.** A few PostHog actions reject personal API keys no matter which scopes the key has: you get `403 "This action does not support personal API key access"` (code `UPSTREAM`, exit 50, with a hint). `project reset-token` is one of them. Do those in the PostHog web app; don't retry or re-scope the key.
 
 ## CI setup
 

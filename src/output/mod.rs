@@ -108,6 +108,12 @@ fn hint_for(err: &BosshoggError) -> Option<&'static str> {
         Config(_) => {
             "Run `bosshogg configure`, or set the env var named in the message (POSTHOG_CLI_*)."
         }
+        ServerError {
+            status: 403,
+            message,
+        } if message.contains("personal API key") => {
+            "PostHog does not allow this action with a personal API key. Do it in the PostHog web app instead."
+        }
         FeatureNotAvailable(_) => {
             "This feature is gated to PostHog Cloud paid plans, or your self-hosted version doesn't support it. Check `bosshogg doctor` for instance details."
         }
@@ -182,5 +188,26 @@ mod tests {
         let v = render_error_value(&err);
         assert!(v.get("retry_with").is_none());
         assert!(v.get("retry_after_s").is_none());
+    }
+
+    #[test]
+    fn render_error_personal_key_unsupported_403_has_hint() {
+        let err = BosshoggError::ServerError {
+            status: 403,
+            message: "This action does not support personal API key access".into(),
+        };
+        let v = render_error_value(&err);
+        assert_eq!(v["code"], "UPSTREAM");
+        assert!(v["hint"].as_str().unwrap().contains("personal API key"));
+        assert_eq!(err.exit_code(), 50);
+    }
+
+    #[test]
+    fn render_error_other_server_error_has_no_hint() {
+        let err = BosshoggError::ServerError {
+            status: 500,
+            message: "boom".into(),
+        };
+        assert!(render_error_value(&err).get("hint").is_none());
     }
 }

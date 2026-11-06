@@ -4,7 +4,7 @@
 //!
 //! All endpoints are environment-scoped (PostHog moved these from the legacy
 //! `/api/projects/:project_id/error_tracking/...` routes to
-//! `/api/environments/:team_id/error_tracking/...`).
+//! `/api/projects/:team_id/error_tracking/...`).
 //!
 //! Soft-delete notes:
 //!   - `error_tracking/fingerprints` IS in SOFT_DELETE_RESOURCES — client.delete()
@@ -464,7 +464,7 @@ async fn list_fingerprints(
         format!("?{}", params.join("&"))
     };
 
-    let path = format!("/api/environments/{env_id}/error_tracking/fingerprints/{query}");
+    let path = format!("/api/projects/{env_id}/error_tracking/fingerprints/{query}");
     let results: Vec<ErrorFingerprint> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -498,7 +498,7 @@ async fn get_fingerprint(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let f: ErrorFingerprint = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/fingerprints/{id}/"
+            "/api/projects/{env_id}/error_tracking/fingerprints/{id}/"
         ))
         .await?;
     if cx.json_mode {
@@ -554,7 +554,7 @@ struct AssignmentRulesListOutput {
 async fn list_assignment_rules(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/error_tracking/assignment_rules/");
+    let path = format!("/api/projects/{env_id}/error_tracking/assignment_rules/");
     let results: Vec<AssignmentRule> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -604,7 +604,7 @@ async fn create_assignment_rule(
 
     let created: AssignmentRule = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/assignment_rules/"),
+            &format!("/api/projects/{env_id}/error_tracking/assignment_rules/"),
             &body,
         )
         .await?;
@@ -622,7 +622,7 @@ async fn get_assignment_rule(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let r: AssignmentRule = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/assignment_rules/{id}/"
+            "/api/projects/{env_id}/error_tracking/assignment_rules/{id}/"
         ))
         .await?;
     if cx.json_mode {
@@ -661,7 +661,7 @@ async fn update_assignment_rule(
 
     let updated: AssignmentRule = client
         .patch(
-            &format!("/api/environments/{env_id}/error_tracking/assignment_rules/{id}/"),
+            &format!("/api/projects/{env_id}/error_tracking/assignment_rules/{id}/"),
             &Value::Object(body),
         )
         .await?;
@@ -683,7 +683,7 @@ async fn delete_assignment_rule(cx: &CommandContext, id: String) -> Result<()> {
     // assignment_rules NOT in SOFT_DELETE_RESOURCES — hard delete.
     client
         .delete(&format!(
-            "/api/environments/{env_id}/error_tracking/assignment_rules/{id}/"
+            "/api/projects/{env_id}/error_tracking/assignment_rules/{id}/"
         ))
         .await?;
 
@@ -715,7 +715,7 @@ async fn reorder_assignment_rules(cx: &CommandContext, order_file: PathBuf) -> R
     let body = json!({ "rule_ids": rule_ids });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/assignment_rules/reorder/"),
+            &format!("/api/projects/{env_id}/error_tracking/assignment_rules/reorder/"),
             &body,
         )
         .await?;
@@ -750,7 +750,7 @@ struct GroupingRulesListOutput {
 async fn list_grouping_rules(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/error_tracking/grouping_rules/");
+    let path = format!("/api/projects/{env_id}/error_tracking/grouping_rules/");
     let results: Vec<GroupingRule> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -792,7 +792,7 @@ async fn create_grouping_rule(
 
     let created: GroupingRule = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/grouping_rules/"),
+            &format!("/api/projects/{env_id}/error_tracking/grouping_rules/"),
             &body,
         )
         .await?;
@@ -810,7 +810,7 @@ async fn get_grouping_rule(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let r: GroupingRule = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/grouping_rules/{id}/"
+            "/api/projects/{env_id}/error_tracking/grouping_rules/{id}/"
         ))
         .await?;
     if cx.json_mode {
@@ -852,7 +852,7 @@ struct IssuesListOutput {
 async fn list_issues(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/error_tracking/issues/");
+    let path = format!("/api/projects/{env_id}/error_tracking/issues/");
     let results: Vec<ErrorIssue> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -886,7 +886,7 @@ async fn get_issue(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let issue: ErrorIssue = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/issues/{id}/"
+            "/api/projects/{env_id}/error_tracking/issues/{id}/"
         ))
         .await?;
     if cx.json_mode {
@@ -923,7 +923,7 @@ async fn issue_activity(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/issues/{id}/activity/"
+            "/api/projects/{env_id}/error_tracking/issues/{id}/activity/"
         ))
         .await?;
     if cx.json_mode {
@@ -949,7 +949,7 @@ async fn issues_activity_list(cx: &CommandContext) -> Result<()> {
     let env_id = env_id_required(client)?;
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/issues/activity/"
+            "/api/projects/{env_id}/error_tracking/issues/activity/"
         ))
         .await?;
     if cx.json_mode {
@@ -981,7 +981,7 @@ async fn assign_issue(cx: &CommandContext, id: String, assignee_id: i64) -> Resu
     let body = json!({ "assignee_id": assignee_id });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/assign/"),
+            &format!("/api/projects/{env_id}/error_tracking/issues/{id}/assign/"),
             &body,
         )
         .await?;
@@ -1004,7 +1004,7 @@ async fn issue_cohort(cx: &CommandContext, id: String) -> Result<()> {
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/cohort/"),
+            &format!("/api/projects/{env_id}/error_tracking/issues/{id}/cohort/"),
             &json!({}),
         )
         .await?;
@@ -1028,7 +1028,7 @@ async fn merge_issue(cx: &CommandContext, id: String, into_issue_id: String) -> 
     let body = json!({ "into_issue_id": into_issue_id });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/merge/"),
+            &format!("/api/projects/{env_id}/error_tracking/issues/{id}/merge/"),
             &body,
         )
         .await?;
@@ -1053,7 +1053,7 @@ async fn split_issue(cx: &CommandContext, id: String, fingerprints_file: PathBuf
     let body = json!({ "fingerprints": fingerprints });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/issues/{id}/split/"),
+            &format!("/api/projects/{env_id}/error_tracking/issues/{id}/split/"),
             &body,
         )
         .await?;
@@ -1078,7 +1078,7 @@ async fn bulk_issues(cx: &CommandContext, ids_file: PathBuf, action: String) -> 
     let body = json!({ "ids": ids, "action": action });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/issues/bulk/"),
+            &format!("/api/projects/{env_id}/error_tracking/issues/bulk/"),
             &body,
         )
         .await?;
@@ -1104,7 +1104,7 @@ async fn resolve_source(
     let client = &cx.client;
     let env_id = env_id_required(client)?;
     let path = format!(
-        "/api/environments/{env_id}/error_tracking/{endpoint}/?organization={}&repo={}&file={}&line={}",
+        "/api/projects/{env_id}/error_tracking/{endpoint}/?organization={}&repo={}&file={}&line={}",
         urlencoding::encode(&organization),
         urlencoding::encode(&repo),
         urlencoding::encode(&file),
@@ -1138,7 +1138,7 @@ struct ReleasesListOutput {
 async fn list_releases(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/error_tracking/releases/");
+    let path = format!("/api/projects/{env_id}/error_tracking/releases/");
     let results: Vec<ErrorTrackingRelease> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -1169,7 +1169,7 @@ async fn get_release(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let r: ErrorTrackingRelease = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/releases/{id}/"
+            "/api/projects/{env_id}/error_tracking/releases/{id}/"
         ))
         .await?;
     if cx.json_mode {
@@ -1192,7 +1192,7 @@ async fn get_release_by_hash(cx: &CommandContext, hash: String) -> Result<()> {
     // so we decode as raw Value to be forward-compatible.
     let v: Value = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/releases/hash/{hash}/"
+            "/api/projects/{env_id}/error_tracking/releases/hash/{hash}/"
         ))
         .await?;
     if cx.json_mode {
@@ -1229,7 +1229,7 @@ struct SymbolSetsListOutput {
 async fn list_symbol_sets(cx: &CommandContext, limit: Option<usize>) -> Result<()> {
     let client = &cx.client;
     let env_id = env_id_required(client)?;
-    let path = format!("/api/environments/{env_id}/error_tracking/symbol_sets/");
+    let path = format!("/api/projects/{env_id}/error_tracking/symbol_sets/");
     let results: Vec<ErrorTrackingSymbolSet> = client.get_paginated(&path, limit).await?;
 
     if cx.json_mode {
@@ -1261,7 +1261,7 @@ async fn get_symbol_set(cx: &CommandContext, id: String) -> Result<()> {
     let env_id = env_id_required(client)?;
     let s: ErrorTrackingSymbolSet = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/symbol_sets/{id}/"
+            "/api/projects/{env_id}/error_tracking/symbol_sets/{id}/"
         ))
         .await?;
     if cx.json_mode {
@@ -1288,7 +1288,7 @@ async fn download_symbol_set(cx: &CommandContext, id: String, out: Option<PathBu
     // a presigned URL. Print the JSON; users can pipe through `jq -r .url | xargs curl -o file`.
     let resp: SymbolSetDownloadResponse = client
         .get(&format!(
-            "/api/environments/{env_id}/error_tracking/symbol_sets/{id}/download/"
+            "/api/projects/{env_id}/error_tracking/symbol_sets/{id}/download/"
         ))
         .await?;
 
@@ -1330,7 +1330,7 @@ async fn start_upload(cx: &CommandContext, name: String, kind: Option<String>) -
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/start_upload/"),
+            &format!("/api/projects/{env_id}/error_tracking/symbol_sets/start_upload/"),
             &Value::Object(body),
         )
         .await?;
@@ -1358,7 +1358,7 @@ async fn finish_upload(cx: &CommandContext, id: String) -> Result<()> {
     // finish_upload is a PUT — body is the symbol set object; send minimal body.
     let v: Value = client
         .put(
-            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/{id}/finish_upload/"),
+            &format!("/api/projects/{env_id}/error_tracking/symbol_sets/{id}/finish_upload/"),
             &json!({}),
         )
         .await?;
@@ -1381,7 +1381,7 @@ async fn bulk_delete_symbol_sets(cx: &CommandContext, ids_file: PathBuf) -> Resu
     let body = json!({ "ids": ids });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/bulk_delete/"),
+            &format!("/api/projects/{env_id}/error_tracking/symbol_sets/bulk_delete/"),
             &body,
         )
         .await?;
@@ -1403,7 +1403,7 @@ async fn bulk_start_upload(cx: &CommandContext, names_file: PathBuf) -> Result<(
 
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/bulk_start_upload/"),
+            &format!("/api/projects/{env_id}/error_tracking/symbol_sets/bulk_start_upload/"),
             &body,
         )
         .await?;
@@ -1428,7 +1428,7 @@ async fn bulk_finish_upload(cx: &CommandContext, ids_file: PathBuf) -> Result<()
     let body = json!({ "ids": ids });
     let v: Value = client
         .post(
-            &format!("/api/environments/{env_id}/error_tracking/symbol_sets/bulk_finish_upload/"),
+            &format!("/api/projects/{env_id}/error_tracking/symbol_sets/bulk_finish_upload/"),
             &body,
         )
         .await?;

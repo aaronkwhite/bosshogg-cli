@@ -2,7 +2,8 @@
 //! `bosshogg dataset` — list / get / create / update / delete.
 //!
 //! Datasets are project-scoped: `/api/projects/{project_id}/datasets/`.
-//! Hard DELETE (not a soft-delete resource).
+//! `delete` archives via `POST .../datasets/{id}/archive/` (hard DELETE is
+//! not available to personal API keys).
 
 use clap::{Args, Subcommand};
 use serde::{Deserialize, Serialize};
@@ -73,7 +74,7 @@ pub enum DatasetCommand {
         #[arg(long)]
         description: Option<String>,
     },
-    /// Delete a dataset by ID (hard delete).
+    /// Delete (archive) a dataset by ID.
     Delete {
         /// Dataset UUID.
         id: String,
@@ -252,10 +253,15 @@ async fn delete_dataset(cx: &CommandContext, id: String) -> Result<()> {
     let client = &cx.client;
     let project_id = project_id_required(client)?;
 
-    cx.confirm(&format!("hard-delete dataset `{id}`; continue?"))?;
+    cx.confirm(&format!("archive dataset `{id}`; continue?"))?;
 
-    client
-        .delete(&format!("/api/projects/{project_id}/datasets/{id}/"))
+    // PostHog no longer accepts DELETE on datasets with a personal API key;
+    // archive is the supported removal path (reversible in the PostHog UI).
+    let _: Value = client
+        .post(
+            &format!("/api/projects/{project_id}/datasets/{id}/archive/"),
+            &json!({}),
+        )
         .await?;
 
     if cx.json_mode {
@@ -271,7 +277,7 @@ async fn delete_dataset(cx: &CommandContext, id: String) -> Result<()> {
             id,
         });
     } else {
-        println!("Deleted dataset {id}");
+        println!("Archived dataset {id}");
     }
     Ok(())
 }

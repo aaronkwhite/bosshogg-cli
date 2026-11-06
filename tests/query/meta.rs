@@ -8,7 +8,7 @@ use wiremock::{Mock, ResponseTemplate};
 async fn query_status_returns_running_state() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/query/q-1/"))
+        .and(path("/api/projects/999999/query/q-1/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "query_status": { "id": "q-1", "complete": false }
         })))
@@ -25,7 +25,7 @@ async fn query_status_returns_running_state() {
 async fn query_cancel_issues_delete() {
     let h = TestHarness::new().await;
     Mock::given(method("DELETE"))
-        .and(path("/api/environments/999999/query/q-1/"))
+        .and(path("/api/projects/999999/query/q-1/"))
         .respond_with(ResponseTemplate::new(204))
         .mount(&h.server)
         .await;
@@ -40,7 +40,7 @@ async fn query_cancel_issues_delete() {
 async fn query_log_returns_entries() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/query/q-1/log/"))
+        .and(path("/api/projects/999999/query/q-1/log/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "results": [ { "timestamp": "2026-04-21T12:00:00Z", "line": "plan accepted" } ]
         })))
@@ -57,7 +57,7 @@ async fn query_log_returns_entries() {
 async fn query_ai_costs_posts_hogql_with_ai_generation_filter() {
     let h = TestHarness::new().await;
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/query/"))
+        .and(path("/api/projects/999999/query/"))
         .and(body_partial_json(json!({
             "query": { "kind": "HogQLQuery" }
         })))

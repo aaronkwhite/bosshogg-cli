@@ -37,7 +37,7 @@ fn dashboard_fixture(id: i64, name: &str) -> serde_json::Value {
 async fn dashboard_list_returns_results() {
     let h = TestHarness::new().await;
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/dashboards/"))
+        .and(path("/api/projects/999999/dashboards/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "count": 2,
             "next": null,
@@ -66,7 +66,7 @@ async fn dashboard_get_by_id() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/dashboards/42/"))
+        .and(path("/api/projects/999999/dashboards/42/"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(dashboard_fixture(42, "My Dashboard")),
         )
@@ -88,7 +88,7 @@ async fn dashboard_refresh_calls_run_insights() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/dashboards/10/run_insights/"))
+        .and(path("/api/projects/999999/dashboards/10/run_insights/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "status": "ok",
             "refreshed": 5
@@ -110,7 +110,7 @@ async fn dashboard_create_with_name() {
     let h = TestHarness::new().await;
 
     Mock::given(method("POST"))
-        .and(path("/api/environments/999999/dashboards/"))
+        .and(path("/api/projects/999999/dashboards/"))
         .and(body_partial_json(json!({"name": "New Dashboard"})))
         .respond_with(
             ResponseTemplate::new(201).set_body_json(dashboard_fixture(100, "New Dashboard")),
@@ -134,7 +134,7 @@ async fn dashboard_update_name_patches() {
     let h = TestHarness::new().await;
 
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/dashboards/55/"))
+        .and(path("/api/projects/999999/dashboards/55/"))
         .and(body_partial_json(json!({"name": "Renamed Dashboard"})))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(dashboard_fixture(55, "Renamed Dashboard")),
@@ -165,7 +165,7 @@ async fn dashboard_delete_issues_patch_deleted_true() {
 
     // Soft-delete routes through PATCH {deleted: true}
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/dashboards/77/"))
+        .and(path("/api/projects/999999/dashboards/77/"))
         .and(body_partial_json(json!({"deleted": true})))
         .respond_with(ResponseTemplate::new(200).set_body_json({
             let mut f = dashboard_fixture(77, "To Delete");
@@ -196,7 +196,7 @@ async fn dashboard_tiles_add_get_merge_patch() {
 
     // GET insight 99 — no existing dashboard attachments.
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/99/"))
+        .and(path("/api/projects/999999/insights/99/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": 99, "short_id": "AbC12345", "name": "x",
             "dashboards": []
@@ -206,7 +206,7 @@ async fn dashboard_tiles_add_get_merge_patch() {
 
     // PATCH insight 99 with dashboards=[20].
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/insights/99/"))
+        .and(path("/api/projects/999999/insights/99/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": 99, "short_id": "AbC12345", "name": "x",
             "dashboards": [20]
@@ -239,7 +239,7 @@ async fn dashboard_tiles_add_preserves_existing_tiles() {
 
     // GET insight 99 — already attached to dashboards 10 and 11.
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/99/"))
+        .and(path("/api/projects/999999/insights/99/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": 99, "short_id": "AbC12345", "name": "x",
             "dashboards": [10, 11]
@@ -249,7 +249,7 @@ async fn dashboard_tiles_add_preserves_existing_tiles() {
 
     // PATCH body must include all three dashboard ids (existing + new).
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/insights/99/"))
+        .and(path("/api/projects/999999/insights/99/"))
         .and(body_partial_json(json!({
             "dashboards": [10, 11, 20]
         })))
@@ -286,14 +286,14 @@ async fn dashboard_tiles_remove_patches_insight_dashboards() {
     let mut dash = dashboard_fixture(20, "Dash");
     dash["tiles"] = json!([{"id": 7, "insight": {"id": 77}}]);
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/dashboards/20/"))
+        .and(path("/api/projects/999999/dashboards/20/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(dash))
         .mount(&h.server)
         .await;
 
     // GET insight 77 → currently attached to dashboards [20, 30].
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/insights/77/"))
+        .and(path("/api/projects/999999/insights/77/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": 77, "short_id": "AbC12345", "name": "x",
             "dashboards": [20, 30]
@@ -303,7 +303,7 @@ async fn dashboard_tiles_remove_patches_insight_dashboards() {
 
     // PATCH insight 77 with dashboards = [30] (20 removed).
     Mock::given(method("PATCH"))
-        .and(path("/api/environments/999999/insights/77/"))
+        .and(path("/api/projects/999999/insights/77/"))
         .and(body_partial_json(json!({ "dashboards": [30] })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": 77, "short_id": "AbC12345", "name": "x",
@@ -372,7 +372,7 @@ async fn dashboard_share_calls_sharing_endpoint() {
     let h = TestHarness::new().await;
 
     Mock::given(method("GET"))
-        .and(path("/api/environments/999999/dashboards/60/sharing/"))
+        .and(path("/api/projects/999999/dashboards/60/sharing/"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "enabled": true,
             "access_token": "dash_share_token_xyz"
